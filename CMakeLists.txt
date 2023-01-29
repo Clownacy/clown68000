@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(clown68000)
+project(clown68000 LANGUAGES C)
 
 add_library(clown68000 STATIC
 	"clowncommon/clowncommon.h"
