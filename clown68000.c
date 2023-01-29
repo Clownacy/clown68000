@@ -29,7 +29,7 @@ Z80 reset stuff:
 https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 */
 
-#include "m68k.h"
+#include "clown68000.h"
 
 #include <assert.h>
 #include <setjmp.h>
@@ -91,8 +91,8 @@ typedef struct DecodedAddressMode
 
 typedef struct Stuff
 {
-	M68k_State *state;
-	const M68k_ReadWriteCallbacks *callbacks;
+	Clown68000_State *state;
+	const Clown68000_ReadWriteCallbacks *callbacks;
 	struct
 	{
 		jmp_buf context;
@@ -102,21 +102,21 @@ typedef struct Stuff
 /* Error callback. */
 /* TODO: Remove this once all instructions are implemented. */
 
-static void (*m68k_error_callback)(const char *format, va_list arg);
+static void (*clown68000_error_callback)(const char *format, va_list arg);
 
-void M68k_SetErrorCallback(void (*error_callback)(const char *format, va_list arg))
+void Clown68000_SetErrorCallback(void (*error_callback)(const char *format, va_list arg))
 {
 	/* TODO - Shouldn't this use the regular state instead of global state? */
-	m68k_error_callback = error_callback;
+	clown68000_error_callback = error_callback;
 }
 
-static void M68k_PrintError(const char *format, ...)
+static void Clown68000_PrintError(const char *format, ...)
 {
-	if (m68k_error_callback != NULL)
+	if (clown68000_error_callback != NULL)
 	{
 		va_list args;
 		va_start(args, format);
-		m68k_error_callback(format, args);
+		clown68000_error_callback(format, args);
 		va_end(args);
 	}
 }
@@ -130,7 +130,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 static cc_u32f ReadByte(const Stuff *stuff, cc_u32f address)
 {
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
 	return callbacks->read_callback(callbacks->user_data, address & 0xFFFFFE, (cc_bool)!odd, odd) >> (odd ? 0 : 8);
@@ -138,7 +138,7 @@ static cc_u32f ReadByte(const Stuff *stuff, cc_u32f address)
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 {
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	if ((address & 1) != 0)
 	{
@@ -153,7 +153,7 @@ static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
 {
 	cc_u32f value;
 
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	if ((address & 1) != 0)
 	{
@@ -172,7 +172,7 @@ static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
 
 static void WriteByte(const Stuff *stuff, cc_u32f address, cc_u32f value)
 {
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
 	callbacks->write_callback(callbacks->user_data, address & 0xFFFFFE, (cc_bool)!odd, odd, value << (odd ? 0 : 8));
@@ -180,7 +180,7 @@ static void WriteByte(const Stuff *stuff, cc_u32f address, cc_u32f value)
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	if ((address & 1) != 0)
 	{
@@ -193,7 +193,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
-	const M68k_ReadWriteCallbacks* const callbacks = stuff->callbacks;
+	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	if ((address & 1) != 0)
 	{
@@ -207,7 +207,7 @@ static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 
 /* Supervisor mode */
 
-static void SetSupervisorMode(M68k_State *state, cc_bool supervisor_mode)
+static void SetSupervisorMode(Clown68000_State *state, cc_bool supervisor_mode)
 {
 	const cc_bool already_supervisor_mode = (state->status_register & STATUS_SUPERVISOR) != 0;
 
@@ -235,7 +235,7 @@ static void SetSupervisorMode(M68k_State *state, cc_bool supervisor_mode)
 
 static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 {
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 	const cc_u16l copy_status_register = state->status_register; /* Preserve the original supervisor bit. */
 
 	/* Exit trace mode. */
@@ -253,7 +253,7 @@ static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
 {
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 
 	/* If a data or address error occurs during group 0 exception processing, then the CPU halts. */
 	if ((state->address_registers[7] & 1) != 0)
@@ -280,7 +280,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_operand)
 {
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 
 	cc_u32f address;
 
@@ -380,7 +380,7 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 
 static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, const Operand *decoded_operand)
 {
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 
 	switch (decoded_operand->address_mode)
 	{
@@ -418,7 +418,7 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 {
 	cc_u32f value = 0;
 
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 
 	switch (decoded_address_mode->type)
 	{
@@ -466,7 +466,7 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 
 static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, cc_u32f value)
 {
-	M68k_State* const state = stuff->state;
+	Clown68000_State* const state = stuff->state;
 
 	switch (decoded_address_mode->type)
 	{
@@ -517,7 +517,7 @@ static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *de
 	}
 }
 
-static cc_bool IsOpcodeConditionTrue(M68k_State *state, cc_u16f opcode)
+static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 {
 	const cc_bool carry = (state->status_register & CONDITION_CODE_CARRY) != 0;
 	const cc_bool overflow = (state->status_register & CONDITION_CODE_OVERFLOW) != 0;
@@ -598,7 +598,7 @@ static cc_bool IsOpcodeConditionTrue(M68k_State *state, cc_u16f opcode)
 
 /* API */
 
-void M68k_Reset(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks)
+void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	Stuff stuff;
 
@@ -621,7 +621,7 @@ void M68k_Reset(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks)
 	}
 }
 
-void M68k_Interrupt(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks, cc_u16f level)
+void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, cc_u16f level)
 {
 	Stuff stuff;
 
@@ -643,7 +643,7 @@ void M68k_Interrupt(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks,
 	}
 }
 
-void M68k_DoCycle(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks)
+void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	if (state->halted)
 	{
