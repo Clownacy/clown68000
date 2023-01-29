@@ -33,11 +33,11 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
 #include <assert.h>
 #include <setjmp.h>
+#include <stdarg.h>
 #include <stddef.h>
 
 #include "clowncommon/clowncommon.h"
 
-#include "error.h"
 #include "m68k/instruction-actions.h"
 #include "m68k/instruction.h"
 #include "m68k/opcode.h"
@@ -99,10 +99,32 @@ typedef struct Stuff
 	} exception;
 } Stuff;
 
+/* Error callback. */
+/* TODO: Remove this once all instructions are implemented. */
+
+static void (*m68k_error_callback)(const char *format, va_list arg);
+
+void M68k_SetErrorCallback(void (*error_callback)(const char *format, va_list arg))
+{
+	/* TODO - Shouldn't this use the regular state instead of global state? */
+	m68k_error_callback = error_callback;
+}
+
+static void M68k_PrintError(const char *format, ...)
+{
+	if (m68k_error_callback != NULL)
+	{
+		va_list args;
+		va_start(args, format);
+		m68k_error_callback(format, args);
+		va_end(args);
+	}
+}
+
 /* Exception forward-declarations. */
 
-static void Group1Or2Exception(Stuff *stuff, size_t vector_offset);
-static void Group0Exception(Stuff *stuff, size_t vector_offset, cc_u32f access_address, cc_bool is_a_read);
+static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset);
+static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read);
 
 /* Memory reads */
 
@@ -211,7 +233,7 @@ static void SetSupervisorMode(M68k_State *state, cc_bool supervisor_mode)
 
 /* Exceptions */
 
-static void Group1Or2Exception(Stuff *stuff, size_t vector_offset)
+static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 {
 	M68k_State* const state = stuff->state;
 	const cc_u16l copy_status_register = state->status_register; /* Preserve the original supervisor bit. */
@@ -229,7 +251,7 @@ static void Group1Or2Exception(Stuff *stuff, size_t vector_offset)
 	state->program_counter = ReadLongWord(stuff, vector_offset * 4);
 }
 
-static void Group0Exception(Stuff *stuff, size_t vector_offset, cc_u32f access_address, cc_bool is_a_read)
+static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
 {
 	M68k_State* const state = stuff->state;
 

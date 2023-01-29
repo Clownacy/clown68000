@@ -19,6 +19,8 @@
 #ifndef M68K_H
 #define M68K_H
 
+#include <stdarg.h>
+
 #include "clowncommon/clowncommon.h"
 
 #ifdef __cplusplus
@@ -46,6 +48,7 @@ typedef struct M68k_ReadWriteCallbacks
 	const void *user_data;
 } M68k_ReadWriteCallbacks;
 
+void M68k_SetErrorCallback(void (*error_callback)(const char *format, va_list arg));
 void M68k_Reset(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks);
 void M68k_Interrupt(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks, cc_u16f level);
 void M68k_DoCycle(M68k_State *state, const M68k_ReadWriteCallbacks *callbacks);

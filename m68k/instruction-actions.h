@@ -232,7 +232,7 @@
 
 #include <stdio.h>
 
-#define UNIMPLEMENTED_INSTRUCTION(instruction) PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, state->program_counter)
+#define UNIMPLEMENTED_INSTRUCTION(instruction) M68k_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, state->program_counter)
 
 #define DO_INSTRUCTION_ACTION_OR\
 	result_value = destination_value | source_value
