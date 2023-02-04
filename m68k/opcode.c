@@ -18,7 +18,7 @@
 
 #include "opcode.h"
 
-static Instruction GetInstruction(const Opcode *opcode)
+static Instruction GetInstruction(const ExplodedOpcode *opcode)
 {
 	Instruction instruction;
 
@@ -475,7 +475,7 @@ static Instruction GetInstruction(const Opcode *opcode)
 	return instruction;
 }
 
-static unsigned int GetSize(const Instruction instruction, const Opcode* const opcode)
+static unsigned int GetSize(const Instruction instruction, const ExplodedOpcode* const opcode)
 {
 	unsigned int operation_size;
 
@@ -636,7 +636,7 @@ do\
 
 #define OPERAND decoded_opcode->operands[0]
 
-static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
 {
 	/* Obtain source value. */
 	switch (decoded_opcode->instruction)
@@ -798,7 +798,7 @@ static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Opcod
 #undef OPERAND
 #define OPERAND decoded_opcode->operands[1]
 
-static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
 {
 	/* Decode destination address mode */
 	switch (decoded_opcode->instruction)
@@ -960,10 +960,23 @@ static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const 
 #undef OPERAND
 #undef SET_OPERAND
 
-void DecodeOpcode(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+void ExplodeOpcode(ExplodedOpcode* const exploded_opcode, const cc_u16f raw_opcode)
 {
-	decoded_opcode->instruction = GetInstruction(opcode);
-	decoded_opcode->size = GetSize(decoded_opcode->instruction, opcode);
-	GetSourceOperand(decoded_opcode, opcode);
-	GetDestinationOperand(decoded_opcode, opcode);
+	exploded_opcode->raw = raw_opcode;
+
+	exploded_opcode->bits_6_and_7 = (raw_opcode >> 6) & 3;
+	exploded_opcode->bit_8 = (raw_opcode & 0x100) != 0;
+
+	exploded_opcode->primary_register = (raw_opcode >> 0) & 7;
+	exploded_opcode->primary_address_mode = (AddressMode)((raw_opcode >> 3) & 7);
+	exploded_opcode->secondary_address_mode = (AddressMode)((raw_opcode >> 6) & 7);
+	exploded_opcode->secondary_register = (raw_opcode >> 9) & 7;
+}
+
+void DecodeOpcode(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const exploded_opcode)
+{
+	decoded_opcode->instruction = GetInstruction(exploded_opcode);
+	decoded_opcode->size = GetSize(decoded_opcode->instruction, exploded_opcode);
+	GetSourceOperand(decoded_opcode, exploded_opcode);
+	GetDestinationOperand(decoded_opcode, exploded_opcode);
 }
