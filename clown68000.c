@@ -45,6 +45,8 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
 /*#define DEBUG_STUFF*/
 
+#define LOW_MEMORY
+
 #ifdef DEBUG_STUFF
 #include <stdio.h>
 #endif
@@ -1585,6 +1587,7 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 
 /* API */
 
+#ifndef LOW_MEMORY
 typedef struct InstructionSteps
 {
 	GetValueCall read_destination;
@@ -1598,15 +1601,19 @@ typedef struct InstructionSteps
 } InstructionSteps;
 
 static InstructionSteps instruction_steps_lookup[0x10000];
+#endif
 
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	Stuff stuff;
+#ifndef LOW_MEMORY
 	cc_u16f i;
+#endif
 
 	stuff.state = state;
 	stuff.callbacks = callbacks;
 
+#ifndef LOW_MEMORY
 	i = 0;
 	do
 	{
@@ -1638,6 +1645,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		instruction_steps->condition_code_negative = GetConditionCodeAction_Negative(decoded_opcode.instruction);
 		instruction_steps->condition_code_extend = GetConditionCodeAction_Extend(decoded_opcode.instruction);
 	} while (i++ != 0xFFFF);
+#endif
 
 	if (!setjmp(stuff.exception.context))
 	{
@@ -1702,7 +1710,9 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			DecodedAddressMode source_decoded_address_mode;
 
 			const cc_u16f machine_code = ReadWord(&closure.stuff, state->program_counter); /* TODO: Temporary - inline this later. */
+#ifndef LOW_MEMORY
 			InstructionSteps* const instruction_steps = &instruction_steps_lookup[machine_code];
+#endif
 
 			closure.source_value = closure.destination_value = closure.result_value = 0; /* TODO: Delete this and try to sort out the 'may be used uninitialised' warnings. */
 
@@ -1720,21 +1730,19 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 				#include "m68k/gen.c"
 			}
 
-/*			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
+#ifdef LOW_MEMORY
+			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
 				closure.destination_value = GetValueUsingDecodedAddressMode2(&closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
-*/
 
+			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
+
+			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
+				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);
+#else
 			closure.destination_value = instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
-
-/*			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
-*/
-
 			instruction_steps->instruction_action(&closure);
-
-/*			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
-				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);*/
-
 			instruction_steps->write_destination(&closure);
+#endif
 
 			/* Update the condition codes in the following order: */
 			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1745,17 +1753,19 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 				closure.rm = 0 - ((closure.result_value & msb_mask) != 0);
 			}
 
-/*			GetConditionCodeAction_Carry(closure.decoded_opcode.instruction)(&closure);
+#ifdef LOW_MEMORY
+			GetConditionCodeAction_Carry(closure.decoded_opcode.instruction)(&closure);
 			GetConditionCodeAction_Overflow(closure.decoded_opcode.instruction)(&closure);
 			GetConditionCodeAction_Zero(closure.decoded_opcode.instruction)(&closure);
 			GetConditionCodeAction_Negative(closure.decoded_opcode.instruction)(&closure);
 			GetConditionCodeAction_Extend(closure.decoded_opcode.instruction)(&closure);
-*/
+#else
 			instruction_steps->condition_code_carry(&closure);
 			instruction_steps->condition_code_overflow(&closure);
 			instruction_steps->condition_code_zero(&closure);
 			instruction_steps->condition_code_negative(&closure);
 			instruction_steps->condition_code_extend(&closure);
+#endif
 
 		#ifdef DEBUG_STUFF
 			{
