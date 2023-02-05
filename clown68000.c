@@ -653,6 +653,8 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressMode *dec
 					break;
 
 				case 4:
+				case 8: /* TODO: This is a hack: some instructions are technically capable of encoding a size
+				           of 8, and for now I'm just assuming that they are identical to longword operations. */
 					function = SetDestination_MemoryLongWord;
 					break;
 
@@ -817,7 +819,17 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 
 /* API */
 
-static ClosureCall bigfuckinglookup[0x10000][5];
+typedef struct InstructionSteps
+{
+	ClosureCall write_destination;
+	ClosureCall condition_code_carry;
+	ClosureCall condition_code_overflow;
+	ClosureCall condition_code_zero;
+	ClosureCall condition_code_negative;
+	ClosureCall condition_code_extend;
+} InstructionSteps;
+
+static InstructionSteps instruction_steps_lookup[0x10000];
 
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
@@ -832,14 +844,28 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	{
 		ExplodedOpcode opcode;
 		DecodedOpcode decoded_opcode;
+
+		InstructionSteps* const instruction_steps = &instruction_steps_lookup[i];
+
 		ExplodeOpcode(&opcode, i);
 		DecodeOpcode(&decoded_opcode, &opcode);
 
-		bigfuckinglookup[i][0] = GetConditionCodeAction_Carry(decoded_opcode.instruction);
-		bigfuckinglookup[i][1] = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
-		bigfuckinglookup[i][2] = GetConditionCodeAction_Zero(decoded_opcode.instruction);
-		bigfuckinglookup[i][3] = GetConditionCodeAction_Negative(decoded_opcode.instruction);
-		bigfuckinglookup[i][4] = GetConditionCodeAction_Extend(decoded_opcode.instruction);
+		if (Instruction_IsDestinationOperandWritten(decoded_opcode.instruction))
+		{
+			DecodedAddressMode destination_decoded_address_mode;
+			DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
+			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(&destination_decoded_address_mode);
+		}
+		else
+		{
+			instruction_steps->write_destination = DummyClosureCall;
+		}
+
+		instruction_steps->condition_code_carry = GetConditionCodeAction_Carry(decoded_opcode.instruction);
+		instruction_steps->condition_code_overflow = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
+		instruction_steps->condition_code_zero = GetConditionCodeAction_Zero(decoded_opcode.instruction);
+		instruction_steps->condition_code_negative = GetConditionCodeAction_Negative(decoded_opcode.instruction);
+		instruction_steps->condition_code_extend = GetConditionCodeAction_Extend(decoded_opcode.instruction);
 	} while (i++ != 0xFFFF);
 
 	if (!setjmp(stuff.exception.context))
@@ -905,9 +931,12 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			ExplodedOpcode opcode;
 			DecodedAddressMode source_decoded_address_mode;
 
+			const cc_u16f machine_code = ReadWord(&closure.stuff, state->program_counter); /* TODO: Temporary - inline this later. */
+			InstructionSteps* const instruction_steps = &instruction_steps_lookup[machine_code];
+
 			closure.source_value = closure.destination_value = closure.result_value = 0; /* TODO: Delete this and try to sort out the 'may be used uninitialised' warnings. */
 
-			ExplodeOpcode(&opcode, ReadWord(&closure.stuff, state->program_counter));
+			ExplodeOpcode(&opcode, machine_code);
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = opcode.raw;
@@ -925,8 +954,10 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 			#undef operation_size
 
-			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
-				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);
+/*			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
+				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);*/
+
+			instruction_steps->write_destination(&closure);
 
 			/* Update the condition codes in the following order: */
 			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -943,11 +974,11 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			GetConditionCodeAction_Negative(closure.decoded_opcode.instruction)(&closure);
 			GetConditionCodeAction_Extend(closure.decoded_opcode.instruction)(&closure);
 */
-			bigfuckinglookup[opcode.raw][0](&closure);
-			bigfuckinglookup[opcode.raw][1](&closure);
-			bigfuckinglookup[opcode.raw][2](&closure);
-			bigfuckinglookup[opcode.raw][3](&closure);
-			bigfuckinglookup[opcode.raw][4](&closure);
+			instruction_steps->condition_code_carry(&closure);
+			instruction_steps->condition_code_overflow(&closure);
+			instruction_steps->condition_code_zero(&closure);
+			instruction_steps->condition_code_negative(&closure);
+			instruction_steps->condition_code_extend(&closure);
 
 		#ifdef DEBUG_STUFF
 			{
