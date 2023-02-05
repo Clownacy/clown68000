@@ -241,63 +241,63 @@
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, state->program_counter)
 
 #define DO_INSTRUCTION_ACTION_OR\
-	result_value = destination_value | source_value
+	closure.result_value = closure.destination_value | closure.source_value
 
 #define DO_INSTRUCTION_ACTION_AND\
-	result_value = destination_value & source_value
+	closure.result_value = closure.destination_value & closure.source_value
 
 #define DO_INSTRUCTION_ACTION_SUBA\
 	if (!opcode.bit_8)\
-		source_value = CC_SIGN_EXTEND_ULONG(15, source_value);\
+		closure.source_value = CC_SIGN_EXTEND_ULONG(15, closure.source_value);\
 \
 	DO_INSTRUCTION_ACTION_SUB
 
 #define DO_INSTRUCTION_ACTION_SUBQ\
-	source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
+	closure.source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
 	DO_INSTRUCTION_ACTION_SUB
 
 #define DO_INSTRUCTION_ACTION_SUB\
-	result_value = destination_value - source_value
+	closure.result_value = closure.destination_value - closure.source_value
 
 #define DO_INSTRUCTION_ACTION_ADDA\
 	if (!opcode.bit_8)\
-		source_value = CC_SIGN_EXTEND_ULONG(15, source_value);\
+		closure.source_value = CC_SIGN_EXTEND_ULONG(15, closure.source_value);\
 \
 	DO_INSTRUCTION_ACTION_ADD
 
 #define DO_INSTRUCTION_ACTION_ADDQ\
-	source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
+	closure.source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
 	DO_INSTRUCTION_ACTION_ADD
 
 #define DO_INSTRUCTION_ACTION_ADD\
-	result_value = destination_value + source_value
+	closure.result_value = closure.destination_value + closure.source_value
 
 #define DO_INSTRUCTION_ACTION_EOR\
-	result_value = destination_value ^ source_value
+	closure.result_value = closure.destination_value ^ closure.source_value
 
 #define DO_INSTRUCTION_ACTION_BTST\
 	/* Modulo the source value */\
-	source_value &= operation_size * 8 - 1;\
+	closure.source_value &= operation_size * 8 - 1;\
 \
 	/* Set the zero flag to the specified bit */\
 	state->status_register &= ~CONDITION_CODE_ZERO;\
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((destination_value & (1ul << source_value)) == 0))
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure.destination_value & (1ul << closure.source_value)) == 0))
 
 #define DO_INSTRUCTION_ACTION_BCHG\
 	DO_INSTRUCTION_ACTION_BTST;\
-	result_value = destination_value ^ (1ul << source_value)
+	closure.result_value = closure.destination_value ^ (1ul << closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_BCLR\
 	DO_INSTRUCTION_ACTION_BTST;\
-	result_value = destination_value & ~(1ul << source_value)
+	closure.result_value = closure.destination_value & ~(1ul << closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_BSET\
 	DO_INSTRUCTION_ACTION_BTST;\
-	result_value = destination_value | (1ul << source_value)
+	closure.result_value = closure.destination_value | (1ul << closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVEP\
 	{\
-	cc_u32f memory_address = destination_value; /* TODO: Maybe get rid of this alias? */\
+	cc_u32f memory_address = closure.destination_value; /* TODO: Maybe get rid of this alias? */\
 \
 	switch (opcode.bits_6_and_7)\
 	{\
@@ -334,10 +334,10 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_MOVEA\
-	result_value = operation_size == 2 ? CC_SIGN_EXTEND_ULONG(15, source_value) : source_value
+	closure.result_value = operation_size == 2 ? CC_SIGN_EXTEND_ULONG(15, closure.source_value) : closure.source_value
 
 #define DO_INSTRUCTION_ACTION_MOVE\
-	result_value = source_value
+	closure.result_value = closure.source_value
 
 #define DO_INSTRUCTION_ACTION_LINK\
 	/* Push address register to stack */\
@@ -348,7 +348,7 @@
 	state->address_registers[opcode.primary_register] = state->address_registers[7];\
 \
 	/* Offset the stack pointer by the immediate value */\
-	state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, source_value)
+	state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_UNLK\
 	{\
@@ -363,30 +363,30 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_NEGX\
-	result_value = 0 - destination_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
+	closure.result_value = 0 - closure.destination_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
 
 #define DO_INSTRUCTION_ACTION_CLR\
-	result_value = 0
+	closure.result_value = 0
 
 #define DO_INSTRUCTION_ACTION_NEG\
-	result_value = 0 - destination_value
+	closure.result_value = 0 - closure.destination_value
 
 #define DO_INSTRUCTION_ACTION_NOT\
-	result_value = ~destination_value
+	closure.result_value = ~closure.destination_value
 
 #define DO_INSTRUCTION_ACTION_EXT\
-	result_value = CC_SIGN_EXTEND_ULONG((opcode.raw & 0x0040) != 0 ? 15 : 7, destination_value)
+	closure.result_value = CC_SIGN_EXTEND_ULONG((opcode.raw & 0x0040) != 0 ? 15 : 7, closure.destination_value)
 
 #define DO_INSTRUCTION_ACTION_NBCD\
 	/* TODO */\
 	UNIMPLEMENTED_INSTRUCTION("NBCD")
 
 #define DO_INSTRUCTION_ACTION_SWAP\
-	result_value = ((destination_value & 0x0000FFFF) << 16) | ((destination_value & 0xFFFF0000) >> 16)
+	closure.result_value = ((closure.destination_value & 0x0000FFFF) << 16) | ((closure.destination_value & 0xFFFF0000) >> 16)
 
 #define DO_INSTRUCTION_ACTION_PEA\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], source_value)
+	WriteLongWord(&stuff, state->address_registers[7], closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_ILLEGAL\
 	/* Illegal instruction. */\
@@ -395,14 +395,14 @@
 #define DO_INSTRUCTION_ACTION_TAS\
 	/* TODO - This instruction doesn't work properly on memory on the Mega Drive */\
 	state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO);\
-	state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((destination_value & 0x80) != 0));\
-	state->status_register |= CONDITION_CODE_ZERO & (0 - (destination_value == 0));\
+	state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((closure.destination_value & 0x80) != 0));\
+	state->status_register |= CONDITION_CODE_ZERO & (0 - (closure.destination_value == 0));\
 \
-	result_value = destination_value | 0x80
+	closure.result_value = closure.destination_value | 0x80
 
 #define DO_INSTRUCTION_ACTION_TRAP\
-	source_value = opcode.raw & 0xF;\
-	Group1Or2Exception(&stuff, 32 + source_value)
+	closure.source_value = opcode.raw & 0xF;\
+	Group1Or2Exception(&stuff, 32 + closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVE_USP\
 	if ((opcode.raw & 8) != 0)\
@@ -454,12 +454,12 @@
 	DO_INSTRUCTION_ACTION_JMP
 
 #define DO_INSTRUCTION_ACTION_JMP\
-	state->program_counter = source_value
+	state->program_counter = closure.source_value
 
 #define DO_INSTRUCTION_ACTION_MOVEM\
 	{\
 	/* Hot damn is this a mess */\
-	cc_u32f memory_address = destination_value; /* TODO: Maybe get rid of this alias? */\
+	cc_u32f memory_address = closure.destination_value; /* TODO: Maybe get rid of this alias? */\
 	cc_u16f i;\
 	cc_u16f bitfield;\
 	\
@@ -480,7 +480,7 @@
 	if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
 		delta = -delta;\
 	\
-	bitfield = source_value;\
+	bitfield = closure.source_value;\
 	\
 	/* First group of registers */\
 	for (i = 0; i < 8; ++i)\
@@ -554,7 +554,7 @@
 	}\
 	else\
 	{\
-		const cc_u32f delta = value - source_value;\
+		const cc_u32f delta = value - closure.source_value;\
 \
 		if ((delta & 0x8000) == 0 && delta != 0)\
 		{\
@@ -566,7 +566,7 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_SCC\
-	result_value = IsOpcodeConditionTrue(state, opcode.raw) ? 0xFF : 0
+	closure.result_value = IsOpcodeConditionTrue(state, opcode.raw) ? 0xFF : 0
 
 #define DO_INSTRUCTION_ACTION_DBCC\
 	if (!IsOpcodeConditionTrue(state, opcode.raw))\
@@ -576,7 +576,7 @@
 		if (loop_counter-- != 0)\
 		{\
 			state->program_counter -= 2;\
-			state->program_counter += CC_SIGN_EXTEND_ULONG(15, source_value);\
+			state->program_counter += CC_SIGN_EXTEND_ULONG(15, closure.source_value);\
 		}\
 	\
 		state->data_registers[opcode.primary_register] &= ~0xFFFFul;\
@@ -588,7 +588,7 @@
 
 #define DO_INSTRUCTION_ACTION_BRA_WORD\
 	state->program_counter -= 2;\
-	state->program_counter += CC_SIGN_EXTEND_ULONG(15, source_value)
+	state->program_counter += CC_SIGN_EXTEND_ULONG(15, closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_BSR(SUB_ACTION)\
 	state->address_registers[7] -= 4;\
@@ -614,22 +614,22 @@
 	DO_INSTRUCTION_ACTION_BCC(DO_INSTRUCTION_ACTION_BRA_WORD)	
 
 #define DO_INSTRUCTION_ACTION_MOVEQ\
-	result_value = CC_SIGN_EXTEND_ULONG(7, opcode.raw)
+	closure.result_value = CC_SIGN_EXTEND_ULONG(7, opcode.raw)
 
 #define DO_INSTRUCTION_ACTION_DIVS\
-	if (source_value == 0)\
+	if (closure.source_value == 0)\
 	{\
 		Group1Or2Exception(&stuff, 5);\
 		longjmp(stuff.exception.context, 1);\
 	}\
 	else\
 	{\
-		const cc_bool source_is_negative = (source_value & 0x8000) != 0;\
-		const cc_bool destination_is_negative = (destination_value & 0x80000000) != 0;\
+		const cc_bool source_is_negative = (closure.source_value & 0x8000) != 0;\
+		const cc_bool destination_is_negative = (closure.destination_value & 0x80000000) != 0;\
 		const cc_bool result_is_negative = source_is_negative != destination_is_negative;\
 \
-		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
-		const cc_u32f absolute_destination_value = destination_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(31, destination_value) : destination_value;\
+		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, closure.source_value) : closure.source_value;\
+		const cc_u32f absolute_destination_value = destination_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(31, closure.destination_value) : closure.destination_value;\
 \
 		const cc_u32f absolute_quotient = absolute_destination_value / absolute_source_value;\
 		const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;\
@@ -639,14 +639,14 @@
 		{\
 			state->status_register |= CONDITION_CODE_OVERFLOW;\
 \
-			result_value = destination_value;\
+			closure.result_value = closure.destination_value;\
 		}\
 		else\
 		{\
 			const cc_u32f absolute_remainder = absolute_destination_value % absolute_source_value;\
 			const cc_u32f remainder = destination_is_negative ? 0 - absolute_remainder : absolute_remainder;\
 \
-			result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
+			closure.result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
 \
 			state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);\
 			state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));\
@@ -655,27 +655,27 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_DIVU\
-	if (source_value == 0)\
+	if (closure.source_value == 0)\
 	{\
 		Group1Or2Exception(&stuff, 5);\
 		longjmp(stuff.exception.context, 1);\
 	}\
 	else\
 	{\
-		const cc_u32f quotient = destination_value / source_value;\
+		const cc_u32f quotient = closure.destination_value / closure.source_value;\
 \
 		/* Overflow detection */\
 		if (quotient > (cc_u32f)0xFFFF)\
 		{\
 			state->status_register |= CONDITION_CODE_OVERFLOW;\
 \
-			result_value = destination_value;\
+			closure.result_value = closure.destination_value;\
 		}\
 		else\
 		{\
-			const cc_u32f remainder = destination_value % source_value;\
+			const cc_u32f remainder = closure.destination_value % closure.source_value;\
 \
-			result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
+			closure.result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
 \
 			state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);\
 			state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));\
@@ -688,24 +688,24 @@
 	UNIMPLEMENTED_INSTRUCTION("SBCD")
 
 #define DO_INSTRUCTION_ACTION_SUBX\
-	result_value = destination_value - source_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
+	closure.result_value = closure.destination_value - closure.source_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
 
 #define DO_INSTRUCTION_ACTION_MULS\
 	{\
-	const cc_bool multiplier_is_negative = (source_value & 0x8000) != 0;\
-	const cc_bool multiplicand_is_negative = (destination_value & 0x8000) != 0;\
+	const cc_bool multiplier_is_negative = (closure.source_value & 0x8000) != 0;\
+	const cc_bool multiplicand_is_negative = (closure.destination_value & 0x8000) != 0;\
 	const cc_bool result_is_negative = multiplier_is_negative != multiplicand_is_negative;\
 \
-	const cc_u32f multiplier = multiplier_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
-	const cc_u32f multiplicand = multiplicand_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, destination_value) : destination_value & 0xFFFF;\
+	const cc_u32f multiplier = multiplier_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, closure.source_value) : closure.source_value;\
+	const cc_u32f multiplicand = multiplicand_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, closure.destination_value) : closure.destination_value & 0xFFFF;\
 \
 	const cc_u32f absolute_result = multiplicand * multiplier;\
 \
-	result_value = result_is_negative ? 0 - absolute_result : absolute_result;\
+	closure.result_value = result_is_negative ? 0 - absolute_result : absolute_result;\
 	}
 
 #define DO_INSTRUCTION_ACTION_MULU\
-	result_value = (destination_value & 0xFFFF) * source_value;\
+	closure.result_value = (closure.destination_value & 0xFFFF) * closure.source_value;\
 
 #define DO_INSTRUCTION_ACTION_ABCD\
 	/* TODO */\
@@ -739,10 +739,10 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_ADDX\
-	result_value = destination_value + source_value + ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
+	closure.result_value = closure.destination_value + closure.source_value + ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
 
 #define DO_INSTRUCTION_ACTION_SHIFT_1_ASD\
-	const unsigned long original_sign_bit = destination_value & sign_bit_bitmask;
+	const unsigned long original_sign_bit = closure.destination_value & sign_bit_bitmask;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD
 
@@ -753,18 +753,18 @@
 	count = (opcode.raw & 0x0020) != 0 ? state->data_registers[opcode.secondary_register] % 64 : ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ASD\
-	result_value <<= 1;\
-	state->status_register |= CONDITION_CODE_OVERFLOW & (0 - ((result_value & sign_bit_bitmask) != original_sign_bit));
+	closure.result_value <<= 1;\
+	state->status_register |= CONDITION_CODE_OVERFLOW & (0 - ((closure.result_value & sign_bit_bitmask) != original_sign_bit));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_LSD\
-	result_value <<= 1;
+	closure.result_value <<= 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ROXD\
-	result_value <<= 1;\
-	result_value |= (state->status_register & CONDITION_CODE_EXTEND) != 0;
+	closure.result_value <<= 1;\
+	closure.result_value |= (state->status_register & CONDITION_CODE_EXTEND) != 0;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ROD\
-	result_value = (result_value << 1) | ((result_value & sign_bit_bitmask) != 0);
+	closure.result_value = (closure.result_value << 1) | ((closure.result_value & sign_bit_bitmask) != 0);
 
 #define DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD\
 	state->status_register &= ~CONDITION_CODE_EXTEND;\
@@ -773,18 +773,18 @@
 #define DO_INSTRUCTION_ACTION_SHIFT_4_ROD
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_ASD\
-	result_value >>= 1;\
-	result_value |= original_sign_bit;
+	closure.result_value >>= 1;\
+	closure.result_value |= original_sign_bit;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_LSD\
-	result_value >>= 1;
+	closure.result_value >>= 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_ROXD\
-	result_value >>= 1;\
-	result_value |= sign_bit_bitmask & (0 - ((state->status_register & CONDITION_CODE_EXTEND) != 0));
+	closure.result_value >>= 1;\
+	closure.result_value |= sign_bit_bitmask & (0 - ((state->status_register & CONDITION_CODE_EXTEND) != 0));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_ROD\
-	result_value = (result_value >> 1) | (sign_bit_bitmask & (0 - ((result_value & 1) != 0)));
+	closure.result_value = (closure.result_value >> 1) | (sign_bit_bitmask & (0 - ((closure.result_value & 1) != 0)));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_6_ROXD\
 	state->status_register |= CONDITION_CODE_CARRY & (0 - ((state->status_register & CONDITION_CODE_EXTEND) != 0));
@@ -800,7 +800,7 @@
 	cc_u16f i;\
 	cc_u16f count;\
 \
-	result_value = destination_value;\
+	closure.result_value = closure.destination_value;\
 \
 	SUB_ACTION_2;\
 \
@@ -814,7 +814,7 @@
 		for (i = 0; i < count; ++i)\
 		{\
 			state->status_register &= ~CONDITION_CODE_CARRY;\
-			state->status_register |= CONDITION_CODE_CARRY & (0 - ((result_value & sign_bit_bitmask) != 0));\
+			state->status_register |= CONDITION_CODE_CARRY & (0 - ((closure.result_value & sign_bit_bitmask) != 0));\
 \
 			SUB_ACTION_3;\
 \
@@ -827,7 +827,7 @@
 		for (i = 0; i < count; ++i)\
 		{\
 			state->status_register &= ~CONDITION_CODE_CARRY;\
-			state->status_register |= CONDITION_CODE_CARRY & (0 - ((result_value & 1) != 0));\
+			state->status_register |= CONDITION_CODE_CARRY & (0 - ((closure.result_value & 1) != 0));\
 \
 			SUB_ACTION_5;\
 \

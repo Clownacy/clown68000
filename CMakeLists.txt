@@ -6,6 +6,8 @@ add_library(clown68000 STATIC
 	"clowncommon/clowncommon.h"
 	"clown68000.c"
 	"clown68000.h"
+	"m68k/instruction-properties.c"
+	"m68k/instruction-properties.h"
 	"m68k/opcode.c"
 	"m68k/opcode.h"
 )

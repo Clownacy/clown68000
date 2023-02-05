@@ -141,7 +141,6 @@ int main(int argc, char **argv)
 		EmitInstructionReadDestinationOperand(i);
 		EmitInstructionAction(i);
 		EmitInstructionWriteDestinationOperand(i);
-		EmitInstructionConditionCodes(i);
 		Emit("break;");
 		--emit_indentation;
 		Emit("");

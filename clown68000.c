@@ -39,6 +39,7 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 #include "clowncommon/clowncommon.h"
 
 #include "m68k/instruction-actions.h"
+#include "m68k/instruction-properties.h"
 #include "m68k/instruction.h"
 #include "m68k/opcode.h"
 
@@ -595,15 +596,181 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 	return cc_false;
 }
 
+/* Condition code functions */
+
+typedef struct Closure
+{
+	Clown68000_State *state;
+	cc_u32f source_value, destination_value, result_value;
+	cc_u16f sm, dm, rm;
+	DecodedOpcode decoded_opcode;
+} Closure;
+
+typedef void (*ClosureCall)(Closure* const closure);
+
+static void DummyClosureCall(Closure* const closure)
+{
+	(void)closure;
+}
+
+static void Carry_StandardCarry(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & closure->dm) | (~closure->rm & closure->dm) | (closure->sm & ~closure->rm));
+}
+
+static void Carry_StandardBorrow(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & ~closure->dm) | (closure->rm & ~closure->dm) | (closure->sm & closure->rm));
+}
+
+static void Carry_NEG(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->state->status_register |= CONDITION_CODE_CARRY & (closure->dm | closure->rm);
+}
+
+static void Carry_Clear(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_CARRY;
+}
+
+static ClosureCall GetConditionCodeAction_Carry(const Instruction instruction)
+{
+	static const ClosureCall functions[] = {
+		DummyClosureCall,     /* INSTRUCTION_CARRY_DECIMAL_CARRY   */ /* TODO - "Decimal carry" */
+		DummyClosureCall,     /* INSTRUCTION_CARRY_DECIMAL_BORROW  */ /* TODO - "Decimal borrow" */
+		Carry_StandardCarry,  /* INSTRUCTION_CARRY_STANDARD_CARRY  */
+		Carry_StandardBorrow, /* INSTRUCTION_CARRY_STANDARD_BORROW */
+		Carry_NEG,            /* INSTRUCTION_CARRY_NEG             */
+		Carry_Clear,          /* INSTRUCTION_CARRY_CLEAR           */
+		DummyClosureCall,     /* INSTRUCTION_CARRY_UNDEFINED       */
+		DummyClosureCall      /* INSTRUCTION_CARRY_UNAFFECTED      */
+	};
+
+	return functions[Instruction_GetCarryModifier(instruction)];
+}
+
+static void Overflow_ADD(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->state->status_register |= CONDITION_CODE_OVERFLOW & ((closure->sm & closure->dm & ~closure->rm) | (~closure->sm & ~closure->dm & closure->rm));
+}
+
+static void Overflow_SUB(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->state->status_register |= CONDITION_CODE_OVERFLOW & ((~closure->sm & closure->dm & ~closure->rm) | (closure->sm & ~closure->dm & closure->rm));
+}
+
+static void Overflow_NEG(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->state->status_register |= CONDITION_CODE_OVERFLOW & (closure->dm & closure->rm);
+}
+
+static void Overflow_Cleared(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+}
+
+static ClosureCall GetConditionCodeAction_Overflow(const Instruction instruction)
+{
+	static const ClosureCall functions[] = {
+		Overflow_ADD,     /* INSTRUCTION_OVERFLOW_ADD        */
+		Overflow_SUB,     /* INSTRUCTION_OVERFLOW_SUB        */
+		Overflow_NEG,     /* INSTRUCTION_OVERFLOW_NEG        */
+		Overflow_Cleared, /* INSTRUCTION_OVERFLOW_CLEARED    */
+		DummyClosureCall, /* INSTRUCTION_OVERFLOW_UNDEFINED  */
+		DummyClosureCall  /* INSTRUCTION_OVERFLOW_UNAFFECTED */
+	};
+
+	return functions[Instruction_GetOverflowModifier(instruction)];
+}
+
+static void Zero_ClearIfNonZeroUnaffectedOtherwise(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+}
+
+static void Zero_SetIfZeroClearOtherwise(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_ZERO;
+	closure->state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+}
+
+static ClosureCall GetConditionCodeAction_Zero(const Instruction instruction)
+{
+	static const ClosureCall functions[] = {
+		Zero_ClearIfNonZeroUnaffectedOtherwise, /* INSTRUCTION_ZERO_CLEAR_IF_NONZERO_UNAFFECTED_OTHERWISE */
+		Zero_SetIfZeroClearOtherwise,           /* INSTRUCTION_ZERO_SET_IF_ZERO_CLEAR_OTHERWISE           */
+		DummyClosureCall,                       /* INSTRUCTION_ZERO_UNDEFINED                             */
+		DummyClosureCall                        /* INSTRUCTION_ZERO_UNAFFECTED                            */
+	};
+
+	return functions[Instruction_GetZeroModifier(instruction)];
+}
+
+static void Negative_SetIfNegativeClearOtherwise(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	closure->state->status_register |= CONDITION_CODE_NEGATIVE & closure->rm;
+}
+
+static ClosureCall GetConditionCodeAction_Negative(const Instruction instruction)
+{
+	static const ClosureCall functions[] = {
+		Negative_SetIfNegativeClearOtherwise, /* INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE */
+		DummyClosureCall,                     /* INSTRUCTION_NEGATIVE_UNDEFINED                       */
+		DummyClosureCall                      /* INSTRUCTION_NEGATIVE_UNAFFECTED                      */
+	};
+
+	return functions[Instruction_GetNegativeModifier(instruction)];
+}
+
+static void Extend_SetToCarry(Closure* const closure)
+{
+	closure->state->status_register &= ~CONDITION_CODE_EXTEND;
+	closure->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((closure->state->status_register & CONDITION_CODE_CARRY) != 0));
+}
+
+static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
+{
+	static const ClosureCall functions[] = {
+		Extend_SetToCarry, /* INSTRUCTION_EXTEND_SET_TO_CARRY */
+		DummyClosureCall   /* INSTRUCTION_EXTEND_UNAFFECTED   */
+	};
+
+	return functions[Instruction_GetExtendModifier(instruction)];
+}
 
 /* API */
+
+static ClosureCall bigfuckinglookup[0x10000][5];
 
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	Stuff stuff;
+	cc_u16f i;
 
 	stuff.state = state;
 	stuff.callbacks = callbacks;
+
+	i = 0;
+	do
+	{
+		ExplodedOpcode opcode;
+		DecodedOpcode decoded_opcode;
+		ExplodeOpcode(&opcode, i);
+		DecodeOpcode(&decoded_opcode, &opcode);
+
+		bigfuckinglookup[i][0] = GetConditionCodeAction_Carry(decoded_opcode.instruction);
+		bigfuckinglookup[i][1] = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
+		bigfuckinglookup[i][2] = GetConditionCodeAction_Zero(decoded_opcode.instruction);
+		bigfuckinglookup[i][3] = GetConditionCodeAction_Negative(decoded_opcode.instruction);
+		bigfuckinglookup[i][4] = GetConditionCodeAction_Extend(decoded_opcode.instruction);
+	} while (i++ != 0xFFFF);
 
 	if (!setjmp(stuff.exception.context))
 	{
@@ -667,12 +834,11 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			/* Process new instruction */
 			ExplodedOpcode opcode;
 			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
-			cc_u32f source_value, destination_value, result_value;
-			DecodedOpcode decoded_opcode;
-			cc_u32f msb_mask;
-			cc_u16f sm, dm, rm;
+			Closure closure;
 
-			source_value = destination_value = result_value = 0;
+			closure.state = state;
+
+			closure.source_value = closure.destination_value = closure.result_value = 0; /* TODO: Delete this and try to sort out the 'may be used uninitialised' warnings. */
 
 			ExplodeOpcode(&opcode, ReadWord(&stuff, state->program_counter));
 
@@ -681,16 +847,37 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			state->program_counter += 2;
 
 			/* Figure out which instruction this is */
-			DecodeOpcode(&decoded_opcode, &opcode);
+			DecodeOpcode(&closure.decoded_opcode, &opcode);
 
-			#define operation_size decoded_opcode.size /* TODO: Get rid of this ugly thing. */
+			#define operation_size closure.decoded_opcode.size /* TODO: Get rid of this ugly thing. */
 
-			switch (decoded_opcode.instruction)
+			switch (closure.decoded_opcode.instruction)
 			{
 				#include "m68k/gen.c"
 			}
 
 			#undef operation_size
+
+			/* Update the condition codes in the following order: */
+			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+			{
+				const cc_u32f msb_mask = (cc_u32f)1 << (closure.decoded_opcode.size * 8 - 1);
+				closure.sm = 0 - ((closure.source_value & msb_mask) != 0);
+				closure.dm = 0 - ((closure.destination_value & msb_mask) != 0);
+				closure.rm = 0 - ((closure.result_value & msb_mask) != 0);
+			}
+
+/*			GetConditionCodeAction_Carry(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Overflow(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Zero(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Negative(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Extend(closure.decoded_opcode.instruction)(&closure);
+*/
+			bigfuckinglookup[opcode.raw][0](&closure);
+			bigfuckinglookup[opcode.raw][1](&closure);
+			bigfuckinglookup[opcode.raw][2](&closure);
+			bigfuckinglookup[opcode.raw][3](&closure);
+			bigfuckinglookup[opcode.raw][4](&closure);
 
 		#ifdef DEBUG_STUFF
 			{
