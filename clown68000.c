@@ -66,6 +66,7 @@ enum
 
 typedef	enum DecodedAddressModeType
 {
+	DECODED_ADDRESS_MODE_TYPE_NONE,
 	DECODED_ADDRESS_MODE_TYPE_REGISTER,
 	DECODED_ADDRESS_MODE_TYPE_MEMORY,
 	DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER,
@@ -385,6 +386,11 @@ static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_
 
 	switch (decoded_operand->address_mode)
 	{
+		case ADDRESS_MODE_NONE:
+			/* None */
+			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_NONE;
+			break;
+
 		case ADDRESS_MODE_DATA_REGISTER:
 		case ADDRESS_MODE_ADDRESS_REGISTER:
 			/* Register */
@@ -415,7 +421,7 @@ static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_
 	}
 }
 
-static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode)
+static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, const DecodedAddressMode *decoded_address_mode)
 {
 	cc_u32f value = 0;
 
@@ -423,6 +429,9 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 
 	switch (decoded_address_mode->type)
 	{
+		case DECODED_ADDRESS_MODE_TYPE_NONE:
+			break;
+
 		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
 			value = *decoded_address_mode->data.reg.address & decoded_address_mode->data.reg.operation_size_bitmask;
 			break;
@@ -463,59 +472,6 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 	}
 
 	return value;
-}
-
-static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, cc_u32f value)
-{
-	Clown68000_State* const state = stuff->state;
-
-	switch (decoded_address_mode->type)
-	{
-		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
-		{
-			const cc_u32f destination_value = *decoded_address_mode->data.reg.address;
-			const cc_u32f operation_size_bitmask = decoded_address_mode->data.reg.operation_size_bitmask;
-			*decoded_address_mode->data.reg.address = (value & operation_size_bitmask) | (destination_value & ~operation_size_bitmask);
-			break;
-		}
-
-		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
-		{
-			const cc_u32f address = decoded_address_mode->data.memory.address;
-
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
-			{
-				case 0:
-					/* This should never happen. */
-					assert(cc_false);
-					break;
-
-				case 1:
-					WriteByte(stuff, address, value);
-					break;
-
-				case 2:
-					WriteWord(stuff, address, value);
-					break;
-
-				case 4:
-					WriteLongWord(stuff, address, value);
-					break;
-			}
-
-			break;
-		}
-
-		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
-			SetSupervisorMode(stuff->state, (value & STATUS_SUPERVISOR) != 0);
-			state->status_register = value & STATUS_REGISTER_MASK;
-
-			break;
-
-		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
-			state->status_register = (state->status_register & ~CONDITION_CODE_REGISTER_MASK) | (value & CONDITION_CODE_REGISTER_MASK);
-			break;
-	}
 }
 
 static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
@@ -600,10 +556,11 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 
 typedef struct Closure
 {
-	Clown68000_State *state;
+	Stuff stuff;
+	DecodedOpcode decoded_opcode;
+	DecodedAddressMode destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
 	cc_u16f sm, dm, rm;
-	DecodedOpcode decoded_opcode;
 } Closure;
 
 typedef void (*ClosureCall)(Closure* const closure);
@@ -613,27 +570,140 @@ static void DummyClosureCall(Closure* const closure)
 	(void)closure;
 }
 
+static void SetDestination_Register(Closure* const closure)
+{
+	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
+	const cc_u32f value = closure->result_value;
+
+	const cc_u32f destination_value = *decoded_address_mode->data.reg.address;
+	const cc_u32f operation_size_bitmask = decoded_address_mode->data.reg.operation_size_bitmask;
+
+	*decoded_address_mode->data.reg.address = (value & operation_size_bitmask) | (destination_value & ~operation_size_bitmask);
+}
+
+static void SetDestination_MemoryByte(Closure* const closure)
+{
+	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
+	const cc_u32f value = closure->result_value;
+
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	WriteByte(&closure->stuff, address, value);
+}
+
+static void SetDestination_MemoryWord(Closure* const closure)
+{
+	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
+	const cc_u32f value = closure->result_value;
+
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	WriteWord(&closure->stuff, address, value);
+}
+
+static void SetDestination_MemoryLongWord(Closure* const closure)
+{
+	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
+	const cc_u32f value = closure->result_value;
+
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	WriteLongWord(&closure->stuff, address, value);
+}
+
+static void SetDestination_StatusRegister(Closure* const closure)
+{
+	const cc_u32f value = closure->result_value;
+
+	SetSupervisorMode(closure->stuff.state, (value & STATUS_SUPERVISOR) != 0);
+	closure->stuff.state->status_register = value & STATUS_REGISTER_MASK;
+}
+
+static void SetDestination_ConditionCodeRegister(Closure* const closure)
+{
+	const cc_u32f value = closure->result_value;
+
+	closure->stuff.state->status_register = (closure->stuff.state->status_register & ~CONDITION_CODE_REGISTER_MASK) | (value & CONDITION_CODE_REGISTER_MASK);
+}
+
+static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressMode *decoded_address_mode)
+{
+	ClosureCall function;
+
+	switch (decoded_address_mode->type)
+	{
+		case DECODED_ADDRESS_MODE_TYPE_NONE:
+			function = DummyClosureCall;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
+			function = SetDestination_Register;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
+		{
+			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
+			{
+				case 1:
+					function = SetDestination_MemoryByte;
+					break;
+
+				case 2:
+					function = SetDestination_MemoryWord;
+					break;
+
+				case 4:
+					function = SetDestination_MemoryLongWord;
+					break;
+
+				default:
+					/* This should never happen. */
+					assert(cc_false);
+					function = DummyClosureCall;
+					break;
+			}
+
+			break;
+		}
+
+		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
+			function = SetDestination_StatusRegister;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
+			function = SetDestination_ConditionCodeRegister;
+			break;
+
+		default:
+			assert(cc_false);
+			function = DummyClosureCall;
+			break;
+	}
+
+	return function;
+}
+
 static void Carry_StandardCarry(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_CARRY;
-	closure->state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & closure->dm) | (~closure->rm & closure->dm) | (closure->sm & ~closure->rm));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->stuff.state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & closure->dm) | (~closure->rm & closure->dm) | (closure->sm & ~closure->rm));
 }
 
 static void Carry_StandardBorrow(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_CARRY;
-	closure->state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & ~closure->dm) | (closure->rm & ~closure->dm) | (closure->sm & closure->rm));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->stuff.state->status_register |= CONDITION_CODE_CARRY & ((closure->sm & ~closure->dm) | (closure->rm & ~closure->dm) | (closure->sm & closure->rm));
 }
 
 static void Carry_NEG(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_CARRY;
-	closure->state->status_register |= CONDITION_CODE_CARRY & (closure->dm | closure->rm);
+	closure->stuff.state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->stuff.state->status_register |= CONDITION_CODE_CARRY & (closure->dm | closure->rm);
 }
 
 static void Carry_Clear(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_CARRY;
+	closure->stuff.state->status_register &= ~CONDITION_CODE_CARRY;
 }
 
 static ClosureCall GetConditionCodeAction_Carry(const Instruction instruction)
@@ -654,25 +724,25 @@ static ClosureCall GetConditionCodeAction_Carry(const Instruction instruction)
 
 static void Overflow_ADD(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	closure->state->status_register |= CONDITION_CODE_OVERFLOW & ((closure->sm & closure->dm & ~closure->rm) | (~closure->sm & ~closure->dm & closure->rm));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->stuff.state->status_register |= CONDITION_CODE_OVERFLOW & ((closure->sm & closure->dm & ~closure->rm) | (~closure->sm & ~closure->dm & closure->rm));
 }
 
 static void Overflow_SUB(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	closure->state->status_register |= CONDITION_CODE_OVERFLOW & ((~closure->sm & closure->dm & ~closure->rm) | (closure->sm & ~closure->dm & closure->rm));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->stuff.state->status_register |= CONDITION_CODE_OVERFLOW & ((~closure->sm & closure->dm & ~closure->rm) | (closure->sm & ~closure->dm & closure->rm));
 }
 
 static void Overflow_NEG(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	closure->state->status_register |= CONDITION_CODE_OVERFLOW & (closure->dm & closure->rm);
+	closure->stuff.state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->stuff.state->status_register |= CONDITION_CODE_OVERFLOW & (closure->dm & closure->rm);
 }
 
 static void Overflow_Cleared(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	closure->stuff.state->status_register &= ~CONDITION_CODE_OVERFLOW;
 }
 
 static ClosureCall GetConditionCodeAction_Overflow(const Instruction instruction)
@@ -691,13 +761,13 @@ static ClosureCall GetConditionCodeAction_Overflow(const Instruction instruction
 
 static void Zero_ClearIfNonZeroUnaffectedOtherwise(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
 }
 
 static void Zero_SetIfZeroClearOtherwise(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_ZERO;
-	closure->state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO;
+	closure->stuff.state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
 }
 
 static ClosureCall GetConditionCodeAction_Zero(const Instruction instruction)
@@ -714,8 +784,8 @@ static ClosureCall GetConditionCodeAction_Zero(const Instruction instruction)
 
 static void Negative_SetIfNegativeClearOtherwise(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	closure->state->status_register |= CONDITION_CODE_NEGATIVE & closure->rm;
+	closure->stuff.state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	closure->stuff.state->status_register |= CONDITION_CODE_NEGATIVE & closure->rm;
 }
 
 static ClosureCall GetConditionCodeAction_Negative(const Instruction instruction)
@@ -731,8 +801,8 @@ static ClosureCall GetConditionCodeAction_Negative(const Instruction instruction
 
 static void Extend_SetToCarry(Closure* const closure)
 {
-	closure->state->status_register &= ~CONDITION_CODE_EXTEND;
-	closure->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((closure->state->status_register & CONDITION_CODE_CARRY) != 0));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_EXTEND;
+	closure->stuff.state->status_register |= CONDITION_CODE_EXTEND & (0 - ((closure->stuff.state->status_register & CONDITION_CODE_CARRY) != 0));
 }
 
 static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
@@ -824,23 +894,20 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 	else
 	{
 		/* Initialise closure and exception stuff. */
-		Stuff stuff;
+		Closure closure;
 
-		stuff.state = state;
-		stuff.callbacks = callbacks;
+		closure.stuff.state = state;
+		closure.stuff.callbacks = callbacks;
 
-		if (!setjmp(stuff.exception.context))
+		if (!setjmp(closure.stuff.exception.context))
 		{
 			/* Process new instruction */
 			ExplodedOpcode opcode;
-			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
-			Closure closure;
-
-			closure.state = state;
+			DecodedAddressMode source_decoded_address_mode;
 
 			closure.source_value = closure.destination_value = closure.result_value = 0; /* TODO: Delete this and try to sort out the 'may be used uninitialised' warnings. */
 
-			ExplodeOpcode(&opcode, ReadWord(&stuff, state->program_counter));
+			ExplodeOpcode(&opcode, ReadWord(&closure.stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = opcode.raw;
@@ -857,6 +924,9 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			}
 
 			#undef operation_size
+
+			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
+				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);
 
 			/* Update the condition codes in the following order: */
 			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */

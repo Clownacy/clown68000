@@ -798,7 +798,7 @@ static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Explo
 #undef OPERAND
 #define OPERAND decoded_opcode->operands[1]
 
-static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
+static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
 {
 	/* Decode destination address mode */
 	switch (decoded_opcode->instruction)
@@ -951,10 +951,9 @@ static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const 
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			/* Doesn't have a destination address mode to decode. */
-			return cc_false;
+			OPERAND.address_mode = ADDRESS_MODE_NONE;
+			break;
 	}
-
-	return cc_true;
 }
 
 #undef OPERAND

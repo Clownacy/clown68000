@@ -33,8 +33,8 @@ void EmitInstructionSupervisorCheck(const Instruction instruction)
 		Emit("/* Only allow this instruction in supervisor mode. */");
 		Emit("if ((state->status_register & STATUS_SUPERVISOR) == 0)");
 		Emit("{");
-		Emit("	Group1Or2Exception(&stuff, 8);");
-		Emit("	longjmp(stuff.exception.context, 1);");
+		Emit("	Group1Or2Exception(&closure.stuff, 8);");
+		Emit("	longjmp(closure.stuff.exception.context, 1);");
 		Emit("}");
 		Emit("");
 	}
@@ -45,19 +45,16 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 	if (Instruction_IsSourceOperandRead(instruction))
 	{
 		Emit("/* Decode source address mode. */");
-		Emit("DecodeAddressMode(&stuff, &source_decoded_address_mode, &closure.decoded_opcode.operands[0]);");
+		Emit("DecodeAddressMode(&closure.stuff, &source_decoded_address_mode, &closure.decoded_opcode.operands[0]);");
 		Emit("");
 	}
 }
 
-void EmitInstructionDestinationAddressMode(const Instruction instruction)
+void EmitInstructionDestinationAddressMode(void)
 {
-	if (Instruction_IsDestinationOperandRead(instruction) || Instruction_IsDestinationOperandWritten(instruction))
-	{
-		Emit("/* Decode destination address mode. */");
-		Emit("DecodeAddressMode(&stuff, &destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);");
-		Emit("");
-	}
+	Emit("/* Decode destination address mode. */");
+	Emit("DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);");
+	Emit("");
 }
 
 void EmitInstructionReadSourceOperand(const Instruction instruction)
@@ -65,7 +62,7 @@ void EmitInstructionReadSourceOperand(const Instruction instruction)
 	if (Instruction_IsSourceOperandRead(instruction))
 	{
 		Emit("/* Read source operand. */");
-		Emit("closure.source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);");
+		Emit("closure.source_value = GetValueUsingDecodedAddressMode(&closure.stuff, &source_decoded_address_mode);");
 		Emit("");
 	}
 }
@@ -75,7 +72,7 @@ void EmitInstructionReadDestinationOperand(const Instruction instruction)
 	if (Instruction_IsDestinationOperandRead(instruction))
 	{
 		Emit("/* Read destination operand. */");
-		Emit("closure.destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);");
+		Emit("closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);");
 		Emit("");
 	}
 }
@@ -364,14 +361,4 @@ void EmitInstructionAction(const Instruction instruction)
 	}
 
 		Emit("");
-}
-
-void EmitInstructionWriteDestinationOperand(const Instruction instruction)
-{
-	if (Instruction_IsDestinationOperandWritten(instruction))
-	{
-		Emit("/* Write destination operand. */");
-		Emit("SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, closure.result_value);");
-		Emit("");
-	}
 }

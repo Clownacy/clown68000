@@ -304,31 +304,31 @@
 		case 0:\
 			/* Memory to register (word) */\
 			state->data_registers[opcode.secondary_register] &= ~0xFFFFul;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 1;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 0;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 0) << 8 * 1;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 1) << 8 * 0;\
 			break;\
 \
 		case 1:\
 			/* Memory to register (longword) */\
 			state->data_registers[opcode.secondary_register] = 0;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 3;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 2;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 2) << 8 * 1;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 3) << 8 * 0;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 0) << 8 * 3;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 1) << 8 * 2;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 2) << 8 * 1;\
+			state->data_registers[opcode.secondary_register] |= ReadByte(&closure.stuff, memory_address + 2 * 3) << 8 * 0;\
 			break;\
 \
 		case 2:\
 			/* Register to memory (word) */\
-			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
 			break;\
 \
 		case 3:\
 			/* Register to memory (longword) */\
-			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 3) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 2) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 2, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 3, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 3) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 2) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 2, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
+			WriteByte(&closure.stuff, memory_address + 2 * 3, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
 			break;\
 	}\
 	}
@@ -342,7 +342,7 @@
 #define DO_INSTRUCTION_ACTION_LINK\
 	/* Push address register to stack */\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], state->address_registers[opcode.primary_register]);\
+	WriteLongWord(&closure.stuff, state->address_registers[7], state->address_registers[opcode.primary_register]);\
 \
 	/* Copy stack pointer to address register */\
 	state->address_registers[opcode.primary_register] = state->address_registers[7];\
@@ -355,7 +355,7 @@
 	cc_u32l value;\
 \
 	state->address_registers[7] = state->address_registers[opcode.primary_register];\
-	value = ReadLongWord(&stuff, state->address_registers[7]);\
+	value = ReadLongWord(&closure.stuff, state->address_registers[7]);\
 	state->address_registers[7] += 4;\
 \
 	/* We need to do this last in case we're writing to A7. */\
@@ -386,11 +386,11 @@
 
 #define DO_INSTRUCTION_ACTION_PEA\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], closure.source_value)
+	WriteLongWord(&closure.stuff, state->address_registers[7], closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_ILLEGAL\
 	/* Illegal instruction. */\
-	Group1Or2Exception(&stuff, 4)
+	Group1Or2Exception(&closure.stuff, 4)
 
 #define DO_INSTRUCTION_ACTION_TAS\
 	/* TODO - This instruction doesn't work properly on memory on the Mega Drive */\
@@ -402,7 +402,7 @@
 
 #define DO_INSTRUCTION_ACTION_TRAP\
 	closure.source_value = opcode.raw & 0xF;\
-	Group1Or2Exception(&stuff, 32 + closure.source_value)
+	Group1Or2Exception(&closure.stuff, 32 + closure.source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVE_USP\
 	if ((opcode.raw & 8) != 0)\
@@ -420,37 +420,37 @@
 
 #define DO_INSTRUCTION_ACTION_RTE\
 	{\
-	const cc_u16f new_status = ReadWord(&stuff, state->address_registers[7]) & STATUS_REGISTER_MASK;\
+	const cc_u16f new_status = ReadWord(&closure.stuff, state->address_registers[7]) & STATUS_REGISTER_MASK;\
 \
 	state->status_register = new_status;\
 	state->address_registers[7] += 2;\
-	state->program_counter = ReadLongWord(&stuff, state->address_registers[7]);\
+	state->program_counter = ReadLongWord(&closure.stuff, state->address_registers[7]);\
 	state->address_registers[7] += 4;\
 \
 	/* Restore the previous supervisor bit so we can toggle properly. */\
 	/* TODO: Maybe redesign SetSupervisorMode so that it isn't so clunky to use here. */\
 	state->status_register |= STATUS_SUPERVISOR;\
-	SetSupervisorMode(stuff.state, (new_status & STATUS_SUPERVISOR) != 0);\
+	SetSupervisorMode(closure.stuff.state, (new_status & STATUS_SUPERVISOR) != 0);\
 	}
 
 #define DO_INSTRUCTION_ACTION_RTS\
-	state->program_counter = ReadLongWord(&stuff, state->address_registers[7]);\
+	state->program_counter = ReadLongWord(&closure.stuff, state->address_registers[7]);\
 	state->address_registers[7] += 4
 
 #define DO_INSTRUCTION_ACTION_TRAPV\
 	if ((state->status_register & CONDITION_CODE_OVERFLOW) != 0)\
-		Group1Or2Exception(&stuff, 7)
+		Group1Or2Exception(&closure.stuff, 7)
 
 #define DO_INSTRUCTION_ACTION_RTR\
 	state->status_register &= ~CONDITION_CODE_REGISTER_MASK;\
-	state->status_register |= ReadByte(&stuff, state->address_registers[7] + 1) & CONDITION_CODE_REGISTER_MASK;\
+	state->status_register |= ReadByte(&closure.stuff, state->address_registers[7] + 1) & CONDITION_CODE_REGISTER_MASK;\
 	state->address_registers[7] += 2;\
-	state->program_counter = ReadLongWord(&stuff, state->address_registers[7]);\
+	state->program_counter = ReadLongWord(&closure.stuff, state->address_registers[7]);\
 	state->address_registers[7] += 4;
 
 #define DO_INSTRUCTION_ACTION_JSR\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], state->program_counter);\
+	WriteLongWord(&closure.stuff, state->address_registers[7], state->program_counter);\
 	DO_INSTRUCTION_ACTION_JMP
 
 #define DO_INSTRUCTION_ACTION_JMP\
@@ -491,17 +491,17 @@
 			{\
 				/* Memory to register */\
 				if ((opcode.raw & 0x0040) != 0)\
-					state->data_registers[i] = ReadLongWord(&stuff, memory_address);\
+					state->data_registers[i] = ReadLongWord(&closure.stuff, memory_address);\
 				else\
-					state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&stuff, memory_address));\
+					state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&closure.stuff, memory_address));\
 			}\
 			else\
 			{\
 				/* Register to memory */\
 				if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
-					write_function(&stuff, memory_address + delta, state->address_registers[7 - i]);\
+					write_function(&closure.stuff, memory_address + delta, state->address_registers[7 - i]);\
 				else\
-					write_function(&stuff, memory_address, state->data_registers[i]);\
+					write_function(&closure.stuff, memory_address, state->data_registers[i]);\
 			}\
 	\
 			memory_address += delta;\
@@ -519,17 +519,17 @@
 			{\
 				/* Memory to register */\
 				if ((opcode.raw & 0x0040) != 0)\
-					state->address_registers[i] = ReadLongWord(&stuff, memory_address);\
+					state->address_registers[i] = ReadLongWord(&closure.stuff, memory_address);\
 				else\
-					state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&stuff, memory_address));\
+					state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&closure.stuff, memory_address));\
 			}\
 			else\
 			{\
 				/* Register to memory */\
 				if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
-					write_function(&stuff, memory_address + delta, state->data_registers[7 - i]);\
+					write_function(&closure.stuff, memory_address + delta, state->data_registers[7 - i]);\
 				else\
-					write_function(&stuff, memory_address, state->address_registers[i]);\
+					write_function(&closure.stuff, memory_address, state->address_registers[i]);\
 			}\
 	\
 			memory_address += delta;\
@@ -550,7 +550,7 @@
 	{\
 		/* Value is smaller than 0. */\
 		state->status_register |= CONDITION_CODE_NEGATIVE;\
-		Group1Or2Exception(&stuff, 6);\
+		Group1Or2Exception(&closure.stuff, 6);\
 	}\
 	else\
 	{\
@@ -560,7 +560,7 @@
 		{\
 			/* Value is greater than upper bound. */\
 			state->status_register &= ~CONDITION_CODE_NEGATIVE;\
-			Group1Or2Exception(&stuff, 6);\
+			Group1Or2Exception(&closure.stuff, 6);\
 		}\
 	}\
 	}
@@ -592,7 +592,7 @@
 
 #define DO_INSTRUCTION_ACTION_BSR(SUB_ACTION)\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], state->program_counter);\
+	WriteLongWord(&closure.stuff, state->address_registers[7], state->program_counter);\
 	SUB_ACTION
 
 #define DO_INSTRUCTION_ACTION_BSR_SHORT\
@@ -619,8 +619,8 @@
 #define DO_INSTRUCTION_ACTION_DIVS\
 	if (closure.source_value == 0)\
 	{\
-		Group1Or2Exception(&stuff, 5);\
-		longjmp(stuff.exception.context, 1);\
+		Group1Or2Exception(&closure.stuff, 5);\
+		longjmp(closure.stuff.exception.context, 1);\
 	}\
 	else\
 	{\
@@ -657,8 +657,8 @@
 #define DO_INSTRUCTION_ACTION_DIVU\
 	if (closure.source_value == 0)\
 	{\
-		Group1Or2Exception(&stuff, 5);\
-		longjmp(stuff.exception.context, 1);\
+		Group1Or2Exception(&closure.stuff, 5);\
+		longjmp(closure.stuff.exception.context, 1);\
 	}\
 	else\
 	{\
@@ -861,10 +861,10 @@
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ROXD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROXD, DO_INSTRUCTION_ACTION_SHIFT_6_ROXD)
 
 #define DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1\
-	Group1Or2Exception(&stuff, 10)
+	Group1Or2Exception(&closure.stuff, 10)
 
 #define DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2\
-	Group1Or2Exception(&stuff, 11)
+	Group1Or2Exception(&closure.stuff, 11)
 
 #define DO_INSTRUCTION_ACTION_NOP\
 	/* Doesn't do anything */
