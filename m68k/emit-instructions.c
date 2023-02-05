@@ -66,13 +66,3 @@ void EmitInstructionReadSourceOperand(const Instruction instruction)
 		Emit("");
 	}
 }
-
-void EmitInstructionReadDestinationOperand(const Instruction instruction)
-{
-	if (Instruction_IsDestinationOperandRead(instruction))
-	{
-		Emit("/* Read destination operand. */");
-		Emit("closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);");
-		Emit("");
-	}
-}

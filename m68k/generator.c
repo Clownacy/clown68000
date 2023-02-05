@@ -140,7 +140,6 @@ int main(int argc, char **argv)
 		EmitInstructionSourceAddressMode(instruction);
 		EmitInstructionReadSourceOperand(instruction);
 		EmitInstructionDestinationAddressMode();
-		EmitInstructionReadDestinationOperand(instruction);
 		Emit("break;");
 		--emit_indentation;
 		Emit("");

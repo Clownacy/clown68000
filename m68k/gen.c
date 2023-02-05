@@ -8,9 +8,6 @@ case INSTRUCTION_ABCD:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ADD:
@@ -22,9 +19,6 @@ case INSTRUCTION_ADD:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -38,17 +32,11 @@ case INSTRUCTION_ADDA:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ADDAQ:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -62,17 +50,11 @@ case INSTRUCTION_ADDI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ADDQ:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -86,9 +68,6 @@ case INSTRUCTION_ADDX:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_AND:
@@ -100,9 +79,6 @@ case INSTRUCTION_AND:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -116,9 +92,6 @@ case INSTRUCTION_ANDI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ANDI_TO_CCR:
@@ -130,9 +103,6 @@ case INSTRUCTION_ANDI_TO_CCR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -153,26 +123,17 @@ case INSTRUCTION_ANDI_TO_SR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ASD_MEMORY:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ASD_REGISTER:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -204,9 +165,6 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_BCHG_STATIC:
@@ -218,9 +176,6 @@ case INSTRUCTION_BCHG_STATIC:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -234,9 +189,6 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_BCLR_STATIC:
@@ -248,9 +200,6 @@ case INSTRUCTION_BCLR_STATIC:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -282,9 +231,6 @@ case INSTRUCTION_BSET_DYNAMIC:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_BSET_STATIC:
@@ -296,9 +242,6 @@ case INSTRUCTION_BSET_STATIC:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -330,9 +273,6 @@ case INSTRUCTION_BTST_DYNAMIC:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_BTST_STATIC:
@@ -344,9 +284,6 @@ case INSTRUCTION_BTST_STATIC:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -366,9 +303,6 @@ case INSTRUCTION_CLR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_CMP:
@@ -380,9 +314,6 @@ case INSTRUCTION_CMP:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -396,9 +327,6 @@ case INSTRUCTION_CMPA:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_CMPI:
@@ -411,9 +339,6 @@ case INSTRUCTION_CMPI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_CMPM:
@@ -425,9 +350,6 @@ case INSTRUCTION_CMPM:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -453,9 +375,6 @@ case INSTRUCTION_DIVS:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_DIVU:
@@ -467,9 +386,6 @@ case INSTRUCTION_DIVU:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -483,9 +399,6 @@ case INSTRUCTION_EOR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_EORI:
@@ -498,9 +411,6 @@ case INSTRUCTION_EORI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_EORI_TO_CCR:
@@ -512,9 +422,6 @@ case INSTRUCTION_EORI_TO_CCR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -535,9 +442,6 @@ case INSTRUCTION_EORI_TO_SR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_EXG:
@@ -549,9 +453,6 @@ case INSTRUCTION_EXG:
 case INSTRUCTION_EXT:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -613,17 +514,11 @@ case INSTRUCTION_LSD_MEMORY:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_LSD_REGISTER:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -717,17 +612,11 @@ case INSTRUCTION_MOVEM:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_MOVEP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -747,9 +636,6 @@ case INSTRUCTION_MULS:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_MULU:
@@ -762,17 +648,11 @@ case INSTRUCTION_MULU:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_NBCD:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -780,17 +660,11 @@ case INSTRUCTION_NEG:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_NEGX:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -804,9 +678,6 @@ case INSTRUCTION_NOT:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_OR:
@@ -818,9 +689,6 @@ case INSTRUCTION_OR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -834,9 +702,6 @@ case INSTRUCTION_ORI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ORI_TO_CCR:
@@ -848,9 +713,6 @@ case INSTRUCTION_ORI_TO_CCR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -870,9 +732,6 @@ case INSTRUCTION_ORI_TO_SR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -905,17 +764,11 @@ case INSTRUCTION_ROD_MEMORY:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ROD_REGISTER:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -923,17 +776,11 @@ case INSTRUCTION_ROXD_MEMORY:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_ROXD_REGISTER:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -972,17 +819,11 @@ case INSTRUCTION_SBCD:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_SCC:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -1015,9 +856,6 @@ case INSTRUCTION_SUB:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_SUBA:
@@ -1030,17 +868,11 @@ case INSTRUCTION_SUBA:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_SUBAQ:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -1054,17 +886,11 @@ case INSTRUCTION_SUBI:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_SUBQ:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 
@@ -1078,26 +904,17 @@ case INSTRUCTION_SUBX:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_SWAP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
 	break;
 
 case INSTRUCTION_TAS:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Read destination operand. */
-	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
 	break;
 

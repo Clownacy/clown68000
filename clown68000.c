@@ -571,6 +571,133 @@ static void DummyClosureCall(Closure* const closure)
 	(void)closure;
 }
 
+/* Read from destination */
+
+typedef cc_u32f (*GetValueCall)(Closure* const closure, const DecodedAddressMode* const decoded_address_mode);
+
+static cc_u32f GetValueCallDummy(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	(void)closure;
+	(void)decoded_address_mode;
+
+	return 0;
+}
+
+static cc_u32f GetValue_Register(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	(void)closure;
+
+	return *decoded_address_mode->data.reg.address & decoded_address_mode->data.reg.operation_size_bitmask;
+}
+
+static cc_u32f GetValue_MemoryAddress(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	(void)closure;
+
+
+	return address;
+}
+
+static cc_u32f GetValue_MemoryByte(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	return ReadByte(&closure->stuff, address);
+}
+
+static cc_u32f GetValue_MemoryWord(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	return ReadWord(&closure->stuff, address);
+}
+
+static cc_u32f GetValue_MemoryLongWord(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	const cc_u32f address = decoded_address_mode->data.memory.address;
+
+	return ReadLongWord(&closure->stuff, address);
+}
+
+static cc_u32f GetValue_StatusRegister(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	(void)decoded_address_mode;
+
+	return closure->stuff.state->status_register;
+}
+
+static cc_u32f GetValue_ConditionCodeRegister(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
+{
+	(void)decoded_address_mode;
+
+	return closure->stuff.state->status_register & 0xFF;
+}
+
+static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressMode *decoded_address_mode)
+{
+	GetValueCall function;
+
+	switch (decoded_address_mode->type)
+	{
+		case DECODED_ADDRESS_MODE_TYPE_NONE:
+			function = GetValueCallDummy;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
+			function = GetValue_Register;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
+		{
+			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
+			{
+				case 0:
+					function = GetValue_MemoryAddress;
+					break;
+
+				case 1:
+					function = GetValue_MemoryByte;
+					break;
+
+				case 2:
+					function = GetValue_MemoryWord;
+					break;
+
+				case 4:
+				case 8: /* TODO: This is a hack: some instructions are technically capable of encoding a size
+				           of 8, and for now I'm just assuming that they are identical to longword operations. */
+					function = GetValue_MemoryLongWord;
+					break;
+
+				default:
+					/* This should never happen. */
+					assert(cc_false);
+					function = GetValueCallDummy;
+					break;
+			}
+
+			break;
+		}
+
+		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
+			function = GetValue_StatusRegister;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
+			function = GetValue_ConditionCodeRegister;
+			break;
+
+		default:
+			assert(cc_false);
+			function = GetValueCallDummy;
+			break;
+	}
+
+	return function;
+}
+
 /* Do instruction action */
 
 static void Action_OR(Closure* const closure)
@@ -1587,6 +1714,9 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			{
 				#include "m68k/gen.c"
 			}
+
+			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
+				closure.destination_value = GetValueUsingDecodedAddressMode2(&closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
 
 			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
 
