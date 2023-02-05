@@ -11,9 +11,6 @@ case INSTRUCTION_ABCD:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ABCD;
-
 	break;
 
 case INSTRUCTION_ADD:
@@ -28,9 +25,6 @@ case INSTRUCTION_ADD:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADD;
 
 	break;
 
@@ -47,9 +41,6 @@ case INSTRUCTION_ADDA:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDA;
-
 	break;
 
 case INSTRUCTION_ADDAQ:
@@ -58,9 +49,6 @@ case INSTRUCTION_ADDAQ:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDQ;
 
 	break;
 
@@ -77,9 +65,6 @@ case INSTRUCTION_ADDI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADD;
-
 	break;
 
 case INSTRUCTION_ADDQ:
@@ -88,9 +73,6 @@ case INSTRUCTION_ADDQ:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDQ;
 
 	break;
 
@@ -107,9 +89,6 @@ case INSTRUCTION_ADDX:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDX;
-
 	break;
 
 case INSTRUCTION_AND:
@@ -124,9 +103,6 @@ case INSTRUCTION_AND:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
 
 	break;
 
@@ -143,9 +119,6 @@ case INSTRUCTION_ANDI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
-
 	break;
 
 case INSTRUCTION_ANDI_TO_CCR:
@@ -160,9 +133,6 @@ case INSTRUCTION_ANDI_TO_CCR:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
 
 	break;
 
@@ -186,9 +156,6 @@ case INSTRUCTION_ANDI_TO_SR:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
-
 	break;
 
 case INSTRUCTION_ASD_MEMORY:
@@ -197,9 +164,6 @@ case INSTRUCTION_ASD_MEMORY:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ASD_MEMORY;
 
 	break;
 
@@ -210,17 +174,11 @@ case INSTRUCTION_ASD_REGISTER:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ASD_REGISTER;
-
 	break;
 
 case INSTRUCTION_BCC_SHORT:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCC_SHORT;
 
 	break;
 
@@ -233,9 +191,6 @@ case INSTRUCTION_BCC_WORD:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCC_WORD;
 
 	break;
 
@@ -252,9 +207,6 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCHG;
-
 	break;
 
 case INSTRUCTION_BCHG_STATIC:
@@ -269,9 +221,6 @@ case INSTRUCTION_BCHG_STATIC:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCHG;
 
 	break;
 
@@ -288,9 +237,6 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCLR;
-
 	break;
 
 case INSTRUCTION_BCLR_STATIC:
@@ -306,17 +252,11 @@ case INSTRUCTION_BCLR_STATIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCLR;
-
 	break;
 
 case INSTRUCTION_BRA_SHORT:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BRA_SHORT;
 
 	break;
 
@@ -329,9 +269,6 @@ case INSTRUCTION_BRA_WORD:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BRA_WORD;
 
 	break;
 
@@ -348,9 +285,6 @@ case INSTRUCTION_BSET_DYNAMIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSET;
-
 	break;
 
 case INSTRUCTION_BSET_STATIC:
@@ -366,17 +300,11 @@ case INSTRUCTION_BSET_STATIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSET;
-
 	break;
 
 case INSTRUCTION_BSR_SHORT:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSR_SHORT;
 
 	break;
 
@@ -389,9 +317,6 @@ case INSTRUCTION_BSR_WORD:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSR_WORD;
 
 	break;
 
@@ -408,9 +333,6 @@ case INSTRUCTION_BTST_DYNAMIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BTST;
-
 	break;
 
 case INSTRUCTION_BTST_STATIC:
@@ -426,9 +348,6 @@ case INSTRUCTION_BTST_STATIC:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BTST;
-
 	break;
 
 case INSTRUCTION_CHK:
@@ -441,9 +360,6 @@ case INSTRUCTION_CHK:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_CHK;
-
 	break;
 
 case INSTRUCTION_CLR:
@@ -452,9 +368,6 @@ case INSTRUCTION_CLR:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_CLR;
 
 	break;
 
@@ -471,9 +384,6 @@ case INSTRUCTION_CMP:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
-
 	break;
 
 case INSTRUCTION_CMPA:
@@ -488,9 +398,6 @@ case INSTRUCTION_CMPA:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBA;
 
 	break;
 
@@ -507,9 +414,6 @@ case INSTRUCTION_CMPI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
-
 	break;
 
 case INSTRUCTION_CMPM:
@@ -525,9 +429,6 @@ case INSTRUCTION_CMPM:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
-
 	break;
 
 case INSTRUCTION_DBCC:
@@ -539,9 +440,6 @@ case INSTRUCTION_DBCC:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DBCC;
 
 	break;
 
@@ -558,9 +456,6 @@ case INSTRUCTION_DIVS:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIVS;
-
 	break;
 
 case INSTRUCTION_DIVU:
@@ -575,9 +470,6 @@ case INSTRUCTION_DIVU:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIVU;
 
 	break;
 
@@ -594,9 +486,6 @@ case INSTRUCTION_EOR:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
-
 	break;
 
 case INSTRUCTION_EORI:
@@ -612,9 +501,6 @@ case INSTRUCTION_EORI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
-
 	break;
 
 case INSTRUCTION_EORI_TO_CCR:
@@ -629,9 +515,6 @@ case INSTRUCTION_EORI_TO_CCR:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
 
 	break;
 
@@ -655,17 +538,11 @@ case INSTRUCTION_EORI_TO_SR:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
-
 	break;
 
 case INSTRUCTION_EXG:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EXG;
 
 	break;
 
@@ -676,17 +553,11 @@ case INSTRUCTION_EXT:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EXT;
-
 	break;
 
 case INSTRUCTION_ILLEGAL:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ILLEGAL;
 
 	break;
 
@@ -700,9 +571,6 @@ case INSTRUCTION_JMP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_JMP;
-
 	break;
 
 case INSTRUCTION_JSR:
@@ -714,9 +582,6 @@ case INSTRUCTION_JSR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_JSR;
 
 	break;
 
@@ -730,9 +595,6 @@ case INSTRUCTION_LEA:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
-
 	break;
 
 case INSTRUCTION_LINK:
@@ -745,9 +607,6 @@ case INSTRUCTION_LINK:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LINK;
-
 	break;
 
 case INSTRUCTION_LSD_MEMORY:
@@ -757,9 +616,6 @@ case INSTRUCTION_LSD_MEMORY:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LSD_MEMORY;
-
 	break;
 
 case INSTRUCTION_LSD_REGISTER:
@@ -768,9 +624,6 @@ case INSTRUCTION_LSD_REGISTER:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LSD_REGISTER;
 
 	break;
 
@@ -784,9 +637,6 @@ case INSTRUCTION_MOVE:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
-
 	break;
 
 case INSTRUCTION_MOVE_FROM_SR:
@@ -799,9 +649,6 @@ case INSTRUCTION_MOVE_FROM_SR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
-
 	break;
 
 case INSTRUCTION_MOVE_TO_CCR:
@@ -813,9 +660,6 @@ case INSTRUCTION_MOVE_TO_CCR:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
 
 	break;
 
@@ -836,9 +680,6 @@ case INSTRUCTION_MOVE_TO_SR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
-
 	break;
 
 case INSTRUCTION_MOVE_USP:
@@ -852,9 +693,6 @@ case INSTRUCTION_MOVE_USP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE_USP;
-
 	break;
 
 case INSTRUCTION_MOVEA:
@@ -866,9 +704,6 @@ case INSTRUCTION_MOVEA:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEA;
 
 	break;
 
@@ -885,9 +720,6 @@ case INSTRUCTION_MOVEM:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEM;
-
 	break;
 
 case INSTRUCTION_MOVEP:
@@ -897,17 +729,11 @@ case INSTRUCTION_MOVEP:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEP;
-
 	break;
 
 case INSTRUCTION_MOVEQ:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEQ;
 
 	break;
 
@@ -924,9 +750,6 @@ case INSTRUCTION_MULS:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MULS;
-
 	break;
 
 case INSTRUCTION_MULU:
@@ -942,9 +765,6 @@ case INSTRUCTION_MULU:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MULU;
-
 	break;
 
 case INSTRUCTION_NBCD:
@@ -953,9 +773,6 @@ case INSTRUCTION_NBCD:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NBCD;
 
 	break;
 
@@ -966,9 +783,6 @@ case INSTRUCTION_NEG:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NEG;
-
 	break;
 
 case INSTRUCTION_NEGX:
@@ -978,17 +792,11 @@ case INSTRUCTION_NEGX:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NEGX;
-
 	break;
 
 case INSTRUCTION_NOP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NOP;
 
 	break;
 
@@ -998,9 +806,6 @@ case INSTRUCTION_NOT:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NOT;
 
 	break;
 
@@ -1017,9 +822,6 @@ case INSTRUCTION_OR:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
-
 	break;
 
 case INSTRUCTION_ORI:
@@ -1035,9 +837,6 @@ case INSTRUCTION_ORI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
-
 	break;
 
 case INSTRUCTION_ORI_TO_CCR:
@@ -1052,9 +851,6 @@ case INSTRUCTION_ORI_TO_CCR:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
 
 	break;
 
@@ -1078,9 +874,6 @@ case INSTRUCTION_ORI_TO_SR:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
-
 	break;
 
 case INSTRUCTION_PEA:
@@ -1092,9 +885,6 @@ case INSTRUCTION_PEA:
 
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_PEA;
 
 	break;
 
@@ -1109,9 +899,6 @@ case INSTRUCTION_RESET:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RESET;
-
 	break;
 
 case INSTRUCTION_ROD_MEMORY:
@@ -1120,9 +907,6 @@ case INSTRUCTION_ROD_MEMORY:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROD_MEMORY;
 
 	break;
 
@@ -1133,9 +917,6 @@ case INSTRUCTION_ROD_REGISTER:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROD_REGISTER;
-
 	break;
 
 case INSTRUCTION_ROXD_MEMORY:
@@ -1145,9 +926,6 @@ case INSTRUCTION_ROXD_MEMORY:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROXD_MEMORY;
-
 	break;
 
 case INSTRUCTION_ROXD_REGISTER:
@@ -1156,9 +934,6 @@ case INSTRUCTION_ROXD_REGISTER:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROXD_REGISTER;
 
 	break;
 
@@ -1173,26 +948,17 @@ case INSTRUCTION_RTE:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTE;
-
 	break;
 
 case INSTRUCTION_RTR:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTR;
-
 	break;
 
 case INSTRUCTION_RTS:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTS;
 
 	break;
 
@@ -1209,9 +975,6 @@ case INSTRUCTION_SBCD:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SBCD;
-
 	break;
 
 case INSTRUCTION_SCC:
@@ -1220,9 +983,6 @@ case INSTRUCTION_SCC:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SCC;
 
 	break;
 
@@ -1243,9 +1003,6 @@ case INSTRUCTION_STOP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_STOP;
-
 	break;
 
 case INSTRUCTION_SUB:
@@ -1260,9 +1017,6 @@ case INSTRUCTION_SUB:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
 
 	break;
 
@@ -1279,9 +1033,6 @@ case INSTRUCTION_SUBA:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBA;
-
 	break;
 
 case INSTRUCTION_SUBAQ:
@@ -1290,9 +1041,6 @@ case INSTRUCTION_SUBAQ:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBQ;
 
 	break;
 
@@ -1309,9 +1057,6 @@ case INSTRUCTION_SUBI:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
-
 	break;
 
 case INSTRUCTION_SUBQ:
@@ -1320,9 +1065,6 @@ case INSTRUCTION_SUBQ:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBQ;
 
 	break;
 
@@ -1339,9 +1081,6 @@ case INSTRUCTION_SUBX:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBX;
-
 	break;
 
 case INSTRUCTION_SWAP:
@@ -1350,9 +1089,6 @@ case INSTRUCTION_SWAP:
 
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SWAP;
 
 	break;
 
@@ -1363,26 +1099,17 @@ case INSTRUCTION_TAS:
 	/* Read destination operand. */
 	closure.destination_value = GetValueUsingDecodedAddressMode(&closure.stuff, &closure.destination_decoded_address_mode);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TAS;
-
 	break;
 
 case INSTRUCTION_TRAP:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TRAP;
-
 	break;
 
 case INSTRUCTION_TRAPV:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TRAPV;
 
 	break;
 
@@ -1396,17 +1123,11 @@ case INSTRUCTION_TST:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
-
 	break;
 
 case INSTRUCTION_UNLK:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNLK;
 
 	break;
 
@@ -1414,17 +1135,11 @@ case INSTRUCTION_UNIMPLEMENTED_1:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
 
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1;
-
 	break;
 
 case INSTRUCTION_UNIMPLEMENTED_2:
 	/* Decode destination address mode. */
 	DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);
-
-	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2;
 
 	break;
 

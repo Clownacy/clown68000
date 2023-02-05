@@ -557,6 +557,7 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 typedef struct Closure
 {
 	Stuff stuff;
+	ExplodedOpcode opcode;
 	DecodedOpcode decoded_opcode;
 	DecodedAddressMode destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
@@ -569,6 +570,642 @@ static void DummyClosureCall(Closure* const closure)
 {
 	(void)closure;
 }
+
+/* Do instruction action */
+
+static void Action_OR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_OR;
+}
+
+static void Action_AND(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_AND;
+}
+
+static void Action_SUBA(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SUBA;
+}
+
+static void Action_SUBQ(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SUBQ;
+}
+
+static void Action_SUB(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SUB;
+}
+
+static void Action_ADDA(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ADDA;
+}
+
+static void Action_ADDQ(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ADDQ;
+}
+
+static void Action_ADD(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ADD;
+}
+
+static void Action_EOR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_EOR;
+}
+
+static void Action_BTST(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BTST;
+}
+
+static void Action_BCHG(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BCHG;
+}
+
+static void Action_BCLR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BCLR;
+}
+
+static void Action_BSET(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BSET;
+}
+
+static void Action_MOVEP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVEP;
+}
+
+static void Action_MOVEA(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVEA;
+}
+
+static void Action_MOVE(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVE;
+}
+
+static void Action_LINK(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_LINK;
+}
+
+static void Action_UNLK(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_UNLK;
+}
+
+static void Action_NEGX(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_NEGX;
+}
+
+static void Action_CLR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_CLR;
+}
+
+static void Action_NEG(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_NEG;
+}
+
+static void Action_NOT(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_NOT;
+}
+
+static void Action_EXT(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_EXT;
+}
+
+static void Action_NBCD(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_NBCD;
+}
+
+static void Action_SWAP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SWAP;
+}
+
+static void Action_PEA(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_PEA;
+}
+
+static void Action_ILLEGAL(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ILLEGAL;
+}
+
+static void Action_TAS(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_TAS;
+}
+
+static void Action_TRAP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_TRAP;
+}
+
+static void Action_MOVE_USP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVE_USP;
+}
+
+static void Action_RESET(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_RESET;
+}
+
+static void Action_STOP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_STOP;
+}
+
+static void Action_RTE(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_RTE;
+}
+
+static void Action_RTS(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_RTS;
+}
+
+static void Action_TRAPV(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_TRAPV;
+}
+
+static void Action_RTR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_RTR;
+}
+
+static void Action_JSR(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_JSR;
+}
+
+static void Action_JMP(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_JMP;
+}
+
+static void Action_MOVEM(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVEM;
+}
+
+static void Action_CHK(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_CHK;
+}
+
+static void Action_Scc(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SCC;
+}
+
+static void Action_DBcc(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_DBCC;
+}
+
+static void Action_BRA_Short(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BRA_SHORT;
+}
+
+static void Action_BRA_Word(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BRA_WORD;
+}
+
+static void Action_BSR_Short(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BSR_SHORT;
+}
+
+static void Action_BSR_Word(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BSR_WORD;
+}
+
+static void Action_Bcc_Short(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BCC_SHORT;
+}
+
+static void Action_Bcc_Word(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_BCC_WORD;
+}
+
+static void Action_MOVEQ(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MOVEQ;
+}
+
+static void Action_DIVS(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_DIVS;
+}
+
+static void Action_DIVU(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_DIVU;
+}
+
+static void Action_SBCD(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SBCD;
+}
+
+static void Action_SUBX(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_SUBX;
+}
+
+static void Action_MULS(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MULS;
+}
+
+static void Action_MULU(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_MULU;
+}
+
+static void Action_ABCD(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ABCD;
+}
+
+static void Action_EXG(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_EXG;
+}
+
+static void Action_ADDX(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ADDX;
+}
+
+static void Action_ASd_Memory(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ASD_MEMORY;
+}
+
+static void Action_ASd_Register(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ASD_REGISTER;
+}
+
+static void Action_LSd_Memory(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_LSD_MEMORY;
+}
+
+static void Action_LSd_Register(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_LSD_REGISTER;
+}
+
+static void Action_ROd_Memory(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ROD_MEMORY;
+}
+
+static void Action_ROd_Register(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ROD_REGISTER;
+}
+
+static void Action_ROXd_Memory(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ROXD_MEMORY;
+}
+
+static void Action_ROXd_Register(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_ROXD_REGISTER;
+}
+
+static void Action_Unimplemented1(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1;
+}
+
+static void Action_Unimplemented2(Closure* const closure)
+{
+	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2;
+}
+
+static ClosureCall GetInstructionAction(const Instruction instruction)
+{
+	ClosureCall function;
+
+	/* TODO: Make this a table. */
+	switch (Instruction_GetAction(instruction))
+	{
+		case INSTRUCTION_ACTION_OR:
+			function = Action_OR;
+			break;
+
+		case INSTRUCTION_ACTION_AND:
+			function = Action_AND;
+			break;
+
+		case INSTRUCTION_ACTION_SUBA:
+			function = Action_SUBA;
+			break;
+
+		case INSTRUCTION_ACTION_SUBQ:
+			function = Action_SUBQ;
+			break;
+
+		case INSTRUCTION_ACTION_SUB:
+			function = Action_SUB;
+			break;
+
+		case INSTRUCTION_ACTION_ADDA:
+			function = Action_ADDA;
+			break;
+
+		case INSTRUCTION_ACTION_ADDQ:
+			function = Action_ADDQ;
+			break;
+
+		case INSTRUCTION_ACTION_ADD:
+			function = Action_ADD;
+			break;
+
+		case INSTRUCTION_ACTION_EOR:
+			function = Action_EOR;
+			break;
+
+		case INSTRUCTION_ACTION_BCHG:
+			function = Action_BCHG;
+			break;
+
+		case INSTRUCTION_ACTION_BCLR:
+			function = Action_BCLR;
+			break;
+
+		case INSTRUCTION_ACTION_BSET:
+			function = Action_BSET;
+			break;
+
+		case INSTRUCTION_ACTION_BTST:
+			function = Action_BTST;
+			break;
+
+		case INSTRUCTION_ACTION_MOVEP:
+			function = Action_MOVEP;
+			break;
+
+		case INSTRUCTION_ACTION_MOVEA:
+			function = Action_MOVEA;
+			break;
+
+		case INSTRUCTION_ACTION_MOVE:
+			function = Action_MOVE;
+			break;
+
+		case INSTRUCTION_ACTION_LINK:
+			function = Action_LINK;
+			break;
+
+		case INSTRUCTION_ACTION_UNLK:
+			function = Action_UNLK;
+			break;
+
+		case INSTRUCTION_ACTION_NEGX:
+			function = Action_NEGX;
+			break;
+
+		case INSTRUCTION_ACTION_CLR:
+			function = Action_CLR;
+			break;
+
+		case INSTRUCTION_ACTION_NEG:
+			function = Action_NEG;
+			break;
+
+		case INSTRUCTION_ACTION_NOT:
+			function = Action_NOT;
+			break;
+
+		case INSTRUCTION_ACTION_EXT:
+			function = Action_EXT;
+			break;
+
+		case INSTRUCTION_ACTION_NBCD:
+			function = Action_NBCD;
+			break;
+
+		case INSTRUCTION_ACTION_SWAP:
+			function = Action_SWAP;
+			break;
+
+		case INSTRUCTION_ACTION_PEA:
+			function = Action_PEA;
+			break;
+
+		case INSTRUCTION_ACTION_ILLEGAL:
+			function = Action_ILLEGAL;
+			break;
+
+		case INSTRUCTION_ACTION_TAS:
+			function = Action_TAS;
+			break;
+
+		case INSTRUCTION_ACTION_TRAP:
+			function = Action_TRAP;
+			break;
+
+		case INSTRUCTION_ACTION_MOVE_USP:
+			function = Action_MOVE_USP;
+			break;
+
+		case INSTRUCTION_ACTION_RESET:
+			function = Action_RESET;
+			break;
+
+		case INSTRUCTION_ACTION_STOP:
+			function = Action_STOP;
+			break;
+
+		case INSTRUCTION_ACTION_RTE:
+			function = Action_RTE;
+			break;
+
+		case INSTRUCTION_ACTION_RTS:
+			function = Action_RTS;
+			break;
+
+		case INSTRUCTION_ACTION_TRAPV:
+			function = Action_TRAPV;
+			break;
+
+		case INSTRUCTION_ACTION_RTR:
+			function = Action_RTR;
+			break;
+
+		case INSTRUCTION_ACTION_JSR:
+			function = Action_JSR;
+			break;
+
+		case INSTRUCTION_ACTION_JMP:
+			function = Action_JMP;
+			break;
+
+		case INSTRUCTION_ACTION_MOVEM:
+			function = Action_MOVEM;
+			break;
+
+		case INSTRUCTION_ACTION_CHK:
+			function = Action_CHK;
+			break;
+
+		case INSTRUCTION_ACTION_SCC:
+			function = Action_Scc;
+			break;
+
+		case INSTRUCTION_ACTION_DBCC:
+			function = Action_DBcc;
+			break;
+
+		case INSTRUCTION_ACTION_BRA_SHORT:
+			function = Action_BRA_Short;
+			break;
+
+		case INSTRUCTION_ACTION_BRA_WORD:
+			function = Action_BRA_Word;
+			break;
+
+		case INSTRUCTION_ACTION_BSR_SHORT:
+			function = Action_BSR_Short;
+			break;
+
+		case INSTRUCTION_ACTION_BSR_WORD:
+			function = Action_BSR_Word;
+			break;
+
+		case INSTRUCTION_ACTION_BCC_SHORT:
+			function = Action_Bcc_Short;
+			break;
+
+		case INSTRUCTION_ACTION_BCC_WORD:
+			function = Action_Bcc_Word;
+			break;
+
+		case INSTRUCTION_ACTION_MOVEQ:
+			function = Action_MOVEQ;
+			break;
+
+		case INSTRUCTION_ACTION_DIVS:
+			function = Action_DIVS;
+			break;
+
+		case INSTRUCTION_ACTION_DIVU:
+			function = Action_DIVU;
+			break;
+
+		case INSTRUCTION_ACTION_SBCD:
+			function = Action_SBCD;
+			break;
+
+		case INSTRUCTION_ACTION_SUBX:
+			function = Action_SUBX;
+			break;
+
+		case INSTRUCTION_ACTION_MULS:
+			function = Action_MULS;
+			break;
+
+		case INSTRUCTION_ACTION_MULU:
+			function = Action_MULU;
+			break;
+
+		case INSTRUCTION_ACTION_ABCD:
+			function = Action_ABCD;
+			break;
+
+		case INSTRUCTION_ACTION_EXG:
+			function = Action_EXG;
+			break;
+
+		case INSTRUCTION_ACTION_ADDX:
+			function = Action_ADDX;
+			break;
+
+		case INSTRUCTION_ACTION_ASD_MEMORY:
+			function = Action_ASd_Memory;
+			break;
+
+		case INSTRUCTION_ACTION_ASD_REGISTER:
+			function = Action_ASd_Register;
+			break;
+
+		case INSTRUCTION_ACTION_LSD_MEMORY:
+			function = Action_LSd_Memory;
+			break;
+
+		case INSTRUCTION_ACTION_LSD_REGISTER:
+			function = Action_LSd_Register;
+			break;
+
+		case INSTRUCTION_ACTION_ROD_MEMORY:
+			function = Action_ROd_Memory;
+			break;
+
+		case INSTRUCTION_ACTION_ROD_REGISTER:
+			function = Action_ROd_Register;
+			break;
+
+		case INSTRUCTION_ACTION_ROXD_MEMORY:
+			function = Action_ROXd_Memory;
+			break;
+
+		case INSTRUCTION_ACTION_ROXD_REGISTER:
+			function = Action_ROXd_Register;
+			break;
+
+		case INSTRUCTION_ACTION_UNIMPLEMENTED_1:
+			function = Action_Unimplemented1;
+			break;
+
+		case INSTRUCTION_ACTION_UNIMPLEMENTED_2:
+			function = Action_Unimplemented2;
+			break;
+
+		case INSTRUCTION_ACTION_NOP:
+			function = DummyClosureCall;
+			break;
+
+		default:
+			assert(cc_false);
+			function = DummyClosureCall;
+			break;
+	}
+
+	return function;
+}
+
+/* Write to destination */
 
 static void SetDestination_Register(Closure* const closure)
 {
@@ -684,6 +1321,8 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressMode *dec
 
 	return function;
 }
+
+/* Condition codes */
 
 static void Carry_StandardCarry(Closure* const closure)
 {
@@ -928,7 +1567,6 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		if (!setjmp(closure.stuff.exception.context))
 		{
 			/* Process new instruction */
-			ExplodedOpcode opcode;
 			DecodedAddressMode source_decoded_address_mode;
 
 			const cc_u16f machine_code = ReadWord(&closure.stuff, state->program_counter); /* TODO: Temporary - inline this later. */
@@ -936,23 +1574,21 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 			closure.source_value = closure.destination_value = closure.result_value = 0; /* TODO: Delete this and try to sort out the 'may be used uninitialised' warnings. */
 
-			ExplodeOpcode(&opcode, machine_code);
+			ExplodeOpcode(&closure.opcode, machine_code);
 
 			/* We already pre-fetched the instruction, so just advance past it. */
-			state->instruction_register = opcode.raw;
+			state->instruction_register = closure.opcode.raw;
 			state->program_counter += 2;
 
 			/* Figure out which instruction this is */
-			DecodeOpcode(&closure.decoded_opcode, &opcode);
-
-			#define operation_size closure.decoded_opcode.size /* TODO: Get rid of this ugly thing. */
+			DecodeOpcode(&closure.decoded_opcode, &closure.opcode);
 
 			switch (closure.decoded_opcode.instruction)
 			{
 				#include "m68k/gen.c"
 			}
 
-			#undef operation_size
+			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
 
 /*			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
 				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);*/
