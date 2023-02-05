@@ -184,8 +184,11 @@
 #define DO_INSTRUCTION_ACTION_SUBX\
 	Emit("DO_INSTRUCTION_ACTION_SUBX;")
 
-#define DO_INSTRUCTION_ACTION_MUL\
-	Emit("DO_INSTRUCTION_ACTION_MUL;")
+#define DO_INSTRUCTION_ACTION_MULS\
+	Emit("DO_INSTRUCTION_ACTION_MULS;")
+
+#define DO_INSTRUCTION_ACTION_MULU\
+	Emit("DO_INSTRUCTION_ACTION_MULU;")
 
 #define DO_INSTRUCTION_ACTION_ABCD\
 	Emit("DO_INSTRUCTION_ACTION_ABCD;")
@@ -687,10 +690,10 @@
 #define DO_INSTRUCTION_ACTION_SUBX\
 	result_value = destination_value - source_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
 
-#define DO_INSTRUCTION_ACTION_MUL\
+#define DO_INSTRUCTION_ACTION_MULS\
 	{\
-	const cc_bool multiplier_is_negative = decoded_opcode.instruction == INSTRUCTION_MULS && (source_value & 0x8000) != 0;\
-	const cc_bool multiplicand_is_negative = decoded_opcode.instruction == INSTRUCTION_MULS && (destination_value & 0x8000) != 0;\
+	const cc_bool multiplier_is_negative = (source_value & 0x8000) != 0;\
+	const cc_bool multiplicand_is_negative = (destination_value & 0x8000) != 0;\
 	const cc_bool result_is_negative = multiplier_is_negative != multiplicand_is_negative;\
 \
 	const cc_u32f multiplier = multiplier_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
@@ -700,6 +703,9 @@
 \
 	result_value = result_is_negative ? 0 - absolute_result : absolute_result;\
 	}
+
+#define DO_INSTRUCTION_ACTION_MULU\
+	result_value = (destination_value & 0xFFFF) * source_value;\
 
 #define DO_INSTRUCTION_ACTION_ABCD\
 	/* TODO */\

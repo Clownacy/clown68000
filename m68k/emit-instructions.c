@@ -298,8 +298,12 @@ void EmitInstructionAction(const Instruction instruction)
 			DO_INSTRUCTION_ACTION_SUBX;
 			break;
 
-		case INSTRUCTION_ACTION_MUL:
-			DO_INSTRUCTION_ACTION_MUL;
+		case INSTRUCTION_ACTION_MULS:
+			DO_INSTRUCTION_ACTION_MULS;
+			break;
+
+		case INSTRUCTION_ACTION_MULU:
+			DO_INSTRUCTION_ACTION_MULU;
 			break;
 
 		case INSTRUCTION_ACTION_ABCD:

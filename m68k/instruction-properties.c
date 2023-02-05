@@ -211,8 +211,10 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 			return INSTRUCTION_ACTION_SUBX;
 
 		case INSTRUCTION_MULS:
+			return INSTRUCTION_ACTION_MULS;
+
 		case INSTRUCTION_MULU:
-			return INSTRUCTION_ACTION_MUL;
+			return INSTRUCTION_ACTION_MULU;
 
 		case INSTRUCTION_ABCD:
 			return INSTRUCTION_ACTION_ABCD;

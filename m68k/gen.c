@@ -1965,7 +1965,7 @@ case INSTRUCTION_MULS:
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MUL;
+	DO_INSTRUCTION_ACTION_MULS;
 
 	/* Write destination operand. */
 	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
@@ -2006,7 +2006,7 @@ case INSTRUCTION_MULU:
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MUL;
+	DO_INSTRUCTION_ACTION_MULU;
 
 	/* Write destination operand. */
 	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
