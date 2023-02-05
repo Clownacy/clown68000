@@ -1587,6 +1587,8 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 
 typedef struct InstructionSteps
 {
+	GetValueCall read_destination;
+	ClosureCall instruction_action;
 	ClosureCall write_destination;
 	ClosureCall condition_code_carry;
 	ClosureCall condition_code_overflow;
@@ -1610,22 +1612,25 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	{
 		ExplodedOpcode opcode;
 		DecodedOpcode decoded_opcode;
+		DecodedAddressMode destination_decoded_address_mode;
 
 		InstructionSteps* const instruction_steps = &instruction_steps_lookup[i];
 
 		ExplodeOpcode(&opcode, i);
 		DecodeOpcode(&decoded_opcode, &opcode);
+		DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
+
+		if (Instruction_IsDestinationOperandRead(decoded_opcode.instruction))
+			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(&destination_decoded_address_mode);
+		else
+			instruction_steps->read_destination = GetValueCallDummy;
+
+		instruction_steps->instruction_action = GetInstructionAction(decoded_opcode.instruction);
 
 		if (Instruction_IsDestinationOperandWritten(decoded_opcode.instruction))
-		{
-			DecodedAddressMode destination_decoded_address_mode;
-			DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
 			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(&destination_decoded_address_mode);
-		}
 		else
-		{
 			instruction_steps->write_destination = DummyClosureCall;
-		}
 
 		instruction_steps->condition_code_carry = GetConditionCodeAction_Carry(decoded_opcode.instruction);
 		instruction_steps->condition_code_overflow = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
@@ -1715,10 +1720,16 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 				#include "m68k/gen.c"
 			}
 
-			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
+/*			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
 				closure.destination_value = GetValueUsingDecodedAddressMode2(&closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
+*/
 
-			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
+			closure.destination_value = instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
+
+/*			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
+*/
+
+			instruction_steps->instruction_action(&closure);
 
 /*			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
 				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);*/
