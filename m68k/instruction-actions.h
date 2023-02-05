@@ -172,8 +172,11 @@
 #define DO_INSTRUCTION_ACTION_MOVEQ\
 	Emit("DO_INSTRUCTION_ACTION_MOVEQ;")
 
-#define DO_INSTRUCTION_ACTION_DIV\
-	Emit("DO_INSTRUCTION_ACTION_DIV;")
+#define DO_INSTRUCTION_ACTION_DIVS\
+	Emit("DO_INSTRUCTION_ACTION_DIVS;")
+
+#define DO_INSTRUCTION_ACTION_DIVU\
+	Emit("DO_INSTRUCTION_ACTION_DIVU;")
 
 #define DO_INSTRUCTION_ACTION_SBCD\
 	Emit("DO_INSTRUCTION_ACTION_SBCD;")
@@ -610,7 +613,7 @@
 #define DO_INSTRUCTION_ACTION_MOVEQ\
 	result_value = CC_SIGN_EXTEND_ULONG(7, opcode.raw)
 
-#define DO_INSTRUCTION_ACTION_DIV\
+#define DO_INSTRUCTION_ACTION_DIVS\
 	if (source_value == 0)\
 	{\
 		Group1Or2Exception(&stuff, 5);\
@@ -618,8 +621,8 @@
 	}\
 	else\
 	{\
-		const cc_bool source_is_negative = decoded_opcode.instruction == INSTRUCTION_DIVS && (source_value & 0x8000) != 0;\
-		const cc_bool destination_is_negative = decoded_opcode.instruction == INSTRUCTION_DIVS && (destination_value & 0x80000000) != 0;\
+		const cc_bool source_is_negative = (source_value & 0x8000) != 0;\
+		const cc_bool destination_is_negative = (destination_value & 0x80000000) != 0;\
 		const cc_bool result_is_negative = source_is_negative != destination_is_negative;\
 \
 		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
@@ -629,7 +632,7 @@
 		const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;\
 \
 		/* Overflow detection */\
-		if (absolute_quotient > (decoded_opcode.instruction == INSTRUCTION_DIVU ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))\
+		if (absolute_quotient > (result_is_negative ? (cc_u32f)0x8000 : (cc_u32f)0x7FFF))\
 		{\
 			state->status_register |= CONDITION_CODE_OVERFLOW;\
 \
@@ -639,6 +642,35 @@
 		{\
 			const cc_u32f absolute_remainder = absolute_destination_value % absolute_source_value;\
 			const cc_u32f remainder = destination_is_negative ? 0 - absolute_remainder : absolute_remainder;\
+\
+			result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
+\
+			state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);\
+			state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));\
+			state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));\
+		}\
+	}
+
+#define DO_INSTRUCTION_ACTION_DIVU\
+	if (source_value == 0)\
+	{\
+		Group1Or2Exception(&stuff, 5);\
+		longjmp(stuff.exception.context, 1);\
+	}\
+	else\
+	{\
+		const cc_u32f quotient = destination_value / source_value;\
+\
+		/* Overflow detection */\
+		if (quotient > (cc_u32f)0xFFFF)\
+		{\
+			state->status_register |= CONDITION_CODE_OVERFLOW;\
+\
+			result_value = destination_value;\
+		}\
+		else\
+		{\
+			const cc_u32f remainder = destination_value % source_value;\
 \
 			result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);\
 \

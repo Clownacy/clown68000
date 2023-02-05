@@ -282,8 +282,12 @@ void EmitInstructionAction(const Instruction instruction)
 			DO_INSTRUCTION_ACTION_MOVEQ;
 			break;
 
-		case INSTRUCTION_ACTION_DIV:
-			DO_INSTRUCTION_ACTION_DIV;
+		case INSTRUCTION_ACTION_DIVS:
+			DO_INSTRUCTION_ACTION_DIVS;
+			break;
+
+		case INSTRUCTION_ACTION_DIVU:
+			DO_INSTRUCTION_ACTION_DIVU;
 			break;
 
 		case INSTRUCTION_ACTION_SBCD:

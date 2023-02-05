@@ -199,8 +199,10 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 			return INSTRUCTION_ACTION_MOVEQ;
 
 		case INSTRUCTION_DIVS:
+			return INSTRUCTION_ACTION_DIVS;
+
 		case INSTRUCTION_DIVU:
-			return INSTRUCTION_ACTION_DIV;
+			return INSTRUCTION_ACTION_DIVU;
 
 		case INSTRUCTION_SBCD:
 			return INSTRUCTION_ACTION_SBCD;

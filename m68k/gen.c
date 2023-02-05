@@ -1191,7 +1191,7 @@ case INSTRUCTION_DIVS:
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIV;
+	DO_INSTRUCTION_ACTION_DIVS;
 
 	/* Write destination operand. */
 	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
@@ -1226,7 +1226,7 @@ case INSTRUCTION_DIVU:
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIV;
+	DO_INSTRUCTION_ACTION_DIVU;
 
 	/* Write destination operand. */
 	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
