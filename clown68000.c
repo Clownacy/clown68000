@@ -368,10 +368,13 @@ typedef struct Closure
 {
 	Stuff stuff;
 	ExplodedOpcode opcode;
+#ifdef LOW_MEMORY
 	DecodedOpcode decoded_opcode;
+#endif
 	DecodedAddressMode destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
 	cc_u16f sm, dm, rm;
+	cc_u32f size_mask;
 } Closure;
 
 typedef void (*ClosureCall)(Closure* const closure);
@@ -1899,11 +1902,11 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeMetad
 	return function;
 }
 
-/* MSB mask */
+/* Size mask */
 
-static cc_u32f GetMSBMask(const DecodedOpcode* const decoded_opcode)
+static cc_u32f GetSizeMask(const DecodedOpcode* const decoded_opcode)
 {
-	return (cc_u32f)1 << (decoded_opcode->size * 8 - 1);
+	return 0xFFFFFFFF >> (32 - decoded_opcode->size * 8);
 }
 
 /* Condition codes */
@@ -1986,13 +1989,13 @@ static ClosureCall GetConditionCodeAction_Overflow(const Instruction instruction
 
 static void Zero_ClearIfNonZeroUnaffectedOtherwise(Closure* const closure)
 {
-	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((closure->result_value & closure->size_mask) == 0));
 }
 
 static void Zero_SetIfZeroClearOtherwise(Closure* const closure)
 {
 	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO;
-	closure->stuff.state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure->result_value & (0xFFFFFFFF >> (32 - closure->decoded_opcode.size * 8))) == 0));
+	closure->stuff.state->status_register |= CONDITION_CODE_ZERO & (0 - ((closure->result_value & closure->size_mask) == 0));
 }
 
 static ClosureCall GetConditionCodeAction_Zero(const Instruction instruction)
@@ -2052,7 +2055,7 @@ typedef struct InstructionSteps
 	GetValueCall read_destination;
 	ClosureCall instruction_action;
 	ClosureCall write_destination;
-	cc_u32l	msb_mask;
+	cc_u32l	size_mask;
 	ClosureCall condition_code_carry;
 	ClosureCall condition_code_overflow;
 	ClosureCall condition_code_zero;
@@ -2109,7 +2112,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		else
 			instruction_steps->write_destination = DummyClosureCall;
 
-		instruction_steps->msb_mask = GetMSBMask(&decoded_opcode);
+		instruction_steps->size_mask = GetSizeMask(&decoded_opcode);
 
 		instruction_steps->condition_code_carry = GetConditionCodeAction_Carry(decoded_opcode.instruction);
 		instruction_steps->condition_code_overflow = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
@@ -2197,8 +2200,10 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			state->instruction_register = closure.opcode.raw;
 			state->program_counter += 2;
 
+#ifdef LOW_MEMORY
 			/* Figure out which instruction this is */
 			DecodeOpcode(&closure.decoded_opcode, &closure.opcode);
+#endif
 
 		#ifdef DEBUG_STUFF
 			{
@@ -2307,6 +2312,8 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		#endif
 
 #ifdef LOW_MEMORY
+			closure.size_mask = GetSizeMask(&closure.decoded_opcode);
+
 			GetSupervisorCheck(closure.decoded_opcode.instruction)(&closure);
 
 			DecodeAddressMode(&source_decoded_address_mode_metadata, &closure.decoded_opcode.operands[0])(&closure, &source_decoded_address_mode);
@@ -2324,6 +2331,8 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
 				SetValueUsingDecodedAddressMode(&destination_decoded_address_mode_metadata)(&closure);
 #else
+			closure.size_mask = instruction_steps->size_mask;
+
 			instruction_steps->supervisor_check(&closure);
 			instruction_steps->decode_source(&closure, &source_decoded_address_mode);
 			closure.source_value = instruction_steps->read_source(&closure, &source_decoded_address_mode);
@@ -2336,11 +2345,7 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			/* Update the condition codes in the following order: */
 			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 			{
-#ifdef LOW_MEMORY
-				const cc_u32f msb_mask = GetMSBMask(&closure.decoded_opcode);
-#else
-				const cc_u32f msb_mask = instruction_steps->msb_mask;
-#endif
+				const cc_u32f msb_mask = (closure.size_mask >> 1) + 1;
 				closure.sm = 0 - ((closure.source_value & msb_mask) != 0);
 				closure.dm = 0 - ((closure.destination_value & msb_mask) != 0);
 				closure.rm = 0 - ((closure.result_value & msb_mask) != 0);

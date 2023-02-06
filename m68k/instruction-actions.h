@@ -277,7 +277,7 @@
 
 #define DO_INSTRUCTION_ACTION_BTST\
 	/* Modulo the source value */\
-	closure->source_value &= closure->decoded_opcode.size * 8 - 1;\
+	closure->source_value &= closure->opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 * 8 - 1 : 1 * 8 - 1;\
 \
 	/* Set the zero flag to the specified bit */\
 	closure->stuff.state->status_register &= ~CONDITION_CODE_ZERO;\
@@ -334,7 +334,7 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_MOVEA\
-	closure->result_value = closure->decoded_opcode.size == 2 ? CC_SIGN_EXTEND_ULONG(15, closure->source_value) : closure->source_value
+	closure->result_value = (closure->opcode.raw & 0x1000) != 0 ? CC_SIGN_EXTEND_ULONG(15, closure->source_value) : closure->source_value
 
 #define DO_INSTRUCTION_ACTION_MOVE\
 	closure->result_value = closure->source_value
@@ -793,7 +793,7 @@
 
 #define DO_INSTRUCTION_ACTION_SHIFT(SUB_ACTION_1, SUB_ACTION_2, SUB_ACTION_3, SUB_ACTION_4, SUB_ACTION_5, SUB_ACTION_6)\
 	{\
-	const cc_u32f sign_bit_bitmask = 1ul << (closure->decoded_opcode.size * 8 - 1);\
+	const cc_u32f sign_bit_bitmask = (closure->size_mask >> 1) + 1;\
 \
 	SUB_ACTION_1\
 \
