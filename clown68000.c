@@ -2048,6 +2048,7 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 #ifndef LOW_MEMORY
 typedef struct InstructionSteps
 {
+	cc_u32l	size_mask;
 	ClosureCall supervisor_check;
 	DecodeAddressModeCall decode_source;
 	GetValueCall read_source;
@@ -2055,7 +2056,6 @@ typedef struct InstructionSteps
 	GetValueCall read_destination;
 	ClosureCall instruction_action;
 	ClosureCall write_destination;
-	cc_u32l	size_mask;
 	ClosureCall condition_code_carry;
 	ClosureCall condition_code_overflow;
 	ClosureCall condition_code_zero;
