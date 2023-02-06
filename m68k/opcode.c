@@ -636,7 +636,7 @@ do\
 
 #define OPERAND decoded_opcode->operands[0]
 
-static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
+static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const ExplodedOpcode* const opcode)
 {
 	/* Obtain source value. */
 	switch (decoded_opcode->instruction)
@@ -696,6 +696,7 @@ static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Explo
 		case INSTRUCTION_SUBQ:
 		case INSTRUCTION_TRAP:
 			/* Doesn't need an address mode for its source. */
+			OPERAND.address_mode = ADDRESS_MODE_NONE;
 			break;
 
 		case INSTRUCTION_BRA_WORD:
@@ -789,10 +790,9 @@ static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Explo
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			/* Doesn't have a source address mode to decode. */
-			return cc_false;
+			OPERAND.address_mode = ADDRESS_MODE_NONE;
+			break;
 	}
-
-	return cc_true;
 }
 
 #undef OPERAND

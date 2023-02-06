@@ -75,17 +75,23 @@ typedef	enum DecodedAddressModeType
 	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
 } DecodedAddressModeType;
 
+/* TODO: Move this */
+typedef struct DecodedAddressModeMetadata
+{
+	DecodedAddressModeType type;
+	cc_u8f operation_size_in_bytes;
+} DecodedAddressModeMetadata;
+
 typedef union DecodedAddressMode
 {
 	struct
 	{
 		cc_u32l *address;
 		cc_u32f operation_size_bitmask;
-	} reg;
+	} reg; /* TODO: Eliminate this completely. */
 	struct
 	{
 		cc_u32f address;
-		cc_u8f operation_size_in_bytes;
 	} memory;
 } DecodedAddressMode;
 
@@ -278,209 +284,6 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 /* Misc. utility */
 
-static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_operand)
-{
-	Clown68000_State* const state = stuff->state;
-
-	cc_u32f address;
-
-	if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT)
-	{
-		/* Absolute short */
-		const cc_u32f short_address = ReadWord(stuff, state->program_counter);
-
-		address = CC_SIGN_EXTEND_ULONG(15, short_address);
-		state->program_counter += 2;
-	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
-	{
-		/* Absolute long */
-		address = ReadLongWord(stuff, state->program_counter);
-		state->program_counter += 4;
-	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
-	{
-		/* Immediate value */
-		if (decoded_operand->operation_size_in_bytes == 1)
-		{
-			/* A byte-sized immediate value occupies two bytes of space */
-			address = state->program_counter + 1;
-			state->program_counter += 2;
-		}
-		else
-		{
-			address = state->program_counter;
-			state->program_counter += decoded_operand->operation_size_in_bytes;
-		}
-	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
-	{
-		/* Address register indirect */
-		address = state->address_registers[decoded_operand->address_mode_register];
-	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-	{
-		/* Address register indirect with predecrement */
-
-		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (decoded_operand->address_mode_register == 7 && decoded_operand->operation_size_in_bytes == 1) ? 2 : decoded_operand->operation_size_in_bytes;
-
-		state->address_registers[decoded_operand->address_mode_register] -= increment_decrement_size;
-		address = state->address_registers[decoded_operand->address_mode_register];
-	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
-	{
-		/* Address register indirect with postincrement */
-
-		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (decoded_operand->address_mode_register == 7 && decoded_operand->operation_size_in_bytes == 1) ? 2 : decoded_operand->operation_size_in_bytes;
-
-		address = state->address_registers[decoded_operand->address_mode_register];
-		state->address_registers[decoded_operand->address_mode_register] += increment_decrement_size;
-	}
-	else
-	{
-		if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && (decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT || decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
-		{
-			/* Program counter used as base address */
-			address = state->program_counter;
-		}
-		else
-		{
-			/* Address register used as base address */
-			address = state->address_registers[decoded_operand->address_mode_register];
-		}
-
-		if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT || (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT))
-		{
-			/* Add displacement */
-			const cc_u32f displacement = ReadWord(stuff, state->program_counter);
-
-			address += CC_SIGN_EXTEND_ULONG(15, displacement);
-			state->program_counter += 2;
-		}
-		else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX || (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
-		{
-			/* Add index register and index literal */
-			const cc_u32f extension_word = ReadWord(stuff, state->program_counter);
-			const cc_bool is_address_register = (extension_word & 0x8000) != 0;
-			const cc_u32f displacement_reg = (extension_word >> 12) & 7;
-			const cc_bool is_longword = (extension_word & 0x0800) != 0;
-			const cc_u32f displacement_literal_value = CC_SIGN_EXTEND_ULONG(7, extension_word);
-			const cc_u32f displacement_reg_value = CC_SIGN_EXTEND_ULONG(is_longword ? 31 : 15, (is_address_register ? state->address_registers : state->data_registers)[displacement_reg]);
-
-			address += displacement_reg_value;
-			address += displacement_literal_value;
-			state->program_counter += 2;
-		}
-	}
-
-	return address;
-}
-
-static DecodedAddressModeType DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, const Operand *decoded_operand)
-{
-	DecodedAddressModeType decoded_address_mode_type;
-
-	Clown68000_State* const state = stuff->state;
-
-	switch (decoded_operand->address_mode)
-	{
-		case ADDRESS_MODE_NONE:
-			/* None */
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_NONE;
-			break;
-
-		case ADDRESS_MODE_DATA_REGISTER:
-		case ADDRESS_MODE_ADDRESS_REGISTER:
-			/* Register */
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
-			decoded_address_mode->reg.address = &(decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER ? state->address_registers : state->data_registers)[decoded_operand->address_mode_register];
-			decoded_address_mode->reg.operation_size_bitmask = (0xFFFFFFFF >> (32 - decoded_operand->operation_size_in_bytes * 8));
-			break;
-
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
-		case ADDRESS_MODE_SPECIAL:
-			/* Memory access */
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
-			decoded_address_mode->memory.address = DecodeMemoryAddressMode(stuff, decoded_operand);
-			decoded_address_mode->memory.operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
-			break;
-
-		case ADDRESS_MODE_STATUS_REGISTER:
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
-			break;
-
-		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
-			break;
-
-		default:
-			assert(cc_false);
-			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_NONE;
-			break;
-	}
-
-	return decoded_address_mode_type;
-}
-
-static cc_u32f GetValueUsingDecodedAddressMode(Stuff* const stuff, const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode* const decoded_address_mode)
-{
-	cc_u32f value = 0;
-
-	Clown68000_State* const state = stuff->state;
-
-	switch (decoded_address_mode_type)
-	{
-		case DECODED_ADDRESS_MODE_TYPE_NONE:
-			break;
-
-		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
-			value = *decoded_address_mode->reg.address & decoded_address_mode->reg.operation_size_bitmask;
-			break;
-
-		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
-		{
-			const cc_u32f address = decoded_address_mode->memory.address;
-
-			switch (decoded_address_mode->memory.operation_size_in_bytes)
-			{
-				case 0:
-					value = address;
-					break;
-
-				case 1:
-					value = ReadByte(stuff, address);
-					break;
-
-				case 2:
-					value = ReadWord(stuff, address);
-					break;
-
-				case 4:
-					value = ReadLongWord(stuff, address);
-					break;
-			}
-
-			break;
-		}
-
-		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
-			value = state->status_register;
-			break;
-
-		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
-			value = state->status_register & 0xFF;
-			break;
-	}
-
-	return value;
-}
-
 static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 {
 	const cc_bool carry = (state->status_register & CONDITION_CODE_CARRY) != 0;
@@ -559,7 +362,7 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 	return cc_false;
 }
 
-/* Condition code functions */
+/* Instruction steps */
 
 typedef struct Closure
 {
@@ -576,6 +379,647 @@ typedef void (*ClosureCall)(Closure* const closure);
 static void DummyClosureCall(Closure* const closure)
 {
 	(void)closure;
+}
+
+/* Supervisor mode check */
+
+static void SupervisorCheck(Closure* const closure)
+{
+	/* Only allow this instruction in supervisor mode. */
+	if ((closure->stuff.state->status_register & STATUS_SUPERVISOR) == 0)
+	{
+		Group1Or2Exception(&closure->stuff, 8);
+		longjmp(closure->stuff.exception.context, 1);
+	}
+}
+
+static ClosureCall GetSupervisorCheck(const Instruction instruction)
+{
+	return Instruction_IsPrivileged(instruction) ? SupervisorCheck : DummyClosureCall;
+}
+
+/* Decode address mode */
+
+typedef void (*DecodeAddressModeCall)(Closure* const closure, DecodedAddressMode* const decoded_address_mode);
+
+static void DummyDecodeAddressModeCall(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	(void)closure;
+	(void)decoded_address_mode;
+}
+
+#define MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, NUMBER, SIZE_NAME, SIZE) \
+static void MemoryAddress_##NAME##NUMBER##_##SIZE_NAME(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	decoded_address_mode->reg.address = &closure->stuff.state->MEMBER[NUMBER]; \
+	decoded_address_mode->reg.operation_size_bitmask = SIZE; \
+}
+
+#define MAKE_MEMORY_ADDRESS_REGISTERS(NAME, MEMBER, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 0, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 1, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 2, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 3, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 4, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 5, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 6, SIZE_NAME, SIZE) \
+	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 7, SIZE_NAME, SIZE)
+
+#define MAKE_MEMORY_ADDRESS_REGISTERS_DATA(SIZE_NAME, SIZE) MAKE_MEMORY_ADDRESS_REGISTERS(D, data_registers, SIZE_NAME, SIZE)
+#define MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(SIZE_NAME, SIZE) MAKE_MEMORY_ADDRESS_REGISTERS(A, address_registers, SIZE_NAME, SIZE)
+
+MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Byte, 0xFF)
+MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Word, 0xFFFF)
+MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Long, 0xFFFFFFFF)
+
+MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Byte, 0xFF) /* TODO: This should never be used, right? */
+MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Word, 0xFFFF)
+MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Long, 0xFFFFFFFF)
+
+static void MemoryAddress_AbsoluteShort(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	const cc_u32f short_address = ReadWord(&closure->stuff, closure->stuff.state->program_counter);
+
+	decoded_address_mode->memory.address = CC_SIGN_EXTEND_ULONG(15, short_address);
+	closure->stuff.state->program_counter += 2;
+}
+
+static void MemoryAddress_AbsoluteLong(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	decoded_address_mode->memory.address = ReadLongWord(&closure->stuff, closure->stuff.state->program_counter);
+	closure->stuff.state->program_counter += 4;
+}
+
+static void MemoryAddress_ImmediateByte(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	/* A byte-sized immediate value occupies two bytes of space */
+	decoded_address_mode->memory.address = closure->stuff.state->program_counter + 1;
+	closure->stuff.state->program_counter += 2;
+}
+
+static void MemoryAddress_ImmediateWord(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	decoded_address_mode->memory.address = closure->stuff.state->program_counter;
+	closure->stuff.state->program_counter += 2;
+}
+
+static void MemoryAddress_ImmediateLong(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	decoded_address_mode->memory.address = closure->stuff.state->program_counter;
+	closure->stuff.state->program_counter += 4;
+}
+
+#define MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(NUMBER) \
+static void MemoryAddress_AddressRegister##NUMBER##Indirect(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	decoded_address_mode->memory.address = closure->stuff.state->address_registers[NUMBER]; \
+}
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(0)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(3)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(5)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(6)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT(7)
+
+#define MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(NUMBER, SIZE_NAME, SIZE) \
+static void MemoryAddress_AddressRegister##NUMBER##IndirectPredecrement_##SIZE_NAME(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	closure->stuff.state->address_registers[NUMBER] -= SIZE; \
+	MemoryAddress_AddressRegister##NUMBER##Indirect(closure, decoded_address_mode); \
+}
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(0, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(1, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(2, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(3, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(4, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(5, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(6, Byte, 1)
+/*MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(7, Byte, 1)*/
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(0, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(1, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(2, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(3, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(4, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(5, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(6, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(7, Word, 2)
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(0, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(1, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(2, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(3, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(4, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(5, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(6, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_PREDECREMENT(7, Long, 4)
+
+#define MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(NUMBER, SIZE_NAME, SIZE) \
+static void MemoryAddress_AddressRegister##NUMBER##IndirectPostincrement_##SIZE_NAME(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	MemoryAddress_AddressRegister##NUMBER##Indirect(closure, decoded_address_mode); \
+	closure->stuff.state->address_registers[NUMBER] += SIZE; \
+}
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(0, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(1, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(2, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(3, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(4, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(5, Byte, 1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(6, Byte, 1)
+/*MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(7, Byte, 1)*/
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(0, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(1, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(2, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(3, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(4, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(5, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(6, Word, 2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(7, Word, 2)
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(0, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(1, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(2, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(3, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(4, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(5, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(6, Long, 4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_POSTINCREMENT(7, Long, 4)
+
+#define MAKE_MEMORY_ADDRESS_DISPLACEMENT \
+	{ \
+		/* Add displacement */ \
+		const cc_u32f displacement = ReadWord(&closure->stuff, closure->stuff.state->program_counter); \
+ \
+		decoded_address_mode->memory.address += CC_SIGN_EXTEND_ULONG(15, displacement); \
+		closure->stuff.state->program_counter += 2; \
+	}
+
+#define MAKE_MEMORY_ADDRESS_INDEX \
+	{ \
+		/* Add index register and index literal */ \
+		const cc_u32f extension_word = ReadWord(&closure->stuff, closure->stuff.state->program_counter); \
+		const cc_bool is_address_register = (extension_word & 0x8000) != 0; \
+		const cc_u32f displacement_reg = (extension_word >> 12) & 7; \
+		const cc_bool is_longword = (extension_word & 0x0800) != 0; \
+		const cc_u32f displacement_literal_value = CC_SIGN_EXTEND_ULONG(7, extension_word); \
+		const cc_u32f displacement_reg_value = CC_SIGN_EXTEND_ULONG(is_longword ? 31 : 15, (is_address_register ? closure->stuff.state->address_registers : closure->stuff.state->data_registers)[displacement_reg]); \
+ \
+		decoded_address_mode->memory.address += displacement_reg_value; \
+		decoded_address_mode->memory.address += displacement_literal_value; \
+		closure->stuff.state->program_counter += 2; \
+	}
+
+#define MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(NUMBER) \
+static void MemoryAddress_AddressRegister##NUMBER##IndirectWithDisplacement(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	/* Address register used as base address */ \
+	decoded_address_mode->memory.address = closure->stuff.state->address_registers[NUMBER]; \
+	MAKE_MEMORY_ADDRESS_DISPLACEMENT \
+}
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(0)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(3)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(5)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(6)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT(7)
+
+static void MemoryAddress_ProgramCounterWithDisplacement(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	/* Program counter used as base address */
+	decoded_address_mode->memory.address = closure->stuff.state->program_counter;
+	MAKE_MEMORY_ADDRESS_DISPLACEMENT
+}
+
+#define MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(NUMBER) \
+static void MemoryAddress_AddressRegister##NUMBER##IndirectWithIndex(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
+{ \
+	/* Address register used as base address */ \
+	decoded_address_mode->memory.address = closure->stuff.state->address_registers[NUMBER]; \
+	MAKE_MEMORY_ADDRESS_INDEX \
+}
+
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(0)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(1)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(2)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(3)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(4)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(5)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(6)
+MAKE_MEMORY_ADDRESS_REGISTER_INDIRECT_WITH_INDEX(7)
+
+static void MemoryAddress_ProgramCounterWithIndex(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
+{
+	/* Program counter used as base address */
+	decoded_address_mode->memory.address = closure->stuff.state->program_counter;
+	MAKE_MEMORY_ADDRESS_INDEX
+}
+
+static DecodeAddressModeCall DecodeMemoryAddressMode(const Operand *decoded_operand)
+{
+	DecodeAddressModeCall function;
+
+	/* TODO: Switch statement! */
+	if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT)
+	{
+		function = MemoryAddress_AbsoluteShort;
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
+	{
+		function = MemoryAddress_AbsoluteLong;
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
+	{
+		/* Immediate value */
+		switch (decoded_operand->operation_size_in_bytes)
+		{
+			case 1:
+				function = MemoryAddress_ImmediateByte;
+				break;
+
+			case 2:
+				function = MemoryAddress_ImmediateWord;
+				break;
+
+			case 4:
+			case 8: /* TODO: Check what a length of 8 actually does. */
+			case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+				function = MemoryAddress_ImmediateLong;
+				break;
+
+			default:
+				function = DummyDecodeAddressModeCall;
+				assert(cc_false);
+				break;
+		}
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
+	{
+		/* Address register indirect */
+		static const DecodeAddressModeCall functions[] = {
+			MemoryAddress_AddressRegister0Indirect,
+			MemoryAddress_AddressRegister1Indirect,
+			MemoryAddress_AddressRegister2Indirect,
+			MemoryAddress_AddressRegister3Indirect,
+			MemoryAddress_AddressRegister4Indirect,
+			MemoryAddress_AddressRegister5Indirect,
+			MemoryAddress_AddressRegister6Indirect,
+			MemoryAddress_AddressRegister7Indirect
+		};
+
+		function = functions[decoded_operand->address_mode_register];
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+	{
+		/* Address register indirect with predecrement */
+		switch (decoded_operand->operation_size_in_bytes)
+		{
+			case 0: /* MOVEM and MOVEP */ /* TODO: Apply this to the other memory address modes? */
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0Indirect,
+					MemoryAddress_AddressRegister1Indirect,
+					MemoryAddress_AddressRegister2Indirect,
+					MemoryAddress_AddressRegister3Indirect,
+					MemoryAddress_AddressRegister4Indirect,
+					MemoryAddress_AddressRegister5Indirect,
+					MemoryAddress_AddressRegister6Indirect,
+					MemoryAddress_AddressRegister7Indirect
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 1:
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister1IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister2IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister3IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister4IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister5IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister6IndirectPredecrement_Byte,
+					MemoryAddress_AddressRegister7IndirectPredecrement_Word /* The stack pointer moves two bytes instead of one byte, for alignment purposes */
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 2:
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister1IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister2IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister3IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister4IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister5IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister6IndirectPredecrement_Word,
+					MemoryAddress_AddressRegister7IndirectPredecrement_Word
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 4:
+			case 8: /* TODO: Check what a length of 8 actually does. */
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister1IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister2IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister3IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister4IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister5IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister6IndirectPredecrement_Long,
+					MemoryAddress_AddressRegister7IndirectPredecrement_Long
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			default:
+				assert(cc_false);
+				function = DummyDecodeAddressModeCall;
+				break;
+		}
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
+	{
+		/* Address register indirect with postincrement */
+		switch (decoded_operand->operation_size_in_bytes)
+		{
+			case 0: /* MOVEM and MOVEP */ /* TODO: Apply this to the other memory address modes? */
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0Indirect,
+					MemoryAddress_AddressRegister1Indirect,
+					MemoryAddress_AddressRegister2Indirect,
+					MemoryAddress_AddressRegister3Indirect,
+					MemoryAddress_AddressRegister4Indirect,
+					MemoryAddress_AddressRegister5Indirect,
+					MemoryAddress_AddressRegister6Indirect,
+					MemoryAddress_AddressRegister7Indirect
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 1:
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister1IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister2IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister3IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister4IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister5IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister6IndirectPostincrement_Byte,
+					MemoryAddress_AddressRegister7IndirectPostincrement_Word /* The stack pointer moves two bytes instead of one byte, for alignment purposes */
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 2:
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister1IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister2IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister3IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister4IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister5IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister6IndirectPostincrement_Word,
+					MemoryAddress_AddressRegister7IndirectPostincrement_Word
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			case 4:
+			case 8: /* TODO: Check what a length of 8 actually does. */
+			{
+				static const DecodeAddressModeCall functions[] = {
+					MemoryAddress_AddressRegister0IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister1IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister2IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister3IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister4IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister5IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister6IndirectPostincrement_Long,
+					MemoryAddress_AddressRegister7IndirectPostincrement_Long
+				};
+
+				function = functions[decoded_operand->address_mode_register];
+				break;
+			}
+
+			default:
+				assert(cc_false);
+				function = DummyDecodeAddressModeCall;
+				break;
+		}
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT)
+	{
+		static const DecodeAddressModeCall functions[] = {
+			MemoryAddress_AddressRegister0IndirectWithDisplacement,
+			MemoryAddress_AddressRegister1IndirectWithDisplacement,
+			MemoryAddress_AddressRegister2IndirectWithDisplacement,
+			MemoryAddress_AddressRegister3IndirectWithDisplacement,
+			MemoryAddress_AddressRegister4IndirectWithDisplacement,
+			MemoryAddress_AddressRegister5IndirectWithDisplacement,
+			MemoryAddress_AddressRegister6IndirectWithDisplacement,
+			MemoryAddress_AddressRegister7IndirectWithDisplacement
+		};
+
+		function = functions[decoded_operand->address_mode_register];
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX)
+	{
+		static const DecodeAddressModeCall functions[] = {
+			MemoryAddress_AddressRegister0IndirectWithIndex,
+			MemoryAddress_AddressRegister1IndirectWithIndex,
+			MemoryAddress_AddressRegister2IndirectWithIndex,
+			MemoryAddress_AddressRegister3IndirectWithIndex,
+			MemoryAddress_AddressRegister4IndirectWithIndex,
+			MemoryAddress_AddressRegister5IndirectWithIndex,
+			MemoryAddress_AddressRegister6IndirectWithIndex,
+			MemoryAddress_AddressRegister7IndirectWithIndex
+		};
+
+		function = functions[decoded_operand->address_mode_register];
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT)
+	{
+		function = MemoryAddress_ProgramCounterWithDisplacement;
+	}
+	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX)
+	{
+		function = MemoryAddress_ProgramCounterWithIndex;
+	}
+
+	return function;
+}
+
+static DecodeAddressModeCall DecodeAddressMode(DecodedAddressModeMetadata *decoded_address_mode_metadata, const Operand *decoded_operand)
+{
+	DecodeAddressModeCall function;
+
+	switch (decoded_operand->address_mode)
+	{
+		case ADDRESS_MODE_NONE:
+			/* None */
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_NONE;
+			function = DummyDecodeAddressModeCall;
+			break;
+
+		case ADDRESS_MODE_DATA_REGISTER:
+		case ADDRESS_MODE_ADDRESS_REGISTER:
+		{
+			/* Register */
+			static const DecodeAddressModeCall functions[2][3][8] = {
+				{
+					{
+						MemoryAddress_D0_Byte,
+						MemoryAddress_D1_Byte,
+						MemoryAddress_D2_Byte,
+						MemoryAddress_D3_Byte,
+						MemoryAddress_D4_Byte,
+						MemoryAddress_D5_Byte,
+						MemoryAddress_D6_Byte,
+						MemoryAddress_D7_Byte
+					},
+					{
+						MemoryAddress_D0_Word,
+						MemoryAddress_D1_Word,
+						MemoryAddress_D2_Word,
+						MemoryAddress_D3_Word,
+						MemoryAddress_D4_Word,
+						MemoryAddress_D5_Word,
+						MemoryAddress_D6_Word,
+						MemoryAddress_D7_Word
+					},
+					{
+						MemoryAddress_D0_Long,
+						MemoryAddress_D1_Long,
+						MemoryAddress_D2_Long,
+						MemoryAddress_D3_Long,
+						MemoryAddress_D4_Long,
+						MemoryAddress_D5_Long,
+						MemoryAddress_D6_Long,
+						MemoryAddress_D7_Long
+					}
+				},
+				{
+					{
+						MemoryAddress_A0_Byte,
+						MemoryAddress_A1_Byte,
+						MemoryAddress_A2_Byte,
+						MemoryAddress_A3_Byte,
+						MemoryAddress_A4_Byte,
+						MemoryAddress_A5_Byte,
+						MemoryAddress_A6_Byte,
+						MemoryAddress_A7_Byte
+					},
+					{
+						MemoryAddress_A0_Word,
+						MemoryAddress_A1_Word,
+						MemoryAddress_A2_Word,
+						MemoryAddress_A3_Word,
+						MemoryAddress_A4_Word,
+						MemoryAddress_A5_Word,
+						MemoryAddress_A6_Word,
+						MemoryAddress_A7_Word
+					},
+					{
+						MemoryAddress_A0_Long,
+						MemoryAddress_A1_Long,
+						MemoryAddress_A2_Long,
+						MemoryAddress_A3_Long,
+						MemoryAddress_A4_Long,
+						MemoryAddress_A5_Long,
+						MemoryAddress_A6_Long,
+						MemoryAddress_A7_Long
+					}
+				}
+			};
+
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
+
+			switch (decoded_operand->operation_size_in_bytes)
+			{
+				case 1:
+					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][0][decoded_operand->address_mode_register];
+					break;
+
+				case 2:
+					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][1][decoded_operand->address_mode_register];
+					break;
+
+				case 4:
+				case 8: /* TODO: Check what a length of 8 actually does. */
+				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][2][decoded_operand->address_mode_register];
+					break;
+
+				default:
+					assert(cc_false);
+					function = DummyDecodeAddressModeCall;
+					break;
+			}
+
+			break;
+		}
+
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
+		case ADDRESS_MODE_SPECIAL:
+			/* Memory access */
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
+			decoded_address_mode_metadata->operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
+			function = DecodeMemoryAddressMode(decoded_operand);
+			break;
+
+		case ADDRESS_MODE_STATUS_REGISTER:
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
+			function = DummyDecodeAddressModeCall;
+			break;
+
+		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
+			function = DummyDecodeAddressModeCall;
+			break;
+
+		default:
+			assert(cc_false);
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_NONE;
+			function = DummyDecodeAddressModeCall;
+			break;
+	}
+
+	return function;
 }
 
 /* Read from destination */
@@ -602,7 +1046,6 @@ static cc_u32f GetValue_MemoryAddress(Closure* const closure, const DecodedAddre
 	const cc_u32f address = decoded_address_mode->memory.address;
 
 	(void)closure;
-
 
 	return address;
 }
@@ -642,11 +1085,11 @@ static cc_u32f GetValue_ConditionCodeRegister(Closure* const closure, const Deco
 	return closure->stuff.state->status_register & 0xFF;
 }
 
-static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode *decoded_address_mode)
+static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressModeMetadata* const decoded_address_mode_metadata)
 {
 	GetValueCall function;
 
-	switch (decoded_address_mode_type)
+	switch (decoded_address_mode_metadata->type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_NONE:
 			function = GetValueCallDummy;
@@ -658,7 +1101,7 @@ static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressModeTyp
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
-			switch (decoded_address_mode->memory.operation_size_in_bytes)
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
 			{
 				case 0:
 					function = GetValue_MemoryAddress;
@@ -1397,11 +1840,11 @@ static void SetDestination_ConditionCodeRegister(Closure* const closure)
 	closure->stuff.state->status_register = (closure->stuff.state->status_register & ~CONDITION_CODE_REGISTER_MASK) | (value & CONDITION_CODE_REGISTER_MASK);
 }
 
-static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode *decoded_address_mode)
+static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeMetadata* const decoded_address_mode_metadata)
 {
 	ClosureCall function;
 
-	switch (decoded_address_mode_type)
+	switch (decoded_address_mode_metadata->type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_NONE:
 			function = DummyClosureCall;
@@ -1413,7 +1856,7 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeType 
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
-			switch (decoded_address_mode->memory.operation_size_in_bytes)
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
 			{
 				case 1:
 					function = SetDestination_MemoryByte;
@@ -1595,6 +2038,10 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 #ifndef LOW_MEMORY
 typedef struct InstructionSteps
 {
+	ClosureCall supervisor_check;
+	DecodeAddressModeCall decode_source;
+	GetValueCall read_source;
+	DecodeAddressModeCall decode_destination;
 	GetValueCall read_destination;
 	ClosureCall instruction_action;
 	ClosureCall write_destination;
@@ -1624,24 +2071,33 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	{
 		ExplodedOpcode opcode;
 		DecodedOpcode decoded_opcode;
-		DecodedAddressMode destination_decoded_address_mode;
-		DecodedAddressModeType destination_decoded_address_mode_type;
+		DecodedAddressModeMetadata source_decoded_address_mode_metadata, destination_decoded_address_mode_metadata;
 
 		InstructionSteps* const instruction_steps = &instruction_steps_lookup[i];
 
 		ExplodeOpcode(&opcode, i);
 		DecodeOpcode(&decoded_opcode, &opcode);
-		destination_decoded_address_mode_type = DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
+
+		instruction_steps->supervisor_check = GetSupervisorCheck(decoded_opcode.instruction);
+
+		instruction_steps->decode_source = DecodeAddressMode(&source_decoded_address_mode_metadata, &decoded_opcode.operands[0]);
+
+		if (Instruction_IsSourceOperandRead(decoded_opcode.instruction))
+			instruction_steps->read_source = GetValueUsingDecodedAddressMode2(&source_decoded_address_mode_metadata);
+		else
+			instruction_steps->read_source = GetValueCallDummy;
+
+		instruction_steps->decode_destination = DecodeAddressMode(&destination_decoded_address_mode_metadata, &decoded_opcode.operands[1]);
 
 		if (Instruction_IsDestinationOperandRead(decoded_opcode.instruction))
-			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(destination_decoded_address_mode_type, &destination_decoded_address_mode);
+			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(&destination_decoded_address_mode_metadata);
 		else
 			instruction_steps->read_destination = GetValueCallDummy;
 
 		instruction_steps->instruction_action = GetInstructionAction(decoded_opcode.instruction);
 
 		if (Instruction_IsDestinationOperandWritten(decoded_opcode.instruction))
-			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(destination_decoded_address_mode_type, &destination_decoded_address_mode);
+			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(&destination_decoded_address_mode_metadata);
 		else
 			instruction_steps->write_destination = DummyClosureCall;
 
@@ -1714,9 +2170,8 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		{
 			/* Process new instruction */
 			DecodedAddressMode source_decoded_address_mode;
-			DecodedAddressModeType source_decoded_address_mode_type;
-#ifndef LOW_MEMORY
-			DecodedAddressModeType destination_decoded_address_mode_type;
+#ifdef LOW_MEMORY
+			DecodedAddressModeMetadata source_decoded_address_mode_metadata, destination_decoded_address_mode_metadata;
 #endif
 
 			const cc_u16f machine_code = ReadWord(&closure.stuff, state->program_counter); /* TODO: Temporary - inline this later. */
@@ -1734,48 +2189,6 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 			/* Figure out which instruction this is */
 			DecodeOpcode(&closure.decoded_opcode, &closure.opcode);
-
-			switch (closure.decoded_opcode.instruction)
-			{
-				#include "m68k/gen.c"
-			}
-
-#ifdef LOW_MEMORY
-			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
-				closure.destination_value = GetValueUsingDecodedAddressMode2(destination_decoded_address_mode_type, &closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
-
-			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
-
-			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
-				SetValueUsingDecodedAddressMode(destination_decoded_address_mode_type, &closure.destination_decoded_address_mode)(&closure);
-#else
-			closure.destination_value = instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
-			instruction_steps->instruction_action(&closure);
-			instruction_steps->write_destination(&closure);
-#endif
-
-			/* Update the condition codes in the following order: */
-			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
-			{
-				const cc_u32f msb_mask = (cc_u32f)1 << (closure.decoded_opcode.size * 8 - 1);
-				closure.sm = 0 - ((closure.source_value & msb_mask) != 0);
-				closure.dm = 0 - ((closure.destination_value & msb_mask) != 0);
-				closure.rm = 0 - ((closure.result_value & msb_mask) != 0);
-			}
-
-#ifdef LOW_MEMORY
-			GetConditionCodeAction_Carry(closure.decoded_opcode.instruction)(&closure);
-			GetConditionCodeAction_Overflow(closure.decoded_opcode.instruction)(&closure);
-			GetConditionCodeAction_Zero(closure.decoded_opcode.instruction)(&closure);
-			GetConditionCodeAction_Negative(closure.decoded_opcode.instruction)(&closure);
-			GetConditionCodeAction_Extend(closure.decoded_opcode.instruction)(&closure);
-#else
-			instruction_steps->condition_code_carry(&closure);
-			instruction_steps->condition_code_overflow(&closure);
-			instruction_steps->condition_code_zero(&closure);
-			instruction_steps->condition_code_negative(&closure);
-			instruction_steps->condition_code_extend(&closure);
-#endif
 
 		#ifdef DEBUG_STUFF
 			{
@@ -1878,10 +2291,60 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 					"INSTRUCTION_UNIMPLEMENTED_2"
 				};
 
-				fprintf(stderr, "0x%.8" CC_PRIXLEAST32 " - %s\n", state->program_counter, instruction_strings[instruction]);
+				fprintf(stderr, "0x%.8" CC_PRIXLEAST32 " - %s\n", state->program_counter, instruction_strings[closure.decoded_opcode.instruction]);
 				state->program_counter |= 0; /* Something to latch a breakpoint onto */
 			}
 		#endif
+
+#ifdef LOW_MEMORY
+			GetSupervisorCheck(closure.decoded_opcode.instruction)(&closure);
+
+			DecodeAddressMode(&source_decoded_address_mode_metadata, &closure.decoded_opcode.operands[0])(&closure, &source_decoded_address_mode);
+
+			if (Instruction_IsSourceOperandRead(closure.decoded_opcode.instruction))
+				closure.source_value = GetValueUsingDecodedAddressMode2(&source_decoded_address_mode_metadata)(&closure, &source_decoded_address_mode);
+
+			DecodeAddressMode(&destination_decoded_address_mode_metadata, &closure.decoded_opcode.operands[1])(&closure, &closure.destination_decoded_address_mode);
+
+			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
+				closure.destination_value = GetValueUsingDecodedAddressMode2(&destination_decoded_address_mode_metadata)(&closure, &closure.destination_decoded_address_mode);
+
+			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
+
+			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
+				SetValueUsingDecodedAddressMode(&destination_decoded_address_mode_metadata)(&closure);
+#else
+			instruction_steps->supervisor_check(&closure);
+			instruction_steps->decode_source(&closure, &source_decoded_address_mode);
+			closure.source_value = instruction_steps->read_source(&closure, &source_decoded_address_mode);
+			instruction_steps->decode_destination(&closure, &closure.destination_decoded_address_mode);
+			closure.destination_value = instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
+			instruction_steps->instruction_action(&closure);
+			instruction_steps->write_destination(&closure);
+#endif
+
+			/* Update the condition codes in the following order: */
+			/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+			{
+				const cc_u32f msb_mask = (cc_u32f)1 << (closure.decoded_opcode.size * 8 - 1);
+				closure.sm = 0 - ((closure.source_value & msb_mask) != 0);
+				closure.dm = 0 - ((closure.destination_value & msb_mask) != 0);
+				closure.rm = 0 - ((closure.result_value & msb_mask) != 0);
+			}
+
+#ifdef LOW_MEMORY
+			GetConditionCodeAction_Carry(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Overflow(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Zero(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Negative(closure.decoded_opcode.instruction)(&closure);
+			GetConditionCodeAction_Extend(closure.decoded_opcode.instruction)(&closure);
+#else
+			instruction_steps->condition_code_carry(&closure);
+			instruction_steps->condition_code_overflow(&closure);
+			instruction_steps->condition_code_zero(&closure);
+			instruction_steps->condition_code_negative(&closure);
+			instruction_steps->condition_code_extend(&closure);
+#endif
 		}
 	}
 }

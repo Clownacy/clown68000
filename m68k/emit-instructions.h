@@ -22,8 +22,5 @@
 #include "instruction.h"
 
 void EmitInstructionSupervisorCheck(const Instruction instruction);
-void EmitInstructionSourceAddressMode(const Instruction instruction);
-void EmitInstructionDestinationAddressMode(void);
-void EmitInstructionReadSourceOperand(const Instruction instruction);
 
 #endif /* M68K_EMIT_INSTRUCTIONS_H */

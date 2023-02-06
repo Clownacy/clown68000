@@ -39,30 +39,3 @@ void EmitInstructionSupervisorCheck(const Instruction instruction)
 		Emit("");
 	}
 }
-
-void EmitInstructionSourceAddressMode(const Instruction instruction)
-{
-	if (Instruction_IsSourceOperandRead(instruction))
-	{
-		Emit("/* Decode source address mode. */");
-		Emit("source_decoded_address_mode_type = DecodeAddressMode(&closure.stuff, &source_decoded_address_mode, &closure.decoded_opcode.operands[0]);");
-		Emit("");
-	}
-}
-
-void EmitInstructionDestinationAddressMode(void)
-{
-	Emit("/* Decode destination address mode. */");
-	Emit("destination_decoded_address_mode_type = DecodeAddressMode(&closure.stuff, &closure.destination_decoded_address_mode, &closure.decoded_opcode.operands[1]);");
-	Emit("");
-}
-
-void EmitInstructionReadSourceOperand(const Instruction instruction)
-{
-	if (Instruction_IsSourceOperandRead(instruction))
-	{
-		Emit("/* Read source operand. */");
-		Emit("closure.source_value = GetValueUsingDecodedAddressMode(&closure.stuff, source_decoded_address_mode_type, &source_decoded_address_mode);");
-		Emit("");
-	}
-}
