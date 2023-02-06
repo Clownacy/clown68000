@@ -45,7 +45,7 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
 /*#define DEBUG_STUFF*/
 
-#define LOW_MEMORY
+/*#define LOW_MEMORY*/
 
 #ifdef DEBUG_STUFF
 #include <stdio.h>
@@ -75,22 +75,18 @@ typedef	enum DecodedAddressModeType
 	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
 } DecodedAddressModeType;
 
-typedef struct DecodedAddressMode
+typedef union DecodedAddressMode
 {
-	DecodedAddressModeType type;
-	union
+	struct
 	{
-		struct
-		{
-			cc_u32l *address;
-			cc_u32f operation_size_bitmask;
-		} reg;
-		struct
-		{
-			cc_u32f address;
-			cc_u8f operation_size_in_bytes;
-		} memory;
-	} data;
+		cc_u32l *address;
+		cc_u32f operation_size_bitmask;
+	} reg;
+	struct
+	{
+		cc_u32f address;
+		cc_u8f operation_size_in_bytes;
+	} memory;
 } DecodedAddressMode;
 
 typedef struct Stuff
@@ -382,23 +378,25 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 	return address;
 }
 
-static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, const Operand *decoded_operand)
+static DecodedAddressModeType DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, const Operand *decoded_operand)
 {
+	DecodedAddressModeType decoded_address_mode_type;
+
 	Clown68000_State* const state = stuff->state;
 
 	switch (decoded_operand->address_mode)
 	{
 		case ADDRESS_MODE_NONE:
 			/* None */
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_NONE;
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_NONE;
 			break;
 
 		case ADDRESS_MODE_DATA_REGISTER:
 		case ADDRESS_MODE_ADDRESS_REGISTER:
 			/* Register */
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
-			decoded_address_mode->data.reg.address = &(decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER ? state->address_registers : state->data_registers)[decoded_operand->address_mode_register];
-			decoded_address_mode->data.reg.operation_size_bitmask = (0xFFFFFFFF >> (32 - decoded_operand->operation_size_in_bytes * 8));
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
+			decoded_address_mode->reg.address = &(decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER ? state->address_registers : state->data_registers)[decoded_operand->address_mode_register];
+			decoded_address_mode->reg.operation_size_bitmask = (0xFFFFFFFF >> (32 - decoded_operand->operation_size_in_bytes * 8));
 			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
@@ -408,41 +406,48 @@ static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
 		case ADDRESS_MODE_SPECIAL:
 			/* Memory access */
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
-			decoded_address_mode->data.memory.address = DecodeMemoryAddressMode(stuff, decoded_operand);
-			decoded_address_mode->data.memory.operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
+			decoded_address_mode->memory.address = DecodeMemoryAddressMode(stuff, decoded_operand);
+			decoded_address_mode->memory.operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
 			break;
 
 		case ADDRESS_MODE_STATUS_REGISTER:
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
 			break;
 
 		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
+			break;
+
+		default:
+			assert(cc_false);
+			decoded_address_mode_type = DECODED_ADDRESS_MODE_TYPE_NONE;
 			break;
 	}
+
+	return decoded_address_mode_type;
 }
 
-static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, const DecodedAddressMode *decoded_address_mode)
+static cc_u32f GetValueUsingDecodedAddressMode(Stuff* const stuff, const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode* const decoded_address_mode)
 {
 	cc_u32f value = 0;
 
 	Clown68000_State* const state = stuff->state;
 
-	switch (decoded_address_mode->type)
+	switch (decoded_address_mode_type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_NONE:
 			break;
 
 		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
-			value = *decoded_address_mode->data.reg.address & decoded_address_mode->data.reg.operation_size_bitmask;
+			value = *decoded_address_mode->reg.address & decoded_address_mode->reg.operation_size_bitmask;
 			break;
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
-			const cc_u32f address = decoded_address_mode->data.memory.address;
+			const cc_u32f address = decoded_address_mode->memory.address;
 
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
+			switch (decoded_address_mode->memory.operation_size_in_bytes)
 			{
 				case 0:
 					value = address;
@@ -589,12 +594,12 @@ static cc_u32f GetValue_Register(Closure* const closure, const DecodedAddressMod
 {
 	(void)closure;
 
-	return *decoded_address_mode->data.reg.address & decoded_address_mode->data.reg.operation_size_bitmask;
+	return *decoded_address_mode->reg.address & decoded_address_mode->reg.operation_size_bitmask;
 }
 
 static cc_u32f GetValue_MemoryAddress(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	(void)closure;
 
@@ -604,21 +609,21 @@ static cc_u32f GetValue_MemoryAddress(Closure* const closure, const DecodedAddre
 
 static cc_u32f GetValue_MemoryByte(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	return ReadByte(&closure->stuff, address);
 }
 
 static cc_u32f GetValue_MemoryWord(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	return ReadWord(&closure->stuff, address);
 }
 
 static cc_u32f GetValue_MemoryLongWord(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	return ReadLongWord(&closure->stuff, address);
 }
@@ -637,11 +642,11 @@ static cc_u32f GetValue_ConditionCodeRegister(Closure* const closure, const Deco
 	return closure->stuff.state->status_register & 0xFF;
 }
 
-static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressMode *decoded_address_mode)
+static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode *decoded_address_mode)
 {
 	GetValueCall function;
 
-	switch (decoded_address_mode->type)
+	switch (decoded_address_mode_type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_NONE:
 			function = GetValueCallDummy;
@@ -653,7 +658,7 @@ static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressMode *d
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
+			switch (decoded_address_mode->memory.operation_size_in_bytes)
 			{
 				case 0:
 					function = GetValue_MemoryAddress;
@@ -1341,10 +1346,10 @@ static void SetDestination_Register(Closure* const closure)
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
 	const cc_u32f value = closure->result_value;
 
-	const cc_u32f destination_value = *decoded_address_mode->data.reg.address;
-	const cc_u32f operation_size_bitmask = decoded_address_mode->data.reg.operation_size_bitmask;
+	const cc_u32f destination_value = *decoded_address_mode->reg.address;
+	const cc_u32f operation_size_bitmask = decoded_address_mode->reg.operation_size_bitmask;
 
-	*decoded_address_mode->data.reg.address = (value & operation_size_bitmask) | (destination_value & ~operation_size_bitmask);
+	*decoded_address_mode->reg.address = (value & operation_size_bitmask) | (destination_value & ~operation_size_bitmask);
 }
 
 static void SetDestination_MemoryByte(Closure* const closure)
@@ -1352,7 +1357,7 @@ static void SetDestination_MemoryByte(Closure* const closure)
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
 	const cc_u32f value = closure->result_value;
 
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	WriteByte(&closure->stuff, address, value);
 }
@@ -1362,7 +1367,7 @@ static void SetDestination_MemoryWord(Closure* const closure)
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
 	const cc_u32f value = closure->result_value;
 
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	WriteWord(&closure->stuff, address, value);
 }
@@ -1372,7 +1377,7 @@ static void SetDestination_MemoryLongWord(Closure* const closure)
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
 	const cc_u32f value = closure->result_value;
 
-	const cc_u32f address = decoded_address_mode->data.memory.address;
+	const cc_u32f address = decoded_address_mode->memory.address;
 
 	WriteLongWord(&closure->stuff, address, value);
 }
@@ -1392,11 +1397,11 @@ static void SetDestination_ConditionCodeRegister(Closure* const closure)
 	closure->stuff.state->status_register = (closure->stuff.state->status_register & ~CONDITION_CODE_REGISTER_MASK) | (value & CONDITION_CODE_REGISTER_MASK);
 }
 
-static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressMode *decoded_address_mode)
+static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeType decoded_address_mode_type, const DecodedAddressMode *decoded_address_mode)
 {
 	ClosureCall function;
 
-	switch (decoded_address_mode->type)
+	switch (decoded_address_mode_type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_NONE:
 			function = DummyClosureCall;
@@ -1408,7 +1413,7 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressMode *dec
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
+			switch (decoded_address_mode->memory.operation_size_in_bytes)
 			{
 				case 1:
 					function = SetDestination_MemoryByte;
@@ -1620,22 +1625,23 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		ExplodedOpcode opcode;
 		DecodedOpcode decoded_opcode;
 		DecodedAddressMode destination_decoded_address_mode;
+		DecodedAddressModeType destination_decoded_address_mode_type;
 
 		InstructionSteps* const instruction_steps = &instruction_steps_lookup[i];
 
 		ExplodeOpcode(&opcode, i);
 		DecodeOpcode(&decoded_opcode, &opcode);
-		DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
+		destination_decoded_address_mode_type = DecodeAddressMode(&stuff, &destination_decoded_address_mode, &decoded_opcode.operands[1]);
 
 		if (Instruction_IsDestinationOperandRead(decoded_opcode.instruction))
-			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(&destination_decoded_address_mode);
+			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(destination_decoded_address_mode_type, &destination_decoded_address_mode);
 		else
 			instruction_steps->read_destination = GetValueCallDummy;
 
 		instruction_steps->instruction_action = GetInstructionAction(decoded_opcode.instruction);
 
 		if (Instruction_IsDestinationOperandWritten(decoded_opcode.instruction))
-			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(&destination_decoded_address_mode);
+			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(destination_decoded_address_mode_type, &destination_decoded_address_mode);
 		else
 			instruction_steps->write_destination = DummyClosureCall;
 
@@ -1708,6 +1714,10 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		{
 			/* Process new instruction */
 			DecodedAddressMode source_decoded_address_mode;
+			DecodedAddressModeType source_decoded_address_mode_type;
+#ifndef LOW_MEMORY
+			DecodedAddressModeType destination_decoded_address_mode_type;
+#endif
 
 			const cc_u16f machine_code = ReadWord(&closure.stuff, state->program_counter); /* TODO: Temporary - inline this later. */
 #ifndef LOW_MEMORY
@@ -1732,12 +1742,12 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 #ifdef LOW_MEMORY
 			if (Instruction_IsDestinationOperandRead(closure.decoded_opcode.instruction))
-				closure.destination_value = GetValueUsingDecodedAddressMode2(&closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
+				closure.destination_value = GetValueUsingDecodedAddressMode2(destination_decoded_address_mode_type, &closure.destination_decoded_address_mode)(&closure, &closure.destination_decoded_address_mode);
 
 			GetInstructionAction(closure.decoded_opcode.instruction)(&closure);
 
 			if (Instruction_IsDestinationOperandWritten(closure.decoded_opcode.instruction))
-				SetValueUsingDecodedAddressMode(&closure.destination_decoded_address_mode)(&closure);
+				SetValueUsingDecodedAddressMode(destination_decoded_address_mode_type, &closure.destination_decoded_address_mode)(&closure);
 #else
 			closure.destination_value = instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
 			instruction_steps->instruction_action(&closure);
