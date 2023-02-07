@@ -2294,6 +2294,8 @@ static void SetUpForConditionCodes(Closure* const closure)
 	closure->rm = 0 - ((closure->result_value & msb_mask) != 0);
 }
 
+#include <string.h> /* TODO: Kill */
+
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	Stuff stuff;
@@ -2367,6 +2369,8 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 			AddToList(instruction_steps, negative);
 			AddToList(instruction_steps, extend);
 		}
+
+		memmove(&instruction_steps->functions[13 - instruction_steps->total_functions], &instruction_steps->functions[0], instruction_steps->total_functions * sizeof(instruction_steps->functions[0]));
 	} while (i++ != 0xFFFF);
 #endif
 
@@ -2589,8 +2593,51 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 #else
 			closure.size_mask = closure.instruction_steps->size_mask; /* TODO: Get rid of this? */
 
-			for (i = 0; i < closure.instruction_steps->total_functions; ++i)
-				closure.instruction_steps->functions[i](&closure);
+			/* A freaking Duff's Device, because I'm that desperate for optimisation. */
+			switch (closure.instruction_steps->total_functions)
+			{
+				case 13:
+					closure.instruction_steps->functions[0](&closure);
+					/* Fall-through */
+				case 12:
+					closure.instruction_steps->functions[1](&closure);
+					/* Fall-through */
+				case 11:
+					closure.instruction_steps->functions[2](&closure);
+					/* Fall-through */
+				case 10:
+					closure.instruction_steps->functions[3](&closure);
+					/* Fall-through */
+				case 9:
+					closure.instruction_steps->functions[4](&closure);
+					/* Fall-through */
+				case 8:
+					closure.instruction_steps->functions[5](&closure);
+					/* Fall-through */
+				case 7:
+					closure.instruction_steps->functions[6](&closure);
+					/* Fall-through */
+				case 6:
+					closure.instruction_steps->functions[7](&closure);
+					/* Fall-through */
+				case 5:
+					closure.instruction_steps->functions[8](&closure);
+					/* Fall-through */
+				case 4:
+					closure.instruction_steps->functions[9](&closure);
+					/* Fall-through */
+				case 3:
+					closure.instruction_steps->functions[10](&closure);
+					/* Fall-through */
+				case 2:
+					closure.instruction_steps->functions[11](&closure);
+					/* Fall-through */
+				case 1:
+					closure.instruction_steps->functions[12](&closure);
+					/* Fall-through */
+				case 0:
+					break;
+			}
 #endif
 		}
 	}
