@@ -375,19 +375,36 @@ typedef void (*DecodeAddressModeCall)(struct Closure* const closure, DecodedAddr
 typedef cc_u32f (*GetValueCall)(struct Closure* const closure, const DecodedAddressMode* const decoded_address_mode);
 
 #ifndef LOW_MEMORY
+typedef struct OperationSteps
+{
+	ClosureCall supervisor_check;
+/*	cc_u8l total_functions;
+	ClosureCall functions[6];
+*/	ClosureCall instruction_action;
+	ClosureCall setup_for_condition_codes;
+	ClosureCall condition_code_carry;
+	ClosureCall condition_code_overflow;
+	ClosureCall condition_code_zero;
+	ClosureCall condition_code_negative;
+	ClosureCall condition_code_extend;
+} OperationSteps;
+
+static OperationSteps operation_steps_lookup[INSTRUCTION_MAX];
+
 typedef struct InstructionSteps
 {
 	cc_u32l	size_mask;
-	cc_u8l total_functions;
-	ClosureCall functions[13];
+	const OperationSteps *operation_steps;
+/*	cc_u8l total_functions;
+	ClosureCall functions[13];*/
 /*	ClosureCall supervisor_check;*/
 	DecodeAddressModeCall decode_source;
 	GetValueCall read_source;
 	DecodeAddressModeCall decode_destination;
 	GetValueCall read_destination;
 /*	ClosureCall instruction_action;
-	ClosureCall write_destination;
-	ClosureCall condition_code_carry;
+*/	ClosureCall write_destination;
+/*	ClosureCall condition_code_carry;
 	ClosureCall condition_code_overflow;
 	ClosureCall condition_code_zero;
 	ClosureCall condition_code_negative;
@@ -2259,6 +2276,7 @@ static ClosureCall GetConditionCodeAction_Extend(const Instruction instruction)
 /* API */
 
 #ifndef LOW_MEMORY
+/*
 static void AddToList(InstructionSteps* const instruction_steps, const ClosureCall function)
 {
 	if (function != DummyClosureCall)
@@ -2283,7 +2301,7 @@ static void DecodeDestination(Closure* const closure)
 static void ReadDestination(Closure* const closure)
 {
 	closure->destination_value = closure->instruction_steps->read_destination(closure, &closure->destination_decoded_address_mode);
-}
+}*/
 #endif
 
 static void SetUpForConditionCodes(Closure* const closure)
@@ -2309,6 +2327,34 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	stuff.callbacks = callbacks;
 
 #ifndef LOW_MEMORY
+	for (i = 0; i < INSTRUCTION_MAX; ++i)
+	{
+		const Instruction instruction = (Instruction)i;
+		OperationSteps* const operation_steps = &operation_steps_lookup[i];
+
+		operation_steps->supervisor_check = GetSupervisorCheck(instruction);
+		operation_steps->instruction_action = GetInstructionAction(instruction);
+
+		{
+			const ClosureCall carry = GetConditionCodeAction_Carry(instruction);
+			const ClosureCall overflow = GetConditionCodeAction_Overflow(instruction);
+			const ClosureCall zero = GetConditionCodeAction_Zero(instruction);
+			const ClosureCall negative = GetConditionCodeAction_Negative(instruction);
+			const ClosureCall extend = GetConditionCodeAction_Extend(instruction);
+
+			if (carry != DummyClosureCall || overflow != DummyClosureCall || zero != DummyClosureCall || negative != DummyClosureCall || extend != DummyClosureCall)
+				operation_steps->setup_for_condition_codes = SetUpForConditionCodes;
+			else
+				operation_steps->setup_for_condition_codes = DummyClosureCall;
+
+			operation_steps->condition_code_carry = carry;
+			operation_steps->condition_code_overflow = overflow;
+			operation_steps->condition_code_zero = zero;
+			operation_steps->condition_code_negative = negative;
+			operation_steps->condition_code_extend = extend;
+		}
+	}
+
 	i = 0;
 	do
 	{
@@ -2322,55 +2368,27 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		DecodeOpcode(&decoded_opcode, &opcode);
 
 		instruction_steps->size_mask = GetSizeMask(&decoded_opcode);
-		instruction_steps->total_functions = 0;
-
-		AddToList(instruction_steps, GetSupervisorCheck(decoded_opcode.instruction));
+		instruction_steps->operation_steps = &operation_steps_lookup[decoded_opcode.instruction];
+		/*instruction_steps->total_functions = 0;*/
 
 		instruction_steps->decode_source = DecodeAddressMode(&source_decoded_address_mode_metadata, &decoded_opcode.operands[0]);
-		if (instruction_steps->decode_source != DummyDecodeAddressModeCall)
-			AddToList(instruction_steps, DecodeSource);
 
 		if (Instruction_IsSourceOperandRead(decoded_opcode.instruction))
-		{
 			instruction_steps->read_source = GetValueUsingDecodedAddressMode2(&source_decoded_address_mode_metadata);
-
-			if (instruction_steps->read_source != GetValueCallDummy)
-				AddToList(instruction_steps, ReadSource);
-		}
+		else
+			instruction_steps->read_source = GetValueCallDummy;
 
 		instruction_steps->decode_destination = DecodeAddressMode(&destination_decoded_address_mode_metadata, &decoded_opcode.operands[1]);
-		if (instruction_steps->decode_destination != DummyDecodeAddressModeCall)
-			AddToList(instruction_steps, DecodeDestination);
 
 		if (Instruction_IsDestinationOperandRead(decoded_opcode.instruction))
-		{
 			instruction_steps->read_destination = GetValueUsingDecodedAddressMode2(&destination_decoded_address_mode_metadata);
-
-			if (instruction_steps->read_destination != GetValueCallDummy)
-				AddToList(instruction_steps, ReadDestination);
-		}
-
-		AddToList(instruction_steps, GetInstructionAction(decoded_opcode.instruction));
+		else
+			instruction_steps->read_destination = GetValueCallDummy;
 
 		if (Instruction_IsDestinationOperandWritten(decoded_opcode.instruction))
-			AddToList(instruction_steps, SetValueUsingDecodedAddressMode(&destination_decoded_address_mode_metadata));
-
-		{
-			const ClosureCall carry = GetConditionCodeAction_Carry(decoded_opcode.instruction);
-			const ClosureCall overflow = GetConditionCodeAction_Overflow(decoded_opcode.instruction);
-			const ClosureCall zero = GetConditionCodeAction_Zero(decoded_opcode.instruction);
-			const ClosureCall negative = GetConditionCodeAction_Negative(decoded_opcode.instruction);
-			const ClosureCall extend = GetConditionCodeAction_Extend(decoded_opcode.instruction);
-
-			if (carry != DummyClosureCall || overflow != DummyClosureCall || zero != DummyClosureCall || negative != DummyClosureCall || extend != DummyClosureCall)
-				AddToList(instruction_steps, SetUpForConditionCodes);
-
-			AddToList(instruction_steps, carry);
-			AddToList(instruction_steps, overflow);
-			AddToList(instruction_steps, zero);
-			AddToList(instruction_steps, negative);
-			AddToList(instruction_steps, extend);
-		}
+			instruction_steps->write_destination = SetValueUsingDecodedAddressMode(&destination_decoded_address_mode_metadata);
+		else
+			instruction_steps->write_destination = DummyClosureCall;
 
 #ifndef TEMPY_DICKY
 		memmove(&instruction_steps->functions[13 - instruction_steps->total_functions], &instruction_steps->functions[0], instruction_steps->total_functions * sizeof(instruction_steps->functions[0]));
@@ -2598,8 +2616,27 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			closure.size_mask = closure.instruction_steps->size_mask; /* TODO: Get rid of this? */
 
 #ifdef TEMPY_DICKY
-			for (i = 0; i < closure.instruction_steps->total_functions; ++i)
-				closure.instruction_steps->functions[i](&closure);
+/*			for (i = 0; i < closure.instruction_steps->total_functions; ++i)
+				closure.instruction_steps->functions[i](&closure);*/
+
+			closure.instruction_steps->operation_steps->supervisor_check(&closure);
+
+			closure.instruction_steps->decode_source(&closure, &closure.source_decoded_address_mode);
+			closure.source_value = closure.instruction_steps->read_source(&closure, &closure.source_decoded_address_mode);
+
+			closure.instruction_steps->decode_destination(&closure, &closure.destination_decoded_address_mode);
+			closure.destination_value = closure.instruction_steps->read_destination(&closure, &closure.destination_decoded_address_mode);
+
+			closure.instruction_steps->operation_steps->instruction_action(&closure);
+
+			closure.instruction_steps->write_destination(&closure);
+
+			closure.instruction_steps->operation_steps->setup_for_condition_codes(&closure);
+			closure.instruction_steps->operation_steps->condition_code_carry(&closure);
+			closure.instruction_steps->operation_steps->condition_code_overflow(&closure);
+			closure.instruction_steps->operation_steps->condition_code_zero(&closure);
+			closure.instruction_steps->operation_steps->condition_code_negative(&closure);
+			closure.instruction_steps->operation_steps->condition_code_extend(&closure);
 #else
 			/* A freaking Duff's Device, because I'm that desperate for optimisation. */
 			switch (closure.instruction_steps->total_functions)

@@ -121,4 +121,6 @@ typedef enum Instruction
 	INSTRUCTION_UNIMPLEMENTED_2
 } Instruction;
 
+#define INSTRUCTION_MAX (INSTRUCTION_UNIMPLEMENTED_2 + 1)
+
 #endif /* M68K_INSTRUCTION_H */
