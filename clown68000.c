@@ -69,7 +69,8 @@ enum
 typedef	enum DecodedAddressModeType
 {
 	DECODED_ADDRESS_MODE_TYPE_NONE,
-	DECODED_ADDRESS_MODE_TYPE_REGISTER,
+	DECODED_ADDRESS_MODE_TYPE_DATA_REGISTER,
+	DECODED_ADDRESS_MODE_TYPE_ADDRESS_REGISTER,
 	DECODED_ADDRESS_MODE_TYPE_MEMORY,
 	DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER,
 	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
@@ -80,6 +81,7 @@ typedef struct DecodedAddressModeMetadata
 {
 	DecodedAddressModeType type;
 	cc_u8f operation_size_in_bytes;
+	cc_u8f register_index;
 } DecodedAddressModeMetadata;
 
 typedef union DecodedAddressMode
@@ -410,34 +412,6 @@ static void DummyDecodeAddressModeCall(Closure* const closure, DecodedAddressMod
 	(void)closure;
 	(void)decoded_address_mode;
 }
-
-#define MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, NUMBER, SIZE_NAME, SIZE) \
-static void MemoryAddress_##NAME##NUMBER##_##SIZE_NAME(Closure* const closure, DecodedAddressMode* const decoded_address_mode) \
-{ \
-	decoded_address_mode->reg.address = &closure->stuff.state->MEMBER[NUMBER]; \
-	decoded_address_mode->reg.operation_size_bitmask = SIZE; \
-}
-
-#define MAKE_MEMORY_ADDRESS_REGISTERS(NAME, MEMBER, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 0, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 1, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 2, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 3, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 4, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 5, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 6, SIZE_NAME, SIZE) \
-	MAKE_MEMORY_ADDRESS_REGISTER(NAME, MEMBER, 7, SIZE_NAME, SIZE)
-
-#define MAKE_MEMORY_ADDRESS_REGISTERS_DATA(SIZE_NAME, SIZE) MAKE_MEMORY_ADDRESS_REGISTERS(D, data_registers, SIZE_NAME, SIZE)
-#define MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(SIZE_NAME, SIZE) MAKE_MEMORY_ADDRESS_REGISTERS(A, address_registers, SIZE_NAME, SIZE)
-
-MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Byte, 0xFF)
-MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Word, 0xFFFF)
-MAKE_MEMORY_ADDRESS_REGISTERS_DATA(Long, 0xFFFFFFFF)
-
-MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Byte, 0xFF) /* TODO: This should never be used, right? */
-MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Word, 0xFFFF)
-MAKE_MEMORY_ADDRESS_REGISTERS_ADDRESS(Long, 0xFFFFFFFF)
 
 static void MemoryAddress_AbsoluteShort(Closure* const closure, DecodedAddressMode* const decoded_address_mode)
 {
@@ -896,102 +870,20 @@ static DecodeAddressModeCall DecodeAddressMode(DecodedAddressModeMetadata *decod
 			break;
 
 		case ADDRESS_MODE_DATA_REGISTER:
-		case ADDRESS_MODE_ADDRESS_REGISTER:
-		{
 			/* Register */
-			static const DecodeAddressModeCall functions[2][3][8] = {
-				{
-					{
-						MemoryAddress_D0_Byte,
-						MemoryAddress_D1_Byte,
-						MemoryAddress_D2_Byte,
-						MemoryAddress_D3_Byte,
-						MemoryAddress_D4_Byte,
-						MemoryAddress_D5_Byte,
-						MemoryAddress_D6_Byte,
-						MemoryAddress_D7_Byte
-					},
-					{
-						MemoryAddress_D0_Word,
-						MemoryAddress_D1_Word,
-						MemoryAddress_D2_Word,
-						MemoryAddress_D3_Word,
-						MemoryAddress_D4_Word,
-						MemoryAddress_D5_Word,
-						MemoryAddress_D6_Word,
-						MemoryAddress_D7_Word
-					},
-					{
-						MemoryAddress_D0_Long,
-						MemoryAddress_D1_Long,
-						MemoryAddress_D2_Long,
-						MemoryAddress_D3_Long,
-						MemoryAddress_D4_Long,
-						MemoryAddress_D5_Long,
-						MemoryAddress_D6_Long,
-						MemoryAddress_D7_Long
-					}
-				},
-				{
-					{
-						MemoryAddress_A0_Byte,
-						MemoryAddress_A1_Byte,
-						MemoryAddress_A2_Byte,
-						MemoryAddress_A3_Byte,
-						MemoryAddress_A4_Byte,
-						MemoryAddress_A5_Byte,
-						MemoryAddress_A6_Byte,
-						MemoryAddress_A7_Byte
-					},
-					{
-						MemoryAddress_A0_Word,
-						MemoryAddress_A1_Word,
-						MemoryAddress_A2_Word,
-						MemoryAddress_A3_Word,
-						MemoryAddress_A4_Word,
-						MemoryAddress_A5_Word,
-						MemoryAddress_A6_Word,
-						MemoryAddress_A7_Word
-					},
-					{
-						MemoryAddress_A0_Long,
-						MemoryAddress_A1_Long,
-						MemoryAddress_A2_Long,
-						MemoryAddress_A3_Long,
-						MemoryAddress_A4_Long,
-						MemoryAddress_A5_Long,
-						MemoryAddress_A6_Long,
-						MemoryAddress_A7_Long
-					}
-				}
-			};
-
-			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
-
-			switch (decoded_operand->operation_size_in_bytes)
-			{
-				case 1:
-					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][0][decoded_operand->address_mode_register];
-					break;
-
-				case 2:
-					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][1][decoded_operand->address_mode_register];
-					break;
-
-				case 4:
-				case 8: /* TODO: Check what a length of 8 actually does. */
-				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
-					function = functions[decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER][2][decoded_operand->address_mode_register];
-					break;
-
-				default:
-					assert(cc_false);
-					function = DummyDecodeAddressModeCall;
-					break;
-			}
-
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_DATA_REGISTER;
+			decoded_address_mode_metadata->operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
+			decoded_address_mode_metadata->register_index = decoded_operand->address_mode_register;
+			function = DummyDecodeAddressModeCall;
 			break;
-		}
+
+		case ADDRESS_MODE_ADDRESS_REGISTER:
+			/* Register */
+			decoded_address_mode_metadata->type = DECODED_ADDRESS_MODE_TYPE_ADDRESS_REGISTER;
+			decoded_address_mode_metadata->operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
+			decoded_address_mode_metadata->register_index = decoded_operand->address_mode_register;
+			function = DummyDecodeAddressModeCall;
+			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
@@ -1036,13 +928,41 @@ static cc_u32f GetValueCallDummy(Closure* const closure, const DecodedAddressMod
 
 	return 0;
 }
-
+/*
 static cc_u32f GetValue_Register(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
 	(void)closure;
 
 	return *decoded_address_mode->reg.address & decoded_address_mode->reg.operation_size_bitmask;
 }
+*/
+#define MAKE_GET_VALUE_REGISTER(NAME, MEMBER, NUMBER, SIZE_NAME, SIZE) \
+static cc_u32f GetValue_##NAME##NUMBER##_##SIZE_NAME(Closure* const closure, const DecodedAddressMode* const decoded_address_mode) \
+{ \
+	(void)decoded_address_mode; \
+	return closure->stuff.state->MEMBER[NUMBER] & SIZE; \
+}
+
+#define MAKE_GET_VALUE_REGISTERS(NAME, MEMBER, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 0, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 1, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 2, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 3, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 4, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 5, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 6, SIZE_NAME, SIZE) \
+	MAKE_GET_VALUE_REGISTER(NAME, MEMBER, 7, SIZE_NAME, SIZE)
+
+#define MAKE_GET_VALUE_REGISTERS_DATA(SIZE_NAME, SIZE) MAKE_GET_VALUE_REGISTERS(D, data_registers, SIZE_NAME, SIZE)
+#define MAKE_GET_VALUE_REGISTERS_ADDRESS(SIZE_NAME, SIZE) MAKE_GET_VALUE_REGISTERS(A, address_registers, SIZE_NAME, SIZE)
+
+MAKE_GET_VALUE_REGISTERS_DATA(Byte, 0xFF)
+MAKE_GET_VALUE_REGISTERS_DATA(Word, 0xFFFF)
+MAKE_GET_VALUE_REGISTERS_DATA(Long, 0xFFFFFFFF)
+
+MAKE_GET_VALUE_REGISTERS_ADDRESS(Byte, 0xFF) /* TODO: This should never be used, right? */
+MAKE_GET_VALUE_REGISTERS_ADDRESS(Word, 0xFFFF)
+MAKE_GET_VALUE_REGISTERS_ADDRESS(Long, 0xFFFFFFFF)
 
 static cc_u32f GetValue_MemoryAddress(Closure* const closure, const DecodedAddressMode* const decoded_address_mode)
 {
@@ -1098,9 +1018,127 @@ static GetValueCall GetValueUsingDecodedAddressMode2(const DecodedAddressModeMet
 			function = GetValueCallDummy;
 			break;
 
-		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
-			function = GetValue_Register;
+		case DECODED_ADDRESS_MODE_TYPE_DATA_REGISTER:
+		{
+			/* Register */
+			static const GetValueCall functions[3][8] = {
+				{
+					GetValue_D0_Byte,
+					GetValue_D1_Byte,
+					GetValue_D2_Byte,
+					GetValue_D3_Byte,
+					GetValue_D4_Byte,
+					GetValue_D5_Byte,
+					GetValue_D6_Byte,
+					GetValue_D7_Byte
+				},
+				{
+					GetValue_D0_Word,
+					GetValue_D1_Word,
+					GetValue_D2_Word,
+					GetValue_D3_Word,
+					GetValue_D4_Word,
+					GetValue_D5_Word,
+					GetValue_D6_Word,
+					GetValue_D7_Word
+				},
+				{
+					GetValue_D0_Long,
+					GetValue_D1_Long,
+					GetValue_D2_Long,
+					GetValue_D3_Long,
+					GetValue_D4_Long,
+					GetValue_D5_Long,
+					GetValue_D6_Long,
+					GetValue_D7_Long
+				}
+			};
+
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
+			{
+				case 1:
+					function = functions[0][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 2:
+					function = functions[1][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 4:
+				case 8: /* TODO: Check what a length of 8 actually does. */
+				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+					function = functions[2][decoded_address_mode_metadata->register_index];
+					break;
+
+				default:
+					assert(cc_false);
+					function = GetValueCallDummy;
+					break;
+			}
+
 			break;
+		}
+
+		case DECODED_ADDRESS_MODE_TYPE_ADDRESS_REGISTER:
+		{
+			/* Register */
+			static const GetValueCall functions[3][8] = {
+				{
+					GetValue_A0_Byte,
+					GetValue_A1_Byte,
+					GetValue_A2_Byte,
+					GetValue_A3_Byte,
+					GetValue_A4_Byte,
+					GetValue_A5_Byte,
+					GetValue_A6_Byte,
+					GetValue_A7_Byte
+				},
+				{
+					GetValue_A0_Word,
+					GetValue_A1_Word,
+					GetValue_A2_Word,
+					GetValue_A3_Word,
+					GetValue_A4_Word,
+					GetValue_A5_Word,
+					GetValue_A6_Word,
+					GetValue_A7_Word
+				},
+				{
+					GetValue_A0_Long,
+					GetValue_A1_Long,
+					GetValue_A2_Long,
+					GetValue_A3_Long,
+					GetValue_A4_Long,
+					GetValue_A5_Long,
+					GetValue_A6_Long,
+					GetValue_A7_Long
+				}
+			};
+
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
+			{
+				case 1:
+					function = functions[0][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 2:
+					function = functions[1][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 4:
+				case 8: /* TODO: Check what a length of 8 actually does. */
+				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+					function = functions[2][decoded_address_mode_metadata->register_index];
+					break;
+
+				default:
+					assert(cc_false);
+					function = GetValueCallDummy;
+					break;
+			}
+
+			break;
+		}
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
@@ -1787,7 +1825,34 @@ static ClosureCall GetInstructionAction(const Instruction instruction)
 
 /* Write to destination */
 
-static void SetDestination_Register(Closure* const closure)
+#define MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, NUMBER, SIZE_NAME, SIZE) \
+static void SetDestination_##NAME##NUMBER##_##SIZE_NAME(Closure* const closure) \
+{ \
+	closure->stuff.state->MEMBER[NUMBER] = (closure->result_value & SIZE) | (closure->stuff.state->MEMBER[NUMBER] & ~SIZE); \
+}
+
+#define MAKE_SET_DESTINATION_REGISTERS(NAME, MEMBER, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 0, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 1, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 2, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 3, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 4, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 5, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 6, SIZE_NAME, SIZE) \
+	MAKE_SET_DESTINATION_REGISTER(NAME, MEMBER, 7, SIZE_NAME, SIZE)
+
+#define MAKE_SET_DESTINATION_REGISTERS_DATA(SIZE_NAME, SIZE) MAKE_SET_DESTINATION_REGISTERS(D, data_registers, SIZE_NAME, SIZE)
+#define MAKE_SET_DESTINATION_REGISTERS_ADDRESS(SIZE_NAME, SIZE) MAKE_SET_DESTINATION_REGISTERS(A, address_registers, SIZE_NAME, SIZE)
+
+MAKE_SET_DESTINATION_REGISTERS_DATA(Byte, 0xFF)
+MAKE_SET_DESTINATION_REGISTERS_DATA(Word, 0xFFFF)
+MAKE_SET_DESTINATION_REGISTERS_DATA(Long, 0xFFFFFFFF)
+
+MAKE_SET_DESTINATION_REGISTERS_ADDRESS(Byte, 0xFF) /* TODO: This should never be used, right? */
+MAKE_SET_DESTINATION_REGISTERS_ADDRESS(Word, 0xFFFF)
+MAKE_SET_DESTINATION_REGISTERS_ADDRESS(Long, 0xFFFFFFFF)
+
+/*static void SetDestination_Register(Closure* const closure)
 {
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
 	const cc_u32f value = closure->result_value;
@@ -1797,7 +1862,7 @@ static void SetDestination_Register(Closure* const closure)
 
 	*decoded_address_mode->reg.address = (value & operation_size_bitmask) | (destination_value & ~operation_size_bitmask);
 }
-
+*/
 static void SetDestination_MemoryByte(Closure* const closure)
 {
 	DecodedAddressMode* const decoded_address_mode = &closure->destination_decoded_address_mode;
@@ -1853,9 +1918,129 @@ static ClosureCall SetValueUsingDecodedAddressMode(const DecodedAddressModeMetad
 			function = DummyClosureCall;
 			break;
 
-		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
-			function = SetDestination_Register;
+		case DECODED_ADDRESS_MODE_TYPE_DATA_REGISTER:
+		{
+			/*function = SetDestination_Register;*/
+
+			static const ClosureCall functions[3][8] = {
+				{
+					SetDestination_D0_Byte,
+					SetDestination_D1_Byte,
+					SetDestination_D2_Byte,
+					SetDestination_D3_Byte,
+					SetDestination_D4_Byte,
+					SetDestination_D5_Byte,
+					SetDestination_D6_Byte,
+					SetDestination_D7_Byte
+				},
+				{
+					SetDestination_D0_Word,
+					SetDestination_D1_Word,
+					SetDestination_D2_Word,
+					SetDestination_D3_Word,
+					SetDestination_D4_Word,
+					SetDestination_D5_Word,
+					SetDestination_D6_Word,
+					SetDestination_D7_Word
+				},
+				{
+					SetDestination_D0_Long,
+					SetDestination_D1_Long,
+					SetDestination_D2_Long,
+					SetDestination_D3_Long,
+					SetDestination_D4_Long,
+					SetDestination_D5_Long,
+					SetDestination_D6_Long,
+					SetDestination_D7_Long
+				}
+			};
+
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
+			{
+				case 1:
+					function = functions[0][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 2:
+					function = functions[1][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 4:
+				case 8: /* TODO: Check what a length of 8 actually does. */
+				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+					function = functions[2][decoded_address_mode_metadata->register_index];
+					break;
+
+				default:
+					assert(cc_false);
+					function = DummyClosureCall;
+					break;
+			}
+
 			break;
+		}
+
+		case DECODED_ADDRESS_MODE_TYPE_ADDRESS_REGISTER:
+		{
+			/*function = SetDestination_Register;*/
+
+			static const ClosureCall functions[3][8] = {
+				{
+					SetDestination_A0_Byte,
+					SetDestination_A1_Byte,
+					SetDestination_A2_Byte,
+					SetDestination_A3_Byte,
+					SetDestination_A4_Byte,
+					SetDestination_A5_Byte,
+					SetDestination_A6_Byte,
+					SetDestination_A7_Byte
+				},
+				{
+					SetDestination_A0_Word,
+					SetDestination_A1_Word,
+					SetDestination_A2_Word,
+					SetDestination_A3_Word,
+					SetDestination_A4_Word,
+					SetDestination_A5_Word,
+					SetDestination_A6_Word,
+					SetDestination_A7_Word
+				},
+				{
+					SetDestination_A0_Long,
+					SetDestination_A1_Long,
+					SetDestination_A2_Long,
+					SetDestination_A3_Long,
+					SetDestination_A4_Long,
+					SetDestination_A5_Long,
+					SetDestination_A6_Long,
+					SetDestination_A7_Long
+				}
+			};
+
+			switch (decoded_address_mode_metadata->operation_size_in_bytes)
+			{
+				case 1:
+					function = functions[0][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 2:
+					function = functions[1][decoded_address_mode_metadata->register_index];
+					break;
+
+				case 4:
+				case 8: /* TODO: Check what a length of 8 actually does. */
+				case 0: /* Malformed LEA instructions can trigger this. */ /* TODO: See if I can avoid this. Or maybe just see what real hardware does. */
+					function = functions[2][decoded_address_mode_metadata->register_index];
+					break;
+
+				default:
+					assert(cc_false);
+					function = DummyClosureCall;
+					break;
+			}
+
+			break;
+		}
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
 		{
