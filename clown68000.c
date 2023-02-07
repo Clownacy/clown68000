@@ -47,6 +47,8 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
 /*#define LOW_MEMORY*/
 
+#define TEMPY_DICKY
+
 #ifdef DEBUG_STUFF
 #include <stdio.h>
 #endif
@@ -2370,7 +2372,9 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 			AddToList(instruction_steps, extend);
 		}
 
+#ifndef TEMPY_DICKY
 		memmove(&instruction_steps->functions[13 - instruction_steps->total_functions], &instruction_steps->functions[0], instruction_steps->total_functions * sizeof(instruction_steps->functions[0]));
+#endif
 	} while (i++ != 0xFFFF);
 #endif
 
@@ -2593,6 +2597,10 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 #else
 			closure.size_mask = closure.instruction_steps->size_mask; /* TODO: Get rid of this? */
 
+#ifdef TEMPY_DICKY
+			for (i = 0; i < closure.instruction_steps->total_functions; ++i)
+				closure.instruction_steps->functions[i](&closure);
+#else
 			/* A freaking Duff's Device, because I'm that desperate for optimisation. */
 			switch (closure.instruction_steps->total_functions)
 			{
@@ -2638,6 +2646,7 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 				case 0:
 					break;
 			}
+#endif
 #endif
 		}
 	}
