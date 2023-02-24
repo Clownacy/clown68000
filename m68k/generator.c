@@ -132,16 +132,18 @@ int main(int argc, char **argv)
 
 	for (i = 0; i < CC_COUNT_OF(instruction_strings); ++i)
 	{
+		const Instruction instruction = (Instruction)i;
+
 		EmitFormatted("case %s:", instruction_strings[i]);
 		++emit_indentation;
-		EmitInstructionSupervisorCheck(i);
-		EmitInstructionSourceAddressMode(i);
-		EmitInstructionReadSourceOperand(i);
-		EmitInstructionDestinationAddressMode(i);
-		EmitInstructionReadDestinationOperand(i);
-		EmitInstructionAction(i);
-		EmitInstructionWriteDestinationOperand(i);
-		EmitInstructionConditionCodes(i);
+		EmitInstructionSupervisorCheck(instruction);
+		EmitInstructionSourceAddressMode(instruction);
+		EmitInstructionReadSourceOperand(instruction);
+		EmitInstructionDestinationAddressMode(instruction);
+		EmitInstructionReadDestinationOperand(instruction);
+		EmitInstructionAction(instruction);
+		EmitInstructionWriteDestinationOperand(instruction);
+		EmitInstructionConditionCodes(instruction);
 		Emit("break;");
 		--emit_indentation;
 		Emit("");
