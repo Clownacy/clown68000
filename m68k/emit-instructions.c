@@ -384,14 +384,6 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 
 	switch (carry)
 	{
-		case INSTRUCTION_CARRY_DECIMAL_CARRY:
-			/* TODO */
-			break;
-
-		case INSTRUCTION_CARRY_DECIMAL_BORROW:
-			/* TODO */
-			break;
-
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			uses_sm = cc_true;
 			uses_dm = cc_true;
@@ -497,14 +489,6 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	Emit("/* Update CARRY condition code */");
 	switch (carry)
 	{
-		case INSTRUCTION_CARRY_DECIMAL_CARRY:
-			Emit("/* TODO - \"Decimal carry\" */");
-			break;
-
-		case INSTRUCTION_CARRY_DECIMAL_BORROW:
-			Emit("/* TODO - \"Decimal borrow\" */");
-			break;
-
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
 			Emit("state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));"); /* TODO: Can't this be simplified? */

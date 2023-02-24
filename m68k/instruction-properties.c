@@ -595,13 +595,6 @@ InstructionCarry Instruction_GetCarryModifier(const Instruction instruction)
 {
 	switch (instruction)
 	{
-		case INSTRUCTION_ABCD:
-			return INSTRUCTION_CARRY_DECIMAL_CARRY;
-
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_SBCD:
-			return INSTRUCTION_CARRY_DECIMAL_BORROW;
-
 		case INSTRUCTION_ADDQ:
 		case INSTRUCTION_ADD:
 		case INSTRUCTION_ADDI:
@@ -645,6 +638,10 @@ InstructionCarry Instruction_GetCarryModifier(const Instruction instruction)
 		case INSTRUCTION_CHK:
 			return INSTRUCTION_CARRY_UNDEFINED;
 
+		case INSTRUCTION_ABCD:
+		case INSTRUCTION_NBCD:
+		case INSTRUCTION_SBCD:
+		/* The above three set their carry code manually. */
 		case INSTRUCTION_ASD_REGISTER:
 		case INSTRUCTION_ASD_MEMORY:
 		case INSTRUCTION_LSD_REGISTER:

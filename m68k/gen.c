@@ -25,7 +25,7 @@ case INSTRUCTION_ABCD:
 	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
-	/* TODO - "Decimal carry" */
+	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
@@ -2061,7 +2061,7 @@ case INSTRUCTION_NBCD:
 	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
-	/* TODO - "Decimal borrow" */
+	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -2659,7 +2659,7 @@ case INSTRUCTION_SBCD:
 	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
-	/* TODO - "Decimal borrow" */
+	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
