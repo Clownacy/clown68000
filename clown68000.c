@@ -27,6 +27,9 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=35569#p35569
 
 Z80 reset stuff:
 https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
+
+ABCD/SBCD quirks:
+http://gendev.spritesmind.net/forum/viewtopic.php?f=2&t=1964
 */
 
 #include "clown68000.h"
