@@ -716,10 +716,13 @@ InstructionOverflow Instruction_GetOverflowModifier(const Instruction instructio
 {
 	switch (instruction)
 	{
+		case INSTRUCTION_ABCD:
 		case INSTRUCTION_ADDQ:
 		case INSTRUCTION_ADD:
 		case INSTRUCTION_ADDI:
 		case INSTRUCTION_ADDX:
+		case INSTRUCTION_NBCD:
+		case INSTRUCTION_SBCD:
 			return INSTRUCTION_OVERFLOW_ADD;
 
 		case INSTRUCTION_SUBQ:
@@ -754,10 +757,7 @@ InstructionOverflow Instruction_GetOverflowModifier(const Instruction instructio
 		case INSTRUCTION_TST:
 			return INSTRUCTION_OVERFLOW_CLEARED;
 
-		case INSTRUCTION_ABCD:
 		case INSTRUCTION_CHK:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_SBCD:
 			return INSTRUCTION_OVERFLOW_UNDEFINED;
 
 		case INSTRUCTION_ASD_REGISTER:
@@ -946,6 +946,9 @@ InstructionNegative Instruction_GetNegativeModifier(const Instruction instructio
 {
 	switch (instruction)
 	{
+		case INSTRUCTION_ABCD:
+		case INSTRUCTION_NBCD:
+		case INSTRUCTION_SBCD:
 		case INSTRUCTION_ADDQ:
 		case INSTRUCTION_SUBQ:
 		case INSTRUCTION_ADD:
@@ -984,11 +987,6 @@ InstructionNegative Instruction_GetNegativeModifier(const Instruction instructio
 		case INSTRUCTION_SWAP:
 		case INSTRUCTION_TST:
 			return INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE;
-
-		case INSTRUCTION_ABCD:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_SBCD:
-			return INSTRUCTION_NEGATIVE_UNDEFINED;
 
 		case INSTRUCTION_CHK:
 		case INSTRUCTION_DIVS:

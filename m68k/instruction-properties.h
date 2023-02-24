@@ -127,7 +127,7 @@ typedef enum InstructionZero
 typedef enum InstructionNegative
 {
 	INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE,
-	INSTRUCTION_NEGATIVE_UNDEFINED,
+	INSTRUCTION_NEGATIVE_UNDEFINED, /* TODO: Unused, so remove this! */
 	INSTRUCTION_NEGATIVE_UNAFFECTED
 } InstructionNegative;
 

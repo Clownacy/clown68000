@@ -19,16 +19,23 @@ case INSTRUCTION_ABCD:
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+	msb_mask = 1ul << (operation_size * 8 - 1);
+	sm = 0 - ((source_value & msb_mask) != 0);
+	dm = 0 - ((destination_value & msb_mask) != 0);
+	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
 	/* TODO - "Decimal carry" */
 	/* Update OVERFLOW condition code */
-	/* Undefined */
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));
 	/* Update NEGATIVE condition code */
-	/* Undefined */
+	/* Standard behaviour: set if result value is negative; clear otherwise */
+	state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & rm;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2048,16 +2055,23 @@ case INSTRUCTION_NBCD:
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+	msb_mask = 1ul << (operation_size * 8 - 1);
+	sm = 0 - ((source_value & msb_mask) != 0);
+	dm = 0 - ((destination_value & msb_mask) != 0);
+	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
 	/* TODO - "Decimal borrow" */
 	/* Update OVERFLOW condition code */
-	/* Undefined */
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));
 	/* Update NEGATIVE condition code */
-	/* Undefined */
+	/* Standard behaviour: set if result value is negative; clear otherwise */
+	state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & rm;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2639,16 +2653,23 @@ case INSTRUCTION_SBCD:
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+	msb_mask = 1ul << (operation_size * 8 - 1);
+	sm = 0 - ((source_value & msb_mask) != 0);
+	dm = 0 - ((destination_value & msb_mask) != 0);
+	rm = 0 - ((result_value & msb_mask) != 0);
 
 	/* Update CARRY condition code */
 	/* TODO - "Decimal borrow" */
 	/* Update OVERFLOW condition code */
-	/* Undefined */
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));
 	/* Update NEGATIVE condition code */
-	/* Undefined */
+	/* Standard behaviour: set if result value is negative; clear otherwise */
+	state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & rm;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
