@@ -469,9 +469,6 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 			uses_rm = cc_true;
 			break;
 
-		case INSTRUCTION_NEGATIVE_UNDEFINED:
-			break;
-
 		case INSTRUCTION_NEGATIVE_UNAFFECTED:
 			break;
 	}
@@ -597,10 +594,6 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 			Emit("/* Standard behaviour: set if result value is negative; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_NEGATIVE;");
 			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & rm;");
-			break;
-
-		case INSTRUCTION_NEGATIVE_UNDEFINED:
-			Emit("/* Undefined */");
 			break;
 
 		case INSTRUCTION_NEGATIVE_UNAFFECTED:
