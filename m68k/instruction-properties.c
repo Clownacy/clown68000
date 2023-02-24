@@ -721,8 +721,6 @@ InstructionOverflow Instruction_GetOverflowModifier(const Instruction instructio
 		case INSTRUCTION_ADD:
 		case INSTRUCTION_ADDI:
 		case INSTRUCTION_ADDX:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_SBCD:
 			return INSTRUCTION_OVERFLOW_ADD;
 
 		case INSTRUCTION_SUBQ:
@@ -730,6 +728,8 @@ InstructionOverflow Instruction_GetOverflowModifier(const Instruction instructio
 		case INSTRUCTION_CMPA:
 		case INSTRUCTION_CMPI:
 		case INSTRUCTION_CMPM:
+		case INSTRUCTION_NBCD:
+		case INSTRUCTION_SBCD:
 		case INSTRUCTION_SUB:
 		case INSTRUCTION_SUBI:
 		case INSTRUCTION_SUBX:

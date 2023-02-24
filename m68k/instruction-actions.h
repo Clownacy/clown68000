@@ -649,8 +649,24 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_SBCD\
-	/* TODO */\
-	UNIMPLEMENTED_INSTRUCTION("SBCD")
+	{\
+	/* ABCD works in two steps: a standard ADDX, followed by a standard ADD between the result and a 'correction factor'. */\
+	DO_INSTRUCTION_ACTION_SUBX;\
+\
+	/* The correction factor is determined by detecting both decimal and integer overflow of each
+	   nibble of the result, and setting its corresponding nibble to 6 if overflow did occur. */\
+	/* Credit goes to Flamewing for this neat logic trick. */\
+	source_value = (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) & 0x88) << 1;\
+	source_value = (source_value >> 2) | (source_value >> 3);\
+\
+	destination_value = result_value;\
+\
+	DO_INSTRUCTION_ACTION_SUB;\
+\
+	/* Manually set the carry flag here. */\
+	state->status_register &= ~CONDITION_CODE_CARRY;\
+	state->status_register |= (source_value & 0x40) != 0 || (~destination_value & result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;\
+	}
 
 #define DO_INSTRUCTION_ACTION_SUBX\
 	result_value = destination_value - source_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0)
@@ -676,20 +692,18 @@
 \
 	/* The correction factor is determined by detecting both decimal and integer overflow of each
 	   nibble of the result, and setting its corresponding nibble to 6 if overflow did occur. */\
-	/* Credit goes to Flamewing for this neat logic trick. This first part just isolates the overflow bits. */\
+	/* Credit goes to Flamewing for this neat logic trick. */\
 	source_value = (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) & 0x88) << 1;\
 	source_value |= ((result_value + 0x66) ^ result_value) & 0x110;\
-\
-	/* Manually set the carry flag here. */\
-	state->status_register &= ~CONDITION_CODE_CARRY;\
-	state->status_register |= (source_value & 0x100) != 0 ? CONDITION_CODE_CARRY : 0;\
-\
-	/* This part converts the overflow bits to the nunber 6. */\
 	source_value = (source_value >> 2) | (source_value >> 3);\
 \
 	destination_value = result_value;\
 \
 	DO_INSTRUCTION_ACTION_ADD;\
+\
+	/* Manually set the carry flag here. */\
+	state->status_register &= ~CONDITION_CODE_CARRY;\
+	state->status_register |= (source_value & 0x40) != 0 || (destination_value & ~result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;\
 	}
 
 #define DO_INSTRUCTION_ACTION_EXG\

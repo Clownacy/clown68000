@@ -2064,7 +2064,7 @@ case INSTRUCTION_NBCD:
 	/* TODO - "Decimal borrow" */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
+	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));
@@ -2662,7 +2662,7 @@ case INSTRUCTION_SBCD:
 	/* TODO - "Decimal borrow" */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
+	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));
