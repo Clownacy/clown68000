@@ -372,8 +372,9 @@
 	result_value = CC_SIGN_EXTEND_ULONG((opcode.raw & 0x0040) != 0 ? 15 : 7, destination_value)
 
 #define DO_INSTRUCTION_ACTION_NBCD\
-	/* TODO */\
-	UNIMPLEMENTED_INSTRUCTION("NBCD")
+	source_value = destination_value;\
+	destination_value = 0;\
+	DO_INSTRUCTION_ACTION_SBCD;
 
 #define DO_INSTRUCTION_ACTION_SWAP\
 	result_value = ((destination_value & 0x0000FFFF) << 16) | ((destination_value & 0xFFFF0000) >> 16)
