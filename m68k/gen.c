@@ -71,7 +71,7 @@ case INSTRUCTION_ADD:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
@@ -182,7 +182,7 @@ case INSTRUCTION_ADDI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
@@ -223,7 +223,7 @@ case INSTRUCTION_ADDQ:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
@@ -270,7 +270,7 @@ case INSTRUCTION_ADDX:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));
@@ -1015,7 +1015,7 @@ case INSTRUCTION_CMP:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -1057,7 +1057,7 @@ case INSTRUCTION_CMPA:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -1099,7 +1099,7 @@ case INSTRUCTION_CMPI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -1141,7 +1141,7 @@ case INSTRUCTION_CMPM:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -2767,7 +2767,7 @@ case INSTRUCTION_SUB:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -2878,7 +2878,7 @@ case INSTRUCTION_SUBI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -2919,7 +2919,7 @@ case INSTRUCTION_SUBQ:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
@@ -2966,7 +2966,7 @@ case INSTRUCTION_SUBX:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | (rm & ~dm) | (sm & rm));
+	state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 	state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));
