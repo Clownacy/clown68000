@@ -510,7 +510,7 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));");
+			Emit("state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | (~rm & dm) | (sm & ~rm));"); /* TODO: Can't this be simplified? */
 			break;
 
 		case INSTRUCTION_CARRY_STANDARD_BORROW:
