@@ -271,7 +271,7 @@
 
 #define DO_INSTRUCTION_ACTION_BTST\
 	/* Modulo the source value */\
-	source_value &= operation_size * 8 - 1;\
+	source_value &= msb_bit_index;\
 \
 	/* Set the zero flag to the specified bit */\
 	state->status_register &= ~CONDITION_CODE_ZERO;\
@@ -328,7 +328,7 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_MOVEA\
-	result_value = operation_size == 2 ? CC_SIGN_EXTEND_ULONG(15, source_value) : source_value
+	result_value = CC_SIGN_EXTEND_ULONG(msb_bit_index, source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVE\
 	result_value = source_value
@@ -789,7 +789,7 @@
 
 #define DO_INSTRUCTION_ACTION_SHIFT(SUB_ACTION_1, SUB_ACTION_2, SUB_ACTION_3, SUB_ACTION_4, SUB_ACTION_5, SUB_ACTION_6)\
 	{\
-	const cc_u32f sign_bit_bitmask = 1ul << (operation_size * 8 - 1);\
+	const cc_u32f sign_bit_bitmask = (cc_u32f)1 << msb_bit_index;\
 \
 	SUB_ACTION_1\
 \

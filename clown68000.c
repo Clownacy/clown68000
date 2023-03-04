@@ -53,11 +53,17 @@ http://gendev.spritesmind.net/forum/viewtopic.php?f=2&t=1964
 
 enum
 {
-	CONDITION_CODE_CARRY    = 1 << 0,
-	CONDITION_CODE_OVERFLOW = 1 << 1,
-	CONDITION_CODE_ZERO     = 1 << 2,
-	CONDITION_CODE_NEGATIVE = 1 << 3,
-	CONDITION_CODE_EXTEND   = 1 << 4,
+	CONDITION_CODE_CARRY_BIT    = 0,
+	CONDITION_CODE_OVERFLOW_BIT = 1,
+	CONDITION_CODE_ZERO_BIT     = 2,
+	CONDITION_CODE_NEGATIVE_BIT = 3,
+	CONDITION_CODE_EXTEND_BIT   = 4,
+
+	CONDITION_CODE_CARRY    = 1 << CONDITION_CODE_CARRY_BIT,
+	CONDITION_CODE_OVERFLOW = 1 << CONDITION_CODE_OVERFLOW_BIT,
+	CONDITION_CODE_ZERO     = 1 << CONDITION_CODE_ZERO_BIT,
+	CONDITION_CODE_NEGATIVE = 1 << CONDITION_CODE_NEGATIVE_BIT,
+	CONDITION_CODE_EXTEND   = 1 << CONDITION_CODE_EXTEND_BIT,
 	CONDITION_CODE_REGISTER_MASK = CONDITION_CODE_EXTEND | CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW | CONDITION_CODE_CARRY,
 
 	STATUS_INTERRUPT_MASK   = 7 << 8,
@@ -672,8 +678,7 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 			cc_u32f source_value, destination_value, result_value;
 			DecodedOpcode decoded_opcode;
-			cc_u32f msb_mask;
-			cc_u16f sm, dm, rm;
+			cc_u32f msb_bit_index;
 
 			source_value = destination_value = result_value = 0;
 
@@ -694,14 +699,12 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			/* Figure out which instruction this is */
 			DecodeOpcode(&decoded_opcode, &opcode);
 
-			#define operation_size decoded_opcode.size /* TODO: Get rid of this ugly thing. */
+			msb_bit_index = (decoded_opcode.size * 8 - 1);
 
 			switch (decoded_opcode.instruction)
 			{
 				#include "m68k/gen.c"
 			}
-
-			#undef operation_size
 
 		#ifdef DEBUG_STUFF
 			{

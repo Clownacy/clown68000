@@ -370,138 +370,26 @@ void EmitInstructionWriteDestinationOperand(const Instruction instruction)
 
 void EmitInstructionConditionCodes(const Instruction instruction)
 {
-	cc_bool uses_sm, uses_dm, uses_rm;
-
-	const InstructionCarry carry = Instruction_GetCarryModifier(instruction);
-	const InstructionOverflow overflow = Instruction_GetOverflowModifier(instruction);
-	const InstructionZero zero = Instruction_GetZeroModifier(instruction);
-	const InstructionNegative negative = Instruction_GetNegativeModifier(instruction);
-	const InstructionExtend extend = Instruction_GetExtendModifier(instruction);
-
-	uses_sm = cc_false;
-	uses_dm = cc_false;
-	uses_rm = cc_false;
-
-	switch (carry)
-	{
-		case INSTRUCTION_CARRY_STANDARD_CARRY:
-			uses_sm = cc_true;
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_CARRY_STANDARD_BORROW:
-			uses_sm = cc_true;
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_CARRY_NEG:
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_CARRY_CLEAR:
-			break;
-
-		case INSTRUCTION_CARRY_UNDEFINED:
-			break;
-
-		case INSTRUCTION_CARRY_UNAFFECTED:
-			break;
-	}
-
-	switch (overflow)
-	{
-		case INSTRUCTION_OVERFLOW_ADD:
-			uses_sm = cc_true;
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_OVERFLOW_SUB:
-			uses_sm = cc_true;
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_OVERFLOW_NEG:
-			uses_dm = cc_true;
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_OVERFLOW_CLEARED:
-			break;
-
-		case INSTRUCTION_OVERFLOW_UNDEFINED:
-			break;
-
-		case INSTRUCTION_OVERFLOW_UNAFFECTED:
-			break;
-	}
-
-	switch (zero)
-	{
-		case INSTRUCTION_ZERO_CLEAR_IF_NONZERO_UNAFFECTED_OTHERWISE:
-			break;
-
-		case INSTRUCTION_ZERO_SET_IF_ZERO_CLEAR_OTHERWISE:
-			break;
-
-		case INSTRUCTION_ZERO_UNDEFINED:
-			break;
-
-		case INSTRUCTION_ZERO_UNAFFECTED:
-			break;
-	}
-
-	switch (negative)
-	{
-		case INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE:
-			uses_rm = cc_true;
-			break;
-
-		case INSTRUCTION_NEGATIVE_UNAFFECTED:
-			break;
-	}
-
-	switch (extend)
-	{
-		case INSTRUCTION_EXTEND_SET_TO_CARRY:
-			break;
-
-		case INSTRUCTION_EXTEND_UNAFFECTED:
-			break;
-	}
-
 	Emit("/* Update the condition codes in the following order: */");
 	Emit("/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */");
-	if (uses_sm || uses_dm || uses_rm)
-		Emit("msb_mask = 1ul << (operation_size * 8 - 1);");
-	if (uses_sm)
-		Emit("sm = 0 - ((source_value & msb_mask) != 0);");
-	if (uses_dm)
-		Emit("dm = 0 - ((destination_value & msb_mask) != 0);");
-	if (uses_rm)
-		Emit("rm = 0 - ((result_value & msb_mask) != 0);");
 	Emit("");
 
 	Emit("/* Update CARRY condition code */");
-	switch (carry)
+	switch (Instruction_GetCarryModifier(instruction))
 	{
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= CONDITION_CODE_CARRY & ((sm & dm) | ((sm | dm) & ~rm));"); /* TODO: Can't this be simplified? */
+			Emit("state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_STANDARD_BORROW:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= CONDITION_CODE_CARRY & ((sm & ~dm) | ((sm | ~dm) & rm));");
+			Emit("state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= CONDITION_CODE_CARRY & (dm | rm);");
+			Emit("state->status_register |= ((destination_value | result_value) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_CLEAR:
@@ -518,21 +406,21 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	}
 
 	Emit("/* Update OVERFLOW condition code */");
-	switch (overflow)
+	switch (Instruction_GetOverflowModifier(instruction))
 	{
 		case INSTRUCTION_OVERFLOW_ADD:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= CONDITION_CODE_OVERFLOW & ((sm & dm & ~rm) | (~sm & ~dm & rm));");
+			Emit("state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_SUB:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= CONDITION_CODE_OVERFLOW & ((~sm & dm & ~rm) | (sm & ~dm & rm));");
+			Emit("state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= CONDITION_CODE_OVERFLOW & (dm & rm);");
+			Emit("state->status_register |= ((destination_value & result_value) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_CLEARED:
@@ -549,17 +437,17 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	}
 
 	Emit("/* Update ZERO condition code */");
-	switch (zero)
+	switch (Instruction_GetZeroModifier(instruction))
 	{
 		case INSTRUCTION_ZERO_CLEAR_IF_NONZERO_UNAFFECTED_OTHERWISE:
 			Emit("/* Cleared if the result is nonzero; unchanged otherwise */");
-			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));");
+			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_SET_IF_ZERO_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result is zero; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_ZERO;");
-			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - operation_size * 8))) == 0));");
+			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_UNDEFINED:
@@ -572,12 +460,12 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	}
 
 	Emit("/* Update NEGATIVE condition code */");
-	switch (negative)
+	switch (Instruction_GetNegativeModifier(instruction))
 	{
 		case INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result value is negative; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_NEGATIVE;");
-			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & rm;");
+			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;");
 			break;
 
 		case INSTRUCTION_NEGATIVE_UNAFFECTED:
@@ -586,7 +474,7 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	}
 
 	Emit("/* Update EXTEND condition code */");
-	switch (extend)
+	switch (Instruction_GetExtendModifier(instruction))
 	{
 		case INSTRUCTION_EXTEND_SET_TO_CARRY:
 			Emit("/* Standard behaviour: set to CARRY */");
