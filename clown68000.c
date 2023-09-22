@@ -142,7 +142,7 @@ static cc_u32f ReadByte(const Stuff *stuff, cc_u32f address)
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	return callbacks->read_callback(callbacks->user_data, address & 0xFFFFFE, (cc_bool)!odd, odd) >> (odd ? 0 : 8);
+	return (callbacks->read_callback(callbacks->user_data, address & 0xFFFFFE, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
 }
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
