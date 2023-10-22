@@ -61,7 +61,7 @@ typedef struct DecodedOpcode
 	Operand operands[2];
 } DecodedOpcode;
 
-typedef struct Opcode
+typedef struct SplitOpcode
 {
 	unsigned int raw;
 
@@ -73,8 +73,8 @@ typedef struct Opcode
 	AddressMode secondary_address_mode;
 
 	cc_bool bit_8;
-} Opcode;
+} SplitOpcode;
 
-void DecodeOpcode(DecodedOpcode* const decoded_opcode, const Opcode* const opcode);
+void DecodeOpcode(DecodedOpcode *decoded_opcode, SplitOpcode *split_opcode, unsigned int opcode);
 
 #endif /* M68K_OPCODE_H */

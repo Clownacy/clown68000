@@ -674,7 +674,7 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		if (!setjmp(stuff.exception.context))
 		{
 			/* Process new instruction */
-			Opcode opcode;
+			SplitOpcode opcode;
 			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 			cc_u32f source_value, destination_value, result_value;
 			DecodedOpcode decoded_opcode;
@@ -682,22 +682,12 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 			source_value = destination_value = result_value = 0;
 
-			opcode.raw = ReadWord(&stuff, state->program_counter);
-
-			opcode.bits_6_and_7 = (opcode.raw >> 6) & 3;
-			opcode.bit_8 = (opcode.raw & 0x100) != 0;
-
-			opcode.primary_register = (opcode.raw >> 0) & 7;
-			opcode.primary_address_mode = (AddressMode)((opcode.raw >> 3) & 7);
-			opcode.secondary_address_mode = (AddressMode)((opcode.raw >> 6) & 7);
-			opcode.secondary_register = (opcode.raw >> 9) & 7;
+			/* Figure out which instruction this is */
+			DecodeOpcode(&decoded_opcode, &opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = opcode.raw;
 			state->program_counter += 2;
-
-			/* Figure out which instruction this is */
-			DecodeOpcode(&decoded_opcode, &opcode);
 
 			msb_bit_index = (decoded_opcode.size * 8 - 1);
 

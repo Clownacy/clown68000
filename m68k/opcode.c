@@ -18,7 +18,7 @@
 
 #include "opcode.h"
 
-static Instruction GetInstruction(const Opcode *opcode)
+static Instruction GetInstruction(const SplitOpcode *opcode)
 {
 	Instruction instruction;
 
@@ -475,7 +475,7 @@ static Instruction GetInstruction(const Opcode *opcode)
 	return instruction;
 }
 
-static unsigned int GetSize(const Instruction instruction, const Opcode* const opcode)
+static unsigned int GetSize(const Instruction instruction, const SplitOpcode* const opcode)
 {
 	unsigned int operation_size;
 
@@ -636,7 +636,7 @@ do\
 
 #define OPERAND decoded_opcode->operands[0]
 
-static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpcode* const opcode)
 {
 	/* Obtain source value. */
 	switch (decoded_opcode->instruction)
@@ -798,7 +798,7 @@ static cc_bool GetSourceOperand(DecodedOpcode* const decoded_opcode, const Opcod
 #undef OPERAND
 #define OPERAND decoded_opcode->operands[1]
 
-static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const SplitOpcode* const opcode)
 {
 	/* Decode destination address mode */
 	switch (decoded_opcode->instruction)
@@ -960,10 +960,20 @@ static cc_bool GetDestinationOperand(DecodedOpcode* const decoded_opcode, const 
 #undef OPERAND
 #undef SET_OPERAND
 
-void DecodeOpcode(DecodedOpcode* const decoded_opcode, const Opcode* const opcode)
+void DecodeOpcode(DecodedOpcode* const decoded_opcode, SplitOpcode* const split_opcode, const unsigned int opcode)
 {
-	decoded_opcode->instruction = GetInstruction(opcode);
-	decoded_opcode->size = GetSize(decoded_opcode->instruction, opcode);
-	GetSourceOperand(decoded_opcode, opcode);
-	GetDestinationOperand(decoded_opcode, opcode);
+	split_opcode->raw = opcode;
+
+	split_opcode->bits_6_and_7 = (split_opcode->raw >> 6) & 3;
+	split_opcode->bit_8 = (split_opcode->raw & 0x100) != 0;
+
+	split_opcode->primary_register = (split_opcode->raw >> 0) & 7;
+	split_opcode->primary_address_mode = (AddressMode)((split_opcode->raw >> 3) & 7);
+	split_opcode->secondary_address_mode = (AddressMode)((split_opcode->raw >> 6) & 7);
+	split_opcode->secondary_register = (split_opcode->raw >> 9) & 7;
+
+	decoded_opcode->instruction = GetInstruction(split_opcode);
+	decoded_opcode->size = GetSize(decoded_opcode->instruction, split_opcode);
+	GetSourceOperand(decoded_opcode, split_opcode);
+	GetDestinationOperand(decoded_opcode, split_opcode);
 }
