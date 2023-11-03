@@ -420,6 +420,10 @@ static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_
 		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
 			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
 			break;
+
+		case ADDRESS_MODE_NONE:
+			assert(cc_false);
+			break;
 	}
 }
 
