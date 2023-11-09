@@ -287,13 +287,13 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 /* Misc. utility */
 
-static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_operand)
+static cc_u32f DecodeMemoryAddressMode(Stuff* const stuff, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
 {
 	Clown68000_State* const state = stuff->state;
 
 	cc_u32f address;
 
-	if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT)
+	if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT)
 	{
 		/* Absolute short */
 		const cc_u32f short_address = ReadWord(stuff, state->program_counter);
@@ -301,16 +301,16 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 		address = CC_SIGN_EXTEND_ULONG(15, short_address);
 		state->program_counter += 2;
 	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
+	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
 	{
 		/* Absolute long */
 		address = ReadLongWord(stuff, state->program_counter);
 		state->program_counter += 4;
 	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
+	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
 	{
 		/* Immediate value */
-		if (decoded_operand->operation_size_in_bytes == 1)
+		if (operation_size_in_bytes == 1)
 		{
 			/* A byte-sized immediate value occupies two bytes of space */
 			address = state->program_counter + 1;
@@ -319,37 +319,37 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 		else
 		{
 			address = state->program_counter;
-			state->program_counter += decoded_operand->operation_size_in_bytes;
+			state->program_counter += operation_size_in_bytes;
 		}
 	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
+	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
 	{
 		/* Address register indirect */
-		address = state->address_registers[decoded_operand->address_mode_register];
+		address = state->address_registers[address_mode_register];
 	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
 		/* Address register indirect with predecrement */
 
 		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (decoded_operand->address_mode_register == 7 && decoded_operand->operation_size_in_bytes == 1) ? 2 : decoded_operand->operation_size_in_bytes;
+		const cc_u16f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
 
-		state->address_registers[decoded_operand->address_mode_register] -= increment_decrement_size;
-		address = state->address_registers[decoded_operand->address_mode_register];
+		state->address_registers[address_mode_register] -= increment_decrement_size;
+		address = state->address_registers[address_mode_register];
 	}
-	else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
+	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
 	{
 		/* Address register indirect with postincrement */
 
 		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (decoded_operand->address_mode_register == 7 && decoded_operand->operation_size_in_bytes == 1) ? 2 : decoded_operand->operation_size_in_bytes;
+		const cc_u16f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
 
-		address = state->address_registers[decoded_operand->address_mode_register];
-		state->address_registers[decoded_operand->address_mode_register] += increment_decrement_size;
+		address = state->address_registers[address_mode_register];
+		state->address_registers[address_mode_register] += increment_decrement_size;
 	}
 	else
 	{
-		if (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && (decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT || decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
+		if (address_mode == ADDRESS_MODE_SPECIAL && (address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT || address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
 		{
 			/* Program counter used as base address */
 			address = state->program_counter;
@@ -357,10 +357,10 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 		else
 		{
 			/* Address register used as base address */
-			address = state->address_registers[decoded_operand->address_mode_register];
+			address = state->address_registers[address_mode_register];
 		}
 
-		if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT || (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT))
+		if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT || (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT))
 		{
 			/* Add displacement */
 			const cc_u32f displacement = ReadWord(stuff, state->program_counter);
@@ -368,7 +368,7 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 			address += CC_SIGN_EXTEND_ULONG(15, displacement);
 			state->program_counter += 2;
 		}
-		else if (decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX || (decoded_operand->address_mode == ADDRESS_MODE_SPECIAL && decoded_operand->address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
+		else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX || (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
 		{
 			/* Add index register and index literal */
 			const cc_u32f extension_word = ReadWord(stuff, state->program_counter);
@@ -387,18 +387,18 @@ static cc_u32f DecodeMemoryAddressMode(Stuff *stuff, const Operand *decoded_oper
 	return address;
 }
 
-static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_mode, const Operand *decoded_operand)
+static void DecodeAddressMode(Stuff* const stuff, DecodedAddressMode* const decoded_address_mode, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
 {
 	Clown68000_State* const state = stuff->state;
 
-	switch (decoded_operand->address_mode)
+	switch (address_mode)
 	{
 		case ADDRESS_MODE_DATA_REGISTER:
 		case ADDRESS_MODE_ADDRESS_REGISTER:
 			/* Register */
 			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_REGISTER;
-			decoded_address_mode->data.reg.address = &(decoded_operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER ? state->address_registers : state->data_registers)[decoded_operand->address_mode_register];
-			decoded_address_mode->data.reg.operation_size_bitmask = (0xFFFFFFFF >> (32 - decoded_operand->operation_size_in_bytes * 8));
+			decoded_address_mode->data.reg.address = &(address_mode == ADDRESS_MODE_ADDRESS_REGISTER ? state->address_registers : state->data_registers)[address_mode_register];
+			decoded_address_mode->data.reg.operation_size_bitmask = (0xFFFFFFFF >> (32 - operation_size_in_bytes * 8));
 			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
@@ -409,8 +409,8 @@ static void DecodeAddressMode(Stuff *stuff, DecodedAddressMode *decoded_address_
 		case ADDRESS_MODE_SPECIAL:
 			/* Memory access */
 			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
-			decoded_address_mode->data.memory.address = DecodeMemoryAddressMode(stuff, decoded_operand);
-			decoded_address_mode->data.memory.operation_size_in_bytes = (cc_u8f)decoded_operand->operation_size_in_bytes;
+			decoded_address_mode->data.memory.address = DecodeMemoryAddressMode(stuff, operation_size_in_bytes, address_mode, address_mode_register);
+			decoded_address_mode->data.memory.operation_size_in_bytes = (cc_u8f)operation_size_in_bytes;
 			break;
 
 		case ADDRESS_MODE_STATUS_REGISTER:
