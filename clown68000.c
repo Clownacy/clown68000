@@ -107,6 +107,7 @@ typedef struct Stuff
 		jmp_buf context;
 	} exception;
 	SplitOpcode opcode;
+	Instruction instruction;
 	cc_u32f operation_size, msb_bit_index;
 	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
@@ -907,6 +908,343 @@ static void Extend_SetToCarry(Stuff* const stuff)
 	stuff->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((stuff->state->status_register & CONDITION_CODE_CARRY) != 0));
 }
 
+static void Action_OR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_OR;
+}
+
+static void Action_AND(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_AND;
+}
+
+static void Action_SUBA(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SUBA;
+}
+
+static void Action_SUBQ(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SUBQ;
+}
+
+static void Action_SUB(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SUB;
+}
+
+static void Action_ADDA(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ADDA;
+}
+
+static void Action_ADDQ(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ADDQ;
+}
+
+static void Action_ADD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ADD;
+}
+
+static void Action_EOR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_EOR;
+}
+
+static void Action_BCHG(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BCHG;
+}
+
+static void Action_BCLR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BCLR;
+}
+
+static void Action_BSET(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BSET;
+}
+
+static void Action_BTST(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BTST;
+}
+
+static void Action_MOVEP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVEP;
+}
+
+static void Action_MOVEA(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVEA;
+}
+
+static void Action_MOVE(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVE;
+}
+
+static void Action_LINK(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_LINK;
+}
+
+static void Action_UNLK(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_UNLK;
+}
+
+static void Action_NEGX(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_NEGX;
+}
+
+static void Action_CLR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_CLR;
+}
+
+static void Action_NEG(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_NEG;
+}
+
+static void Action_NOT(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_NOT;
+}
+
+static void Action_EXT(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_EXT;
+}
+
+static void Action_NBCD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_NBCD;
+}
+
+static void Action_SWAP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SWAP;
+}
+
+static void Action_PEA(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_PEA;
+}
+
+static void Action_ILLEGAL(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ILLEGAL;
+}
+
+static void Action_TAS(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_TAS;
+}
+
+static void Action_TRAP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_TRAP;
+}
+
+static void Action_MOVE_USP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVE_USP;
+}
+
+static void Action_RESET(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_RESET;
+}
+
+static void Action_STOP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_STOP;
+}
+
+static void Action_RTE(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_RTE;
+}
+
+static void Action_RTS(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_RTS;
+}
+
+static void Action_TRAPV(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_TRAPV;
+}
+
+static void Action_RTR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_RTR;
+}
+
+static void Action_JSR(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_JSR;
+}
+
+static void Action_JMP(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_JMP;
+}
+
+static void Action_MOVEM(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVEM;
+}
+
+static void Action_CHK(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_CHK;
+}
+
+static void Action_SCC(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SCC;
+}
+
+static void Action_DBCC(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_DBCC;
+}
+
+static void Action_BRA_SHORT(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BRA_SHORT;
+}
+
+static void Action_BRA_WORD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BRA_WORD;
+}
+
+static void Action_BSR_SHORT(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BSR_SHORT;
+}
+
+static void Action_BSR_WORD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BSR_WORD;
+}
+
+static void Action_BCC_SHORT(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BCC_SHORT;
+}
+
+static void Action_BCC_WORD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_BCC_WORD;
+}
+
+static void Action_MOVEQ(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MOVEQ;
+}
+
+static void Action_DIV(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_DIV;
+}
+
+static void Action_SBCD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SBCD;
+}
+
+static void Action_SUBX(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_SUBX;
+}
+
+static void Action_MUL(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_MUL;
+}
+
+static void Action_ABCD(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ABCD;
+}
+
+static void Action_EXG(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_EXG;
+}
+
+static void Action_ADDX(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ADDX;
+}
+
+static void Action_ASD_MEMORY(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ASD_MEMORY;
+}
+
+static void Action_ASD_REGISTER(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ASD_REGISTER;
+}
+
+static void Action_LSD_MEMORY(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_LSD_MEMORY;
+}
+
+static void Action_LSD_REGISTER(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_LSD_REGISTER;
+}
+
+static void Action_ROD_MEMORY(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ROD_MEMORY;
+}
+
+static void Action_ROD_REGISTER(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ROD_REGISTER;
+}
+
+static void Action_ROXD_MEMORY(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ROXD_MEMORY;
+}
+
+static void Action_ROXD_REGISTER(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_ROXD_REGISTER;
+}
+
+static void Action_UNIMPLEMENTED_1(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1;
+}
+
+static void Action_UNIMPLEMENTED_2(Stuff* const stuff)
+{
+	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2;
+}
+
+static void Action_NOP(Stuff* const stuff)
+{
+	(void)stuff;
+
+	DO_INSTRUCTION_ACTION_NOP;
+}
+
 
 /* API */
 
@@ -977,18 +1315,16 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		if (!setjmp(stuff.exception.context))
 		{
 			/* Process new instruction */
-			Instruction instruction;
-
 			stuff.source_value = stuff.destination_value = stuff.result_value = 0; /* TODO: This is unnecessary - remove this! */
 
 			/* Figure out which instruction this is */
-			instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+			stuff.instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = stuff.opcode.raw;
 			state->program_counter += 2;
 
-			switch (instruction)
+			switch (stuff.instruction)
 			{
 				#include "m68k/gen.c"
 			}

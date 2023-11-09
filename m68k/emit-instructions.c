@@ -23,9 +23,6 @@
 #include "emit.h"
 #include "instruction-properties.h"
 
-#define EMIT
-#include "instruction-actions.h"
-
 void EmitInstructionSupervisorCheck(const Instruction instruction)
 {
 	if (Instruction_IsPrivileged(instruction))
@@ -267,271 +264,271 @@ void EmitInstructionAction(const Instruction instruction)
 	switch (Instruction_GetAction(instruction))
 	{
 		case INSTRUCTION_ACTION_OR:
-			DO_INSTRUCTION_ACTION_OR;
+			Emit("Action_OR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_AND:
-			DO_INSTRUCTION_ACTION_AND;
+			Emit("Action_AND(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SUBA:
-			DO_INSTRUCTION_ACTION_SUBA;
+			Emit("Action_SUBA(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SUBQ:
-			DO_INSTRUCTION_ACTION_SUBQ;
+			Emit("Action_SUBQ(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SUB:
-			DO_INSTRUCTION_ACTION_SUB;
+			Emit("Action_SUB(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ADDA:
-			DO_INSTRUCTION_ACTION_ADDA;
+			Emit("Action_ADDA(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ADDQ:
-			DO_INSTRUCTION_ACTION_ADDQ;
+			Emit("Action_ADDQ(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ADD:
-			DO_INSTRUCTION_ACTION_ADD;
+			Emit("Action_ADD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_EOR:
-			DO_INSTRUCTION_ACTION_EOR;
+			Emit("Action_EOR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BCHG:
-			DO_INSTRUCTION_ACTION_BCHG;
+			Emit("Action_BCHG(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BCLR:
-			DO_INSTRUCTION_ACTION_BCLR;
+			Emit("Action_BCLR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BSET:
-			DO_INSTRUCTION_ACTION_BSET;
+			Emit("Action_BSET(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BTST:
-			DO_INSTRUCTION_ACTION_BTST;
+			Emit("Action_BTST(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVEP:
-			DO_INSTRUCTION_ACTION_MOVEP;
+			Emit("Action_MOVEP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVEA:
-			DO_INSTRUCTION_ACTION_MOVEA;
+			Emit("Action_MOVEA(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVE:
-			DO_INSTRUCTION_ACTION_MOVE;
+			Emit("Action_MOVE(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_LINK:
-			DO_INSTRUCTION_ACTION_LINK;
+			Emit("Action_LINK(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_UNLK:
-			DO_INSTRUCTION_ACTION_UNLK;
+			Emit("Action_UNLK(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_NEGX:
-			DO_INSTRUCTION_ACTION_NEGX;
+			Emit("Action_NEGX(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_CLR:
-			DO_INSTRUCTION_ACTION_CLR;
+			Emit("Action_CLR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_NEG:
-			DO_INSTRUCTION_ACTION_NEG;
+			Emit("Action_NEG(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_NOT:
-			DO_INSTRUCTION_ACTION_NOT;
+			Emit("Action_NOT(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_EXT:
-			DO_INSTRUCTION_ACTION_EXT;
+			Emit("Action_EXT(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_NBCD:
-			DO_INSTRUCTION_ACTION_NBCD;
+			Emit("Action_NBCD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SWAP:
-			DO_INSTRUCTION_ACTION_SWAP;
+			Emit("Action_SWAP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_PEA:
-			DO_INSTRUCTION_ACTION_PEA;
+			Emit("Action_PEA(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ILLEGAL:
-			DO_INSTRUCTION_ACTION_ILLEGAL;
+			Emit("Action_ILLEGAL(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_TAS:
-			DO_INSTRUCTION_ACTION_TAS;
+			Emit("Action_TAS(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_TRAP:
-			DO_INSTRUCTION_ACTION_TRAP;
+			Emit("Action_TRAP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVE_USP:
-			DO_INSTRUCTION_ACTION_MOVE_USP;
+			Emit("Action_MOVE_USP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_RESET:
-			DO_INSTRUCTION_ACTION_RESET;
+			Emit("Action_RESET(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_STOP:
-			DO_INSTRUCTION_ACTION_STOP;
+			Emit("Action_STOP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_RTE:
-			DO_INSTRUCTION_ACTION_RTE;
+			Emit("Action_RTE(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_RTS:
-			DO_INSTRUCTION_ACTION_RTS;
+			Emit("Action_RTS(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_TRAPV:
-			DO_INSTRUCTION_ACTION_TRAPV;
+			Emit("Action_TRAPV(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_RTR:
-			DO_INSTRUCTION_ACTION_RTR;
+			Emit("Action_RTR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_JSR:
-			DO_INSTRUCTION_ACTION_JSR;
+			Emit("Action_JSR(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_JMP:
-			DO_INSTRUCTION_ACTION_JMP;
+			Emit("Action_JMP(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVEM:
-			DO_INSTRUCTION_ACTION_MOVEM;
+			Emit("Action_MOVEM(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_CHK:
-			DO_INSTRUCTION_ACTION_CHK;
+			Emit("Action_CHK(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SCC:
-			DO_INSTRUCTION_ACTION_SCC;
+			Emit("Action_SCC(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_DBCC:
-			DO_INSTRUCTION_ACTION_DBCC;
+			Emit("Action_DBCC(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BRA_SHORT:
-			DO_INSTRUCTION_ACTION_BRA_SHORT;
+			Emit("Action_BRA_SHORT(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BRA_WORD:
-			DO_INSTRUCTION_ACTION_BRA_WORD;
+			Emit("Action_BRA_WORD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BSR_SHORT:
-			DO_INSTRUCTION_ACTION_BSR_SHORT;
+			Emit("Action_BSR_SHORT(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BSR_WORD:
-			DO_INSTRUCTION_ACTION_BSR_WORD;
+			Emit("Action_BSR_WORD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BCC_SHORT:
-			DO_INSTRUCTION_ACTION_BCC_SHORT;
+			Emit("Action_BCC_SHORT(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BCC_WORD:
-			DO_INSTRUCTION_ACTION_BCC_WORD;
+			Emit("Action_BCC_WORD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVEQ:
-			DO_INSTRUCTION_ACTION_MOVEQ;
+			Emit("Action_MOVEQ(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_DIV:
-			DO_INSTRUCTION_ACTION_DIV;
+			Emit("Action_DIV(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SBCD:
-			DO_INSTRUCTION_ACTION_SBCD;
+			Emit("Action_SBCD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_SUBX:
-			DO_INSTRUCTION_ACTION_SUBX;
+			Emit("Action_SUBX(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MUL:
-			DO_INSTRUCTION_ACTION_MUL;
+			Emit("Action_MUL(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ABCD:
-			DO_INSTRUCTION_ACTION_ABCD;
+			Emit("Action_ABCD(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_EXG:
-			DO_INSTRUCTION_ACTION_EXG;
+			Emit("Action_EXG(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ADDX:
-			DO_INSTRUCTION_ACTION_ADDX;
+			Emit("Action_ADDX(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ASD_MEMORY:
-			DO_INSTRUCTION_ACTION_ASD_MEMORY;
+			Emit("Action_ASD_MEMORY(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ASD_REGISTER:
-			DO_INSTRUCTION_ACTION_ASD_REGISTER;
+			Emit("Action_ASD_REGISTER(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_LSD_MEMORY:
-			DO_INSTRUCTION_ACTION_LSD_MEMORY;
+			Emit("Action_LSD_MEMORY(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_LSD_REGISTER:
-			DO_INSTRUCTION_ACTION_LSD_REGISTER;
+			Emit("Action_LSD_REGISTER(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ROD_MEMORY:
-			DO_INSTRUCTION_ACTION_ROD_MEMORY;
+			Emit("Action_ROD_MEMORY(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ROD_REGISTER:
-			DO_INSTRUCTION_ACTION_ROD_REGISTER;
+			Emit("Action_ROD_REGISTER(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ROXD_MEMORY:
-			DO_INSTRUCTION_ACTION_ROXD_MEMORY;
+			Emit("Action_ROXD_MEMORY(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_ROXD_REGISTER:
-			DO_INSTRUCTION_ACTION_ROXD_REGISTER;
+			Emit("Action_ROXD_REGISTER(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_UNIMPLEMENTED_1:
-			DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1;
+			Emit("Action_UNIMPLEMENTED_1(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_UNIMPLEMENTED_2:
-			DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2;
+			Emit("Action_UNIMPLEMENTED_2(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_NOP:
-			DO_INSTRUCTION_ACTION_NOP;
+			Emit("Action_NOP(&stuff);");
 			break;
 	}
 

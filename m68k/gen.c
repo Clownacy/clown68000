@@ -15,7 +15,7 @@ case INSTRUCTION_ABCD:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ABCD;
+	Action_ABCD(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -53,7 +53,7 @@ case INSTRUCTION_ADD:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADD;
+	Action_ADD(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -91,7 +91,7 @@ case INSTRUCTION_ADDA:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDA;
+	Action_ADDA(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -123,7 +123,7 @@ case INSTRUCTION_ADDAQ:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDQ;
+	Action_ADDQ(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -161,7 +161,7 @@ case INSTRUCTION_ADDI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADD;
+	Action_ADD(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -193,7 +193,7 @@ case INSTRUCTION_ADDQ:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDQ;
+	Action_ADDQ(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -231,7 +231,7 @@ case INSTRUCTION_ADDX:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ADDX;
+	Action_ADDX(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -269,7 +269,7 @@ case INSTRUCTION_AND:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
+	Action_AND(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -307,7 +307,7 @@ case INSTRUCTION_ANDI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
+	Action_AND(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -345,7 +345,7 @@ case INSTRUCTION_ANDI_TO_CCR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
+	Action_AND(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -386,7 +386,7 @@ case INSTRUCTION_ANDI_TO_SR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_AND;
+	Action_AND(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -418,7 +418,7 @@ case INSTRUCTION_ASD_MEMORY:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ASD_MEMORY;
+	Action_ASD_MEMORY(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -450,7 +450,7 @@ case INSTRUCTION_ASD_REGISTER:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ASD_REGISTER;
+	Action_ASD_REGISTER(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -473,7 +473,7 @@ case INSTRUCTION_ASD_REGISTER:
 
 case INSTRUCTION_BCC_SHORT:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCC_SHORT;
+	Action_BCC_SHORT(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -499,7 +499,7 @@ case INSTRUCTION_BCC_WORD:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCC_WORD;
+	Action_BCC_WORD(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -534,7 +534,7 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCHG;
+	Action_BCHG(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -572,7 +572,7 @@ case INSTRUCTION_BCHG_STATIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCHG;
+	Action_BCHG(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -610,7 +610,7 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCLR;
+	Action_BCLR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -648,7 +648,7 @@ case INSTRUCTION_BCLR_STATIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BCLR;
+	Action_BCLR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -671,7 +671,7 @@ case INSTRUCTION_BCLR_STATIC:
 
 case INSTRUCTION_BRA_SHORT:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BRA_SHORT;
+	Action_BRA_SHORT(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -697,7 +697,7 @@ case INSTRUCTION_BRA_WORD:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BRA_WORD;
+	Action_BRA_WORD(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -732,7 +732,7 @@ case INSTRUCTION_BSET_DYNAMIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSET;
+	Action_BSET(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -770,7 +770,7 @@ case INSTRUCTION_BSET_STATIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSET;
+	Action_BSET(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -793,7 +793,7 @@ case INSTRUCTION_BSET_STATIC:
 
 case INSTRUCTION_BSR_SHORT:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSR_SHORT;
+	Action_BSR_SHORT(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -819,7 +819,7 @@ case INSTRUCTION_BSR_WORD:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BSR_WORD;
+	Action_BSR_WORD(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -854,7 +854,7 @@ case INSTRUCTION_BTST_DYNAMIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BTST;
+	Action_BTST(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -889,7 +889,7 @@ case INSTRUCTION_BTST_STATIC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_BTST;
+	Action_BTST(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -918,7 +918,7 @@ case INSTRUCTION_CHK:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_CHK;
+	Action_CHK(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -947,7 +947,7 @@ case INSTRUCTION_CLR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_CLR;
+	Action_CLR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -985,7 +985,7 @@ case INSTRUCTION_CMP:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
+	Action_SUB(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1020,7 +1020,7 @@ case INSTRUCTION_CMPA:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBA;
+	Action_SUBA(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1055,7 +1055,7 @@ case INSTRUCTION_CMPI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
+	Action_SUB(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1090,7 +1090,7 @@ case INSTRUCTION_CMPM:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
+	Action_SUB(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1119,7 +1119,7 @@ case INSTRUCTION_DBCC:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DBCC;
+	Action_DBCC(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1154,7 +1154,7 @@ case INSTRUCTION_DIVS:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIV;
+	Action_DIV(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1192,7 +1192,7 @@ case INSTRUCTION_DIVU:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_DIV;
+	Action_DIV(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1230,7 +1230,7 @@ case INSTRUCTION_EOR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
+	Action_EOR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1268,7 +1268,7 @@ case INSTRUCTION_EORI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
+	Action_EOR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1306,7 +1306,7 @@ case INSTRUCTION_EORI_TO_CCR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
+	Action_EOR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1347,7 +1347,7 @@ case INSTRUCTION_EORI_TO_SR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EOR;
+	Action_EOR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1370,7 +1370,7 @@ case INSTRUCTION_EORI_TO_SR:
 
 case INSTRUCTION_EXG:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EXG;
+	Action_EXG(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1399,7 +1399,7 @@ case INSTRUCTION_EXT:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_EXT;
+	Action_EXT(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1422,7 +1422,7 @@ case INSTRUCTION_EXT:
 
 case INSTRUCTION_ILLEGAL:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ILLEGAL;
+	Action_ILLEGAL(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1448,7 +1448,7 @@ case INSTRUCTION_JMP:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_JMP;
+	Action_JMP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1474,7 +1474,7 @@ case INSTRUCTION_JSR:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_JSR;
+	Action_JSR(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1506,7 +1506,7 @@ case INSTRUCTION_LEA:
 	DecodeDestination_AddressRegisterSecondary(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1538,7 +1538,7 @@ case INSTRUCTION_LINK:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LINK;
+	Action_LINK(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1567,7 +1567,7 @@ case INSTRUCTION_LSD_MEMORY:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LSD_MEMORY;
+	Action_LSD_MEMORY(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1599,7 +1599,7 @@ case INSTRUCTION_LSD_REGISTER:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_LSD_REGISTER;
+	Action_LSD_REGISTER(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1634,7 +1634,7 @@ case INSTRUCTION_MOVE:
 	DecodeDestination_SecondaryAddressMode(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1669,7 +1669,7 @@ case INSTRUCTION_MOVE_FROM_SR:
 	DecodeDestination_PrimaryAddressMode(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1704,7 +1704,7 @@ case INSTRUCTION_MOVE_TO_CCR:
 	DecodeDestination_ConditionCodeRegister(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1742,7 +1742,7 @@ case INSTRUCTION_MOVE_TO_SR:
 	DecodeDestination_StatusRegister(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1768,7 +1768,7 @@ case INSTRUCTION_MOVE_USP:
 	SupervisorCheck(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE_USP;
+	Action_MOVE_USP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1800,7 +1800,7 @@ case INSTRUCTION_MOVEA:
 	DecodeDestination_AddressRegisterSecondaryFull(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEA;
+	Action_MOVEA(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1838,7 +1838,7 @@ case INSTRUCTION_MOVEM:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEM;
+	Action_MOVEM(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1864,7 +1864,7 @@ case INSTRUCTION_MOVEP:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEP;
+	Action_MOVEP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1890,7 +1890,7 @@ case INSTRUCTION_MOVEQ:
 	DecodeDestination_DataRegisterSecondary(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVEQ;
+	Action_MOVEQ(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1928,7 +1928,7 @@ case INSTRUCTION_MULS:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MUL;
+	Action_MUL(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1966,7 +1966,7 @@ case INSTRUCTION_MULU:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MUL;
+	Action_MUL(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -1998,7 +1998,7 @@ case INSTRUCTION_NBCD:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NBCD;
+	Action_NBCD(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2030,7 +2030,7 @@ case INSTRUCTION_NEG:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NEG;
+	Action_NEG(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2062,7 +2062,7 @@ case INSTRUCTION_NEGX:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NEGX;
+	Action_NEGX(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2085,7 +2085,7 @@ case INSTRUCTION_NEGX:
 
 case INSTRUCTION_NOP:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NOP;
+	Action_NOP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2114,7 +2114,7 @@ case INSTRUCTION_NOT:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_NOT;
+	Action_NOT(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2152,7 +2152,7 @@ case INSTRUCTION_OR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
+	Action_OR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2190,7 +2190,7 @@ case INSTRUCTION_ORI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
+	Action_OR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2228,7 +2228,7 @@ case INSTRUCTION_ORI_TO_CCR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
+	Action_OR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2269,7 +2269,7 @@ case INSTRUCTION_ORI_TO_SR:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_OR;
+	Action_OR(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2298,7 +2298,7 @@ case INSTRUCTION_PEA:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_PEA;
+	Action_PEA(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2321,7 +2321,7 @@ case INSTRUCTION_RESET:
 	SupervisorCheck(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RESET;
+	Action_RESET(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2350,7 +2350,7 @@ case INSTRUCTION_ROD_MEMORY:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROD_MEMORY;
+	Action_ROD_MEMORY(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2382,7 +2382,7 @@ case INSTRUCTION_ROD_REGISTER:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROD_REGISTER;
+	Action_ROD_REGISTER(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2414,7 +2414,7 @@ case INSTRUCTION_ROXD_MEMORY:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROXD_MEMORY;
+	Action_ROXD_MEMORY(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2446,7 +2446,7 @@ case INSTRUCTION_ROXD_REGISTER:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_ROXD_REGISTER;
+	Action_ROXD_REGISTER(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2472,7 +2472,7 @@ case INSTRUCTION_RTE:
 	SupervisorCheck(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTE;
+	Action_RTE(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2492,7 +2492,7 @@ case INSTRUCTION_RTE:
 
 case INSTRUCTION_RTR:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTR;
+	Action_RTR(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2512,7 +2512,7 @@ case INSTRUCTION_RTR:
 
 case INSTRUCTION_RTS:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_RTS;
+	Action_RTS(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2547,7 +2547,7 @@ case INSTRUCTION_SBCD:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SBCD;
+	Action_SBCD(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2579,7 +2579,7 @@ case INSTRUCTION_SCC:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SCC;
+	Action_SCC(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2614,7 +2614,7 @@ case INSTRUCTION_STOP:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_STOP;
+	Action_STOP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2649,7 +2649,7 @@ case INSTRUCTION_SUB:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
+	Action_SUB(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2687,7 +2687,7 @@ case INSTRUCTION_SUBA:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBA;
+	Action_SUBA(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2719,7 +2719,7 @@ case INSTRUCTION_SUBAQ:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBQ;
+	Action_SUBQ(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2757,7 +2757,7 @@ case INSTRUCTION_SUBI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUB;
+	Action_SUB(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2789,7 +2789,7 @@ case INSTRUCTION_SUBQ:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBQ;
+	Action_SUBQ(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2827,7 +2827,7 @@ case INSTRUCTION_SUBX:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SUBX;
+	Action_SUBX(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2859,7 +2859,7 @@ case INSTRUCTION_SWAP:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_SWAP;
+	Action_SWAP(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2891,7 +2891,7 @@ case INSTRUCTION_TAS:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TAS;
+	Action_TAS(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2914,7 +2914,7 @@ case INSTRUCTION_TAS:
 
 case INSTRUCTION_TRAP:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TRAP;
+	Action_TRAP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2934,7 +2934,7 @@ case INSTRUCTION_TRAP:
 
 case INSTRUCTION_TRAPV:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_TRAPV;
+	Action_TRAPV(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2963,7 +2963,7 @@ case INSTRUCTION_TST:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_MOVE;
+	Action_MOVE(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2983,7 +2983,7 @@ case INSTRUCTION_TST:
 
 case INSTRUCTION_UNLK:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNLK;
+	Action_UNLK(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3003,7 +3003,7 @@ case INSTRUCTION_UNLK:
 
 case INSTRUCTION_UNIMPLEMENTED_1:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_1;
+	Action_UNIMPLEMENTED_1(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3023,7 +3023,7 @@ case INSTRUCTION_UNIMPLEMENTED_1:
 
 case INSTRUCTION_UNIMPLEMENTED_2:
 	/* Do the actual instruction. */
-	DO_INSTRUCTION_ACTION_UNIMPLEMENTED_2;
+	Action_UNIMPLEMENTED_2(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
