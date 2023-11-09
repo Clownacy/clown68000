@@ -135,11 +135,11 @@ static void (* const microcode_DBCC[])(Stuff* const stuff) = {
 };
 
 static void (* const microcode_DIVS[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIV, WriteDestination, Carry_Clear, NULL
+	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIVS, WriteDestination, Carry_Clear, NULL
 };
 
 static void (* const microcode_DIVU[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIV, WriteDestination, Carry_Clear, NULL
+	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIVU, WriteDestination, Carry_Clear, NULL
 };
 
 static void (* const microcode_EOR[])(Stuff* const stuff) = {
@@ -231,11 +231,11 @@ static void (* const microcode_MOVEQ[])(Stuff* const stuff) = {
 };
 
 static void (* const microcode_MULS[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MUL, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
+	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MULS, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
 };
 
 static void (* const microcode_MULU[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MUL, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
+	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MULU, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
 };
 
 static void (* const microcode_NBCD[])(Stuff* const stuff) = {

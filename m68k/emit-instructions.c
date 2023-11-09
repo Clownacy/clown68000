@@ -451,8 +451,12 @@ void EmitInstructionAction(const Instruction instruction)
 			Emit("Action_MOVEQ, ");
 			break;
 
-		case INSTRUCTION_ACTION_DIV:
-			Emit("Action_DIV, ");
+		case INSTRUCTION_ACTION_DIVS:
+			Emit("Action_DIVS, ");
+			break;
+
+		case INSTRUCTION_ACTION_DIVU:
+			Emit("Action_DIVU, ");
 			break;
 
 		case INSTRUCTION_ACTION_SBCD:
@@ -463,8 +467,12 @@ void EmitInstructionAction(const Instruction instruction)
 			Emit("Action_SUBX, ");
 			break;
 
-		case INSTRUCTION_ACTION_MUL:
-			Emit("Action_MUL, ");
+		case INSTRUCTION_ACTION_MULS:
+			Emit("Action_MULS, ");
+			break;
+
+		case INSTRUCTION_ACTION_MULU:
+			Emit("Action_MULU, ");
 			break;
 
 		case INSTRUCTION_ACTION_ABCD:

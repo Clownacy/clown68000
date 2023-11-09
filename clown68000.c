@@ -100,7 +100,6 @@ typedef struct Stuff
 		jmp_buf context;
 	} exception;
 	SplitOpcode opcode;
-	Instruction instruction;
 	cc_u32f operation_size, msb_bit_index;
 	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
@@ -1356,7 +1355,7 @@ static void Action_MOVEQ(Stuff* const stuff)
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
 }
 
-static void Action_DIV(Stuff* const stuff)
+static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 {
 	if (stuff->source_value == 0)
 	{
@@ -1365,8 +1364,8 @@ static void Action_DIV(Stuff* const stuff)
 	}
 	else
 	{
-		const cc_bool source_is_negative = stuff->instruction == INSTRUCTION_DIVS && (stuff->source_value & 0x8000) != 0;
-		const cc_bool destination_is_negative = stuff->instruction == INSTRUCTION_DIVS && (stuff->destination_value & 0x80000000) != 0;
+		const cc_bool source_is_negative = is_signed && (stuff->source_value & 0x8000) != 0;
+		const cc_bool destination_is_negative = is_signed && (stuff->destination_value & 0x80000000) != 0;
 		const cc_bool result_is_negative = source_is_negative != destination_is_negative;
 
 		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, stuff->source_value) : stuff->source_value;
@@ -1376,7 +1375,7 @@ static void Action_DIV(Stuff* const stuff)
 		const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;
 
 		/* Overflow detection */
-		if (absolute_quotient > (stuff->instruction == INSTRUCTION_DIVU ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))
+		if (absolute_quotient > (!is_signed ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))
 		{
 			stuff->state->status_register |= CONDITION_CODE_OVERFLOW;
 
@@ -1394,6 +1393,16 @@ static void Action_DIV(Stuff* const stuff)
 			stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));
 		}
 	}
+}
+
+static void Action_DIVS(Stuff* const stuff)
+{
+	Action_DIVCommon(stuff, cc_true);
+}
+
+static void Action_DIVU(Stuff* const stuff)
+{
+	Action_DIVCommon(stuff, cc_false);
 }
 
 static void Action_SUBX(Stuff* const stuff)
@@ -1428,10 +1437,10 @@ static void Action_NBCD(Stuff* const stuff)
 	Action_SBCD(stuff);
 }
 
-static void Action_MUL(Stuff* const stuff)
+static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
 {
-	const cc_bool multiplier_is_negative = stuff->instruction == INSTRUCTION_MULS && (stuff->source_value & 0x8000) != 0;
-	const cc_bool multiplicand_is_negative = stuff->instruction == INSTRUCTION_MULS && (stuff->destination_value & 0x8000) != 0;
+	const cc_bool multiplier_is_negative = is_signed && (stuff->source_value & 0x8000) != 0;
+	const cc_bool multiplicand_is_negative = is_signed && (stuff->destination_value & 0x8000) != 0;
 	const cc_bool result_is_negative = multiplier_is_negative != multiplicand_is_negative;
 
 	const cc_u32f multiplier = multiplier_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, stuff->source_value) : stuff->source_value;
@@ -1440,6 +1449,16 @@ static void Action_MUL(Stuff* const stuff)
 	const cc_u32f absolute_result = multiplicand * multiplier;
 
 	stuff->result_value = result_is_negative ? 0 - absolute_result : absolute_result;
+}
+
+static void Action_MULS(Stuff* const stuff)
+{
+	Action_MULCommon(stuff, cc_true);
+}
+
+static void Action_MULU(Stuff* const stuff)
+{
+	Action_MULCommon(stuff, cc_false);
 }
 
 static void Action_ADDX(Stuff* const stuff)
@@ -1819,15 +1838,15 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			unsigned int i;
 
 			/* Figure out which instruction this is. */
-			stuff.instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+			const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = stuff.opcode.raw;
 			state->program_counter += 2;
 
 			/* Execute the instruction's microcode. */
-			for (i = 0; microcode[stuff.instruction][i] != NULL; ++i)
-				microcode[stuff.instruction][i](&stuff);
+			for (i = 0; microcode[instruction][i] != NULL; ++i)
+				microcode[instruction][i](&stuff);
 		}
 	}
 }
