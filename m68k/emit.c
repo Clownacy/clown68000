@@ -37,8 +37,6 @@ void Emit(const char* const line)
 
 		fputs(line, emit_file);
 	}
-
-	fputc('\n', emit_file);
 }
 
 CC_ATTRIBUTE_PRINTF(1, 2) void EmitFormatted(const char* const line, ...)
@@ -52,6 +50,4 @@ CC_ATTRIBUTE_PRINTF(1, 2) void EmitFormatted(const char* const line, ...)
 	va_start(args, line);
 	vfprintf(emit_file, line, args);
 	va_end(args);
-
-	fputc('\n', emit_file);
 }
