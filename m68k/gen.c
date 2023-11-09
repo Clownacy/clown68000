@@ -1,12 +1,15 @@
 case INSTRUCTION_ABCD:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -40,14 +43,17 @@ case INSTRUCTION_ABCD:
 	break;
 
 case INSTRUCTION_ADD:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -83,6 +89,9 @@ case INSTRUCTION_ADD:
 	break;
 
 case INSTRUCTION_ADDA:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -90,7 +99,7 @@ case INSTRUCTION_ADDA:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -118,8 +127,11 @@ case INSTRUCTION_ADDA:
 	break;
 
 case INSTRUCTION_ADDAQ:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -147,14 +159,17 @@ case INSTRUCTION_ADDAQ:
 	break;
 
 case INSTRUCTION_ADDI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -190,8 +205,11 @@ case INSTRUCTION_ADDI:
 	break;
 
 case INSTRUCTION_ADDQ:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -227,14 +245,17 @@ case INSTRUCTION_ADDQ:
 	break;
 
 case INSTRUCTION_ADDX:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -269,14 +290,17 @@ case INSTRUCTION_ADDX:
 	break;
 
 case INSTRUCTION_AND:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -308,14 +332,17 @@ case INSTRUCTION_AND:
 	break;
 
 case INSTRUCTION_ANDI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -347,8 +374,11 @@ case INSTRUCTION_ANDI:
 	break;
 
 case INSTRUCTION_ANDI_TO_CCR:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -389,8 +419,11 @@ case INSTRUCTION_ANDI_TO_SR:
 		longjmp(stuff.exception.context, 1);
 	}
 
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -424,8 +457,11 @@ case INSTRUCTION_ANDI_TO_SR:
 	break;
 
 case INSTRUCTION_ASD_MEMORY:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -457,8 +493,11 @@ case INSTRUCTION_ASD_MEMORY:
 	break;
 
 case INSTRUCTION_ASD_REGISTER:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -536,14 +575,17 @@ case INSTRUCTION_BCC_WORD:
 	break;
 
 case INSTRUCTION_BCHG_DYNAMIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -571,6 +613,9 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	break;
 
 case INSTRUCTION_BCHG_STATIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
@@ -578,7 +623,7 @@ case INSTRUCTION_BCHG_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -606,14 +651,17 @@ case INSTRUCTION_BCHG_STATIC:
 	break;
 
 case INSTRUCTION_BCLR_DYNAMIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -641,6 +689,9 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	break;
 
 case INSTRUCTION_BCLR_STATIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
@@ -648,7 +699,7 @@ case INSTRUCTION_BCLR_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -722,14 +773,17 @@ case INSTRUCTION_BRA_WORD:
 	break;
 
 case INSTRUCTION_BSET_DYNAMIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -757,6 +811,9 @@ case INSTRUCTION_BSET_DYNAMIC:
 	break;
 
 case INSTRUCTION_BSET_STATIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
@@ -764,7 +821,7 @@ case INSTRUCTION_BSET_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -838,14 +895,17 @@ case INSTRUCTION_BSR_WORD:
 	break;
 
 case INSTRUCTION_BTST_DYNAMIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -870,6 +930,9 @@ case INSTRUCTION_BTST_DYNAMIC:
 	break;
 
 case INSTRUCTION_BTST_STATIC:
+	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
@@ -877,7 +940,7 @@ case INSTRUCTION_BTST_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -902,8 +965,11 @@ case INSTRUCTION_BTST_STATIC:
 	break;
 
 case INSTRUCTION_CHK:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -928,8 +994,11 @@ case INSTRUCTION_CHK:
 	break;
 
 case INSTRUCTION_CLR:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -961,14 +1030,17 @@ case INSTRUCTION_CLR:
 	break;
 
 case INSTRUCTION_CMP:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -999,6 +1071,9 @@ case INSTRUCTION_CMP:
 	break;
 
 case INSTRUCTION_CMPA:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1006,7 +1081,7 @@ case INSTRUCTION_CMPA:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1037,14 +1112,17 @@ case INSTRUCTION_CMPA:
 	break;
 
 case INSTRUCTION_CMPI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1075,14 +1153,17 @@ case INSTRUCTION_CMPI:
 	break;
 
 case INSTRUCTION_CMPM:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1113,8 +1194,11 @@ case INSTRUCTION_CMPM:
 	break;
 
 case INSTRUCTION_DBCC:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1139,6 +1223,9 @@ case INSTRUCTION_DBCC:
 	break;
 
 case INSTRUCTION_DIVS:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1146,7 +1233,7 @@ case INSTRUCTION_DIVS:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1174,6 +1261,9 @@ case INSTRUCTION_DIVS:
 	break;
 
 case INSTRUCTION_DIVU:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1181,7 +1271,7 @@ case INSTRUCTION_DIVU:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1209,14 +1299,17 @@ case INSTRUCTION_DIVU:
 	break;
 
 case INSTRUCTION_EOR:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1248,14 +1341,17 @@ case INSTRUCTION_EOR:
 	break;
 
 case INSTRUCTION_EORI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1287,8 +1383,11 @@ case INSTRUCTION_EORI:
 	break;
 
 case INSTRUCTION_EORI_TO_CCR:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1329,8 +1428,11 @@ case INSTRUCTION_EORI_TO_SR:
 		longjmp(stuff.exception.context, 1);
 	}
 
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1384,8 +1486,11 @@ case INSTRUCTION_EXG:
 	break;
 
 case INSTRUCTION_EXT:
+	operation_size = opcode.raw & 0x0040 ? 4 : 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1489,6 +1594,9 @@ case INSTRUCTION_JSR:
 	break;
 
 case INSTRUCTION_LEA:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1496,7 +1604,7 @@ case INSTRUCTION_LEA:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1521,8 +1629,11 @@ case INSTRUCTION_LEA:
 	break;
 
 case INSTRUCTION_LINK:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1547,8 +1658,11 @@ case INSTRUCTION_LINK:
 	break;
 
 case INSTRUCTION_LSD_MEMORY:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1580,8 +1694,11 @@ case INSTRUCTION_LSD_MEMORY:
 	break;
 
 case INSTRUCTION_LSD_REGISTER:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1613,14 +1730,30 @@ case INSTRUCTION_LSD_REGISTER:
 	break;
 
 case INSTRUCTION_MOVE:
+	switch (opcode.raw & 0x3000)
+	{
+		case 0x1000:
+			operation_size = 1;
+			break;
+
+		case 0x2000:
+			operation_size = 4;
+			break;
+
+		case 0x3000:
+			operation_size = 2;
+			break;
+	}
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.secondary_address_mode, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.secondary_address_mode, opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1649,6 +1782,9 @@ case INSTRUCTION_MOVE:
 	break;
 
 case INSTRUCTION_MOVE_FROM_SR:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
 
@@ -1656,7 +1792,7 @@ case INSTRUCTION_MOVE_FROM_SR:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1681,8 +1817,11 @@ case INSTRUCTION_MOVE_FROM_SR:
 	break;
 
 case INSTRUCTION_MOVE_TO_CCR:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1720,8 +1859,11 @@ case INSTRUCTION_MOVE_TO_SR:
 		longjmp(stuff.exception.context, 1);
 	}
 
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1779,8 +1921,24 @@ case INSTRUCTION_MOVE_USP:
 	break;
 
 case INSTRUCTION_MOVEA:
+	switch (opcode.raw & 0x3000)
+	{
+		case 0x1000:
+			operation_size = 1;
+			break;
+
+		case 0x2000:
+			operation_size = 4;
+			break;
+
+		case 0x3000:
+			operation_size = 2;
+			break;
+	}
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1811,8 +1969,11 @@ case INSTRUCTION_MOVEA:
 	break;
 
 case INSTRUCTION_MOVEM:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1869,8 +2030,11 @@ case INSTRUCTION_MOVEP:
 	break;
 
 case INSTRUCTION_MOVEQ:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEQ;
@@ -1899,6 +2063,9 @@ case INSTRUCTION_MOVEQ:
 	break;
 
 case INSTRUCTION_MULS:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1906,7 +2073,7 @@ case INSTRUCTION_MULS:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1938,6 +2105,9 @@ case INSTRUCTION_MULS:
 	break;
 
 case INSTRUCTION_MULU:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -1945,7 +2115,7 @@ case INSTRUCTION_MULU:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1977,8 +2147,11 @@ case INSTRUCTION_MULU:
 	break;
 
 case INSTRUCTION_NBCD:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2012,8 +2185,11 @@ case INSTRUCTION_NBCD:
 	break;
 
 case INSTRUCTION_NEG:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2049,8 +2225,11 @@ case INSTRUCTION_NEG:
 	break;
 
 case INSTRUCTION_NEGX:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2105,8 +2284,11 @@ case INSTRUCTION_NOP:
 	break;
 
 case INSTRUCTION_NOT:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2138,14 +2320,17 @@ case INSTRUCTION_NOT:
 	break;
 
 case INSTRUCTION_OR:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2177,14 +2362,17 @@ case INSTRUCTION_OR:
 	break;
 
 case INSTRUCTION_ORI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2216,8 +2404,11 @@ case INSTRUCTION_ORI:
 	break;
 
 case INSTRUCTION_ORI_TO_CCR:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2258,8 +2449,11 @@ case INSTRUCTION_ORI_TO_SR:
 		longjmp(stuff.exception.context, 1);
 	}
 
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2346,8 +2540,11 @@ case INSTRUCTION_RESET:
 	break;
 
 case INSTRUCTION_ROD_MEMORY:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2379,8 +2576,11 @@ case INSTRUCTION_ROD_MEMORY:
 	break;
 
 case INSTRUCTION_ROD_REGISTER:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2412,8 +2612,11 @@ case INSTRUCTION_ROD_REGISTER:
 	break;
 
 case INSTRUCTION_ROXD_MEMORY:
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2445,8 +2648,11 @@ case INSTRUCTION_ROXD_MEMORY:
 	break;
 
 case INSTRUCTION_ROXD_REGISTER:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2545,14 +2751,17 @@ case INSTRUCTION_RTS:
 	break;
 
 case INSTRUCTION_SBCD:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2586,8 +2795,11 @@ case INSTRUCTION_SBCD:
 	break;
 
 case INSTRUCTION_SCC:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2622,8 +2834,11 @@ case INSTRUCTION_STOP:
 		longjmp(stuff.exception.context, 1);
 	}
 
+	operation_size = 2;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2648,14 +2863,17 @@ case INSTRUCTION_STOP:
 	break;
 
 case INSTRUCTION_SUB:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2691,6 +2909,9 @@ case INSTRUCTION_SUB:
 	break;
 
 case INSTRUCTION_SUBA:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
 
@@ -2698,7 +2919,7 @@ case INSTRUCTION_SUBA:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2726,8 +2947,11 @@ case INSTRUCTION_SUBA:
 	break;
 
 case INSTRUCTION_SUBAQ:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2755,14 +2979,17 @@ case INSTRUCTION_SUBAQ:
 	break;
 
 case INSTRUCTION_SUBI:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2798,8 +3025,11 @@ case INSTRUCTION_SUBI:
 	break;
 
 case INSTRUCTION_SUBQ:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2835,14 +3065,17 @@ case INSTRUCTION_SUBQ:
 	break;
 
 case INSTRUCTION_SUBX:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2877,8 +3110,11 @@ case INSTRUCTION_SUBX:
 	break;
 
 case INSTRUCTION_SWAP:
+	operation_size = 4;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2910,8 +3146,11 @@ case INSTRUCTION_SWAP:
 	break;
 
 case INSTRUCTION_TAS:
+	operation_size = 1;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2979,8 +3218,11 @@ case INSTRUCTION_TRAPV:
 	break;
 
 case INSTRUCTION_TST:
+	operation_size = 1 << opcode.bits_6_and_7;
+	msb_bit_index = operation_size * 8 - 1;
+
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, decoded_opcode.size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);

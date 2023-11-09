@@ -137,6 +137,7 @@ int main(int argc, char **argv)
 		EmitFormatted("case %s:", instruction_strings[i]);
 		++emit_indentation;
 		EmitInstructionSupervisorCheck(instruction);
+		EmitInstructionSize(instruction);
 		EmitInstructionSourceAddressMode(instruction);
 		EmitInstructionReadSourceOperand(instruction);
 		EmitInstructionDestinationAddressMode(instruction);

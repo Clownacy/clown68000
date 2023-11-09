@@ -40,6 +40,72 @@ void EmitInstructionSupervisorCheck(const Instruction instruction)
 	}
 }
 
+void EmitInstructionSize(const Instruction instruction)
+{
+	const InstructionSize size = Instruction_GetSize(instruction);
+
+	if (size != INSTRUCTION_SIZE_NONE)
+	{
+		switch (Instruction_GetSize(instruction))
+		{
+			case INSTRUCTION_SIZE_BYTE:
+				/* Hardcoded to a byte. */
+				Emit("operation_size = 1;");
+				break;
+
+			case INSTRUCTION_SIZE_WORD:
+				/* Hardcoded to a word. */
+				Emit("operation_size = 2;");
+				break;
+
+			case INSTRUCTION_SIZE_LONGWORD:
+				/* Hardcoded to a longword. */
+				Emit("operation_size = 4;");
+				break;
+
+			case INSTRUCTION_SIZE_LONGWORD_REGISTER_BYTE_MEMORY:
+				/* 4 if register - 1 if memory. */
+				Emit("operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;");
+				break;
+
+			case INSTRUCTION_SIZE_MOVE:
+				/* Derived from an odd bitfield. */
+				Emit("switch (opcode.raw & 0x3000)");
+				Emit("{");
+				Emit("	case 0x1000:");
+				Emit("		operation_size = 1;");
+				Emit("		break;");
+				Emit("");
+				Emit("	case 0x2000:");
+				Emit("		operation_size = 4;"); /* Yup, this isn't a typo. */
+				Emit("		break;");
+				Emit("");
+				Emit("	case 0x3000:");
+				Emit("		operation_size = 2;");
+				Emit("		break;");
+				Emit("}");
+
+				break;
+
+			case INSTRUCTION_SIZE_EXT:
+				Emit("operation_size = opcode.raw & 0x0040 ? 4 : 2;");
+				break;
+
+			case INSTRUCTION_SIZE_STANDARD:
+				/* Standard. */
+				Emit("operation_size = 1 << opcode.bits_6_and_7;");
+				break;
+
+			case INSTRUCTION_SIZE_NONE:
+				/* Doesn't have a size. */
+				break;
+		}
+
+		Emit("msb_bit_index = operation_size * 8 - 1;");
+		Emit("");
+	}
+}
+
 static EmitOperandSource(const char* const operation_size, const char* const address_mode, const char* const address_mode_register)
 {
 	EmitFormatted("DecodeAddressMode(&stuff, &source_decoded_address_mode, %s, %s, %s);", operation_size, address_mode, address_mode_register);
@@ -60,12 +126,12 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA:
 				/* Immediate value (any size). */
-				EmitOperandSource("decoded_opcode.size", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
+				EmitOperandSource("operation_size", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY:
 				/* Secondary data register. */
-				EmitOperandSource("decoded_opcode.size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandSource("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA_BYTE:
@@ -88,12 +154,12 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 				break;
 
 			case INSTRUCTION_SOURCE_BCD_X:
-				EmitOperandSource("decoded_opcode.size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
+				EmitOperandSource("operation_size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit. */
-				EmitOperandSource("decoded_opcode.size", "opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode", "opcode.bit_8 ? opcode.secondary_register : opcode.primary_register");
+				EmitOperandSource("operation_size", "opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode", "opcode.bit_8 ? opcode.secondary_register : opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_SIZED:
@@ -102,12 +168,12 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 				break;
 
 			case INSTRUCTION_SOURCE_ADDRESS_REGISTER_PRIMARY_POSTINCREMENT:
-				EmitOperandSource("decoded_opcode.size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.primary_register");
+				EmitOperandSource("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode. */
-				EmitOperandSource("decoded_opcode.size", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandSource("operation_size", "opcode.primary_address_mode", "opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_WORD:
@@ -135,31 +201,31 @@ void EmitInstructionDestinationAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_PRIMARY:
 				/* Data register (primary) */
-				EmitOperandDestination("decoded_opcode.size", "ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
+				EmitOperandDestination("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY:
 				/* Data register (secondary) */
-				EmitOperandDestination("decoded_opcode.size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY:
 				/* Address register (secondary) */
-				EmitOperandDestination("decoded_opcode.size", "ADDRESS_MODE_ADDRESS_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_SECONDARY_ADDRESS_MODE:
 				/* Secondary address mode */
-				EmitOperandDestination("decoded_opcode.size", "opcode.secondary_address_mode", "opcode.secondary_register");
+				EmitOperandDestination("operation_size", "opcode.secondary_address_mode", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_BCD_X:
-				EmitOperandDestination("decoded_opcode.size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("operation_size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit */
-				EmitOperandDestination("decoded_opcode.size", "opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER", "opcode.bit_8 ? opcode.primary_register : opcode.secondary_register");
+				EmitOperandDestination("operation_size", "opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER", "opcode.bit_8 ? opcode.primary_register : opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_FULL:
@@ -168,12 +234,12 @@ void EmitInstructionDestinationAddressMode(const Instruction instruction)
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_POSTINCREMENT:
-				EmitOperandDestination("decoded_opcode.size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.secondary_register");
+				EmitOperandDestination("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_PRIMARY_ADDRESS_MODE:
 				/* Using primary address mode */
-				EmitOperandDestination("decoded_opcode.size", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandDestination("operation_size", "opcode.primary_address_mode", "opcode.primary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_CONDITION_CODE_REGISTER:

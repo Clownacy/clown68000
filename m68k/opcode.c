@@ -18,8 +18,6 @@
 
 #include "opcode.h"
 
-#include "instruction-properties.h"
-
 static Instruction GetInstruction(const SplitOpcode *opcode)
 {
 	Instruction instruction;
@@ -477,71 +475,7 @@ static Instruction GetInstruction(const SplitOpcode *opcode)
 	return instruction;
 }
 
-static unsigned int GetSize(const Instruction instruction, const SplitOpcode* const opcode)
-{
-	unsigned int operation_size;
-
-	operation_size = 0;
-
-	switch (Instruction_GetSize(instruction))
-	{
-		case INSTRUCTION_SIZE_BYTE:
-			/* Hardcoded to a byte. */
-			operation_size = 1;
-			break;
-
-		case INSTRUCTION_SIZE_WORD:
-			/* Hardcoded to a word. */
-			operation_size = 2;
-			break;
-
-		case INSTRUCTION_SIZE_LONGWORD:
-			/* Hardcoded to a longword. */
-			operation_size = 4;
-			break;
-
-		case INSTRUCTION_SIZE_LONGWORD_REGISTER_BYTE_MEMORY:
-			/* 4 if register - 1 if memory. */
-			operation_size = opcode->primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-			break;
-
-		case INSTRUCTION_SIZE_MOVE:
-			/* Derived from an odd bitfield. */
-			switch (opcode->raw & 0x3000)
-			{
-				case 0x1000:
-					operation_size = 1;
-					break;
-			
-				case 0x2000:
-					operation_size = 4; /* Yup, this isn't a typo. */
-					break;
-			
-				case 0x3000:
-					operation_size = 2;
-					break;
-			}
-
-			break;
-
-		case INSTRUCTION_SIZE_EXT:
-			operation_size = opcode->raw & 0x0040 ? 4 : 2;
-			break;
-
-		case INSTRUCTION_SIZE_STANDARD:
-			/* Standard. */
-			operation_size = 1 << opcode->bits_6_and_7;
-			break;
-
-		case INSTRUCTION_SIZE_NONE:
-			/* Doesn't have a size. */
-			break;
-	}
-
-	return operation_size;
-}
-
-void DecodeOpcode(DecodedOpcode* const decoded_opcode, SplitOpcode* const split_opcode, const unsigned int opcode)
+Instruction DecodeOpcode(SplitOpcode* const split_opcode, const unsigned int opcode)
 {
 	split_opcode->raw = opcode;
 
@@ -553,6 +487,5 @@ void DecodeOpcode(DecodedOpcode* const decoded_opcode, SplitOpcode* const split_
 	split_opcode->secondary_address_mode = (AddressMode)((split_opcode->raw >> 6) & 7);
 	split_opcode->secondary_register = (split_opcode->raw >> 9) & 7;
 
-	decoded_opcode->instruction = GetInstruction(split_opcode);
-	decoded_opcode->size = GetSize(decoded_opcode->instruction, split_opcode);
+	return GetInstruction(split_opcode);
 }

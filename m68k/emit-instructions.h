@@ -22,6 +22,7 @@
 #include "instruction.h"
 
 void EmitInstructionSupervisorCheck(const Instruction instruction);
+void EmitInstructionSize(const Instruction instruction);
 void EmitInstructionSourceAddressMode(const Instruction instruction);
 void EmitInstructionDestinationAddressMode(const Instruction instruction);
 void EmitInstructionReadSourceOperand(const Instruction instruction);

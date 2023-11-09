@@ -48,12 +48,6 @@ typedef enum AddressModeSpecial
 	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4
 } AddressModeSpecial;
 
-typedef struct DecodedOpcode
-{
-	Instruction instruction;
-	unsigned int size;
-} DecodedOpcode;
-
 typedef struct SplitOpcode
 {
 	unsigned int raw;
@@ -68,6 +62,6 @@ typedef struct SplitOpcode
 	cc_bool bit_8;
 } SplitOpcode;
 
-void DecodeOpcode(DecodedOpcode *decoded_opcode, SplitOpcode *split_opcode, unsigned int opcode);
+Instruction DecodeOpcode(SplitOpcode *split_opcode, unsigned int opcode);
 
 #endif /* M68K_OPCODE_H */

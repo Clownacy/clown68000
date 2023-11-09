@@ -679,23 +679,21 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		{
 			/* Process new instruction */
 			SplitOpcode opcode;
+			Instruction instruction;
 			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 			cc_u32f source_value, destination_value, result_value;
-			DecodedOpcode decoded_opcode;
-			cc_u32f msb_bit_index;
+			cc_u32f operation_size, msb_bit_index;
 
 			source_value = destination_value = result_value = 0;
 
 			/* Figure out which instruction this is */
-			DecodeOpcode(&decoded_opcode, &opcode, ReadWord(&stuff, state->program_counter));
+			instruction = DecodeOpcode(&opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = opcode.raw;
 			state->program_counter += 2;
 
-			msb_bit_index = (decoded_opcode.size * 8 - 1);
-
-			switch (decoded_opcode.instruction)
+			switch (instruction)
 			{
 				#include "m68k/gen.c"
 			}

@@ -10,8 +10,6 @@ add_library(clown68000 STATIC
 	"clown68000.h"
 	"m68k/opcode.c"
 	"m68k/opcode.h"
-	"m68k/instruction-properties.c"
-	"m68k/instruction-properties.h"
 )
 
 set_target_properties(clown68000 PROPERTIES

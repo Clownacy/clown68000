@@ -619,8 +619,8 @@
 	}\
 	else\
 	{\
-		const cc_bool source_is_negative = decoded_opcode.instruction == INSTRUCTION_DIVS && (source_value & 0x8000) != 0;\
-		const cc_bool destination_is_negative = decoded_opcode.instruction == INSTRUCTION_DIVS && (destination_value & 0x80000000) != 0;\
+		const cc_bool source_is_negative = instruction == INSTRUCTION_DIVS && (source_value & 0x8000) != 0;\
+		const cc_bool destination_is_negative = instruction == INSTRUCTION_DIVS && (destination_value & 0x80000000) != 0;\
 		const cc_bool result_is_negative = source_is_negative != destination_is_negative;\
 \
 		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
@@ -630,7 +630,7 @@
 		const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;\
 \
 		/* Overflow detection */\
-		if (absolute_quotient > (decoded_opcode.instruction == INSTRUCTION_DIVU ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))\
+		if (absolute_quotient > (instruction == INSTRUCTION_DIVU ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))\
 		{\
 			state->status_register |= CONDITION_CODE_OVERFLOW;\
 \
@@ -674,8 +674,8 @@
 
 #define DO_INSTRUCTION_ACTION_MUL\
 	{\
-	const cc_bool multiplier_is_negative = decoded_opcode.instruction == INSTRUCTION_MULS && (source_value & 0x8000) != 0;\
-	const cc_bool multiplicand_is_negative = decoded_opcode.instruction == INSTRUCTION_MULS && (destination_value & 0x8000) != 0;\
+	const cc_bool multiplier_is_negative = instruction == INSTRUCTION_MULS && (source_value & 0x8000) != 0;\
+	const cc_bool multiplicand_is_negative = instruction == INSTRUCTION_MULS && (destination_value & 0x8000) != 0;\
 	const cc_bool result_is_negative = multiplier_is_negative != multiplicand_is_negative;\
 \
 	const cc_u32f multiplier = multiplier_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, source_value) : source_value;\
