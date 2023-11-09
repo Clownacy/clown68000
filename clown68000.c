@@ -45,12 +45,6 @@ http://gendev.spritesmind.net/forum/viewtopic.php?f=2&t=1964
 #include "m68k/instruction.h"
 #include "m68k/opcode.h"
 
-/*#define DEBUG_STUFF*/
-
-#ifdef DEBUG_STUFF
-#include <stdio.h>
-#endif
-
 enum
 {
 	CONDITION_CODE_CARRY_BIT    = 0,
@@ -1415,127 +1409,19 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 		if (!setjmp(stuff.exception.context))
 		{
+			/* Process new instruction. */
 			unsigned int i;
 
-			/* Process new instruction */
-			stuff.source_value = stuff.destination_value = stuff.result_value = 0; /* TODO: This is unnecessary - remove this! */
-
-			/* Figure out which instruction this is */
+			/* Figure out which instruction this is. */
 			stuff.instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
 			state->instruction_register = stuff.opcode.raw;
 			state->program_counter += 2;
 
-			/* Execute the instruction's micrcode */
+			/* Execute the instruction's microcode. */
 			for (i = 0; microcode[stuff.instruction][i] != NULL; ++i)
 				microcode[stuff.instruction][i](&stuff);
-
-		#ifdef DEBUG_STUFF
-			{
-				static const char* const instruction_strings[] = {
-					"INSTRUCTION_ABCD",
-					"INSTRUCTION_ADD",
-					"INSTRUCTION_ADDA",
-					"INSTRUCTION_ADDAQ",
-					"INSTRUCTION_ADDI",
-					"INSTRUCTION_ADDQ",
-					"INSTRUCTION_ADDX",
-					"INSTRUCTION_AND",
-					"INSTRUCTION_ANDI",
-					"INSTRUCTION_ANDI_TO_CCR",
-					"INSTRUCTION_ANDI_TO_SR",
-					"INSTRUCTION_ASD_MEMORY",
-					"INSTRUCTION_ASD_REGISTER",
-					"INSTRUCTION_BCC_SHORT",
-					"INSTRUCTION_BCC_WORD",
-					"INSTRUCTION_BCHG_DYNAMIC",
-					"INSTRUCTION_BCHG_STATIC",
-					"INSTRUCTION_BCLR_DYNAMIC",
-					"INSTRUCTION_BCLR_STATIC",
-					"INSTRUCTION_BRA_SHORT",
-					"INSTRUCTION_BRA_WORD",
-					"INSTRUCTION_BSET_DYNAMIC",
-					"INSTRUCTION_BSET_STATIC",
-					"INSTRUCTION_BSR_SHORT",
-					"INSTRUCTION_BSR_WORD",
-					"INSTRUCTION_BTST_DYNAMIC",
-					"INSTRUCTION_BTST_STATIC",
-					"INSTRUCTION_CHK",
-					"INSTRUCTION_CLR",
-					"INSTRUCTION_CMP",
-					"INSTRUCTION_CMPA",
-					"INSTRUCTION_CMPI",
-					"INSTRUCTION_CMPM",
-					"INSTRUCTION_DBCC",
-					"INSTRUCTION_DIVS",
-					"INSTRUCTION_DIVU",
-					"INSTRUCTION_EOR",
-					"INSTRUCTION_EORI",
-					"INSTRUCTION_EORI_TO_CCR",
-					"INSTRUCTION_EORI_TO_SR",
-					"INSTRUCTION_EXG",
-					"INSTRUCTION_EXT",
-					"INSTRUCTION_ILLEGAL",
-					"INSTRUCTION_JMP",
-					"INSTRUCTION_JSR",
-					"INSTRUCTION_LEA",
-					"INSTRUCTION_LINK",
-					"INSTRUCTION_LSD_MEMORY",
-					"INSTRUCTION_LSD_REGISTER",
-					"INSTRUCTION_MOVE",
-					"INSTRUCTION_MOVE_FROM_SR",
-					"INSTRUCTION_MOVE_TO_CCR",
-					"INSTRUCTION_MOVE_TO_SR",
-					"INSTRUCTION_MOVE_USP",
-					"INSTRUCTION_MOVEA",
-					"INSTRUCTION_MOVEM",
-					"INSTRUCTION_MOVEP",
-					"INSTRUCTION_MOVEQ",
-					"INSTRUCTION_MULS",
-					"INSTRUCTION_MULU",
-					"INSTRUCTION_NBCD",
-					"INSTRUCTION_NEG",
-					"INSTRUCTION_NEGX",
-					"INSTRUCTION_NOP",
-					"INSTRUCTION_NOT",
-					"INSTRUCTION_OR",
-					"INSTRUCTION_ORI",
-					"INSTRUCTION_ORI_TO_CCR",
-					"INSTRUCTION_ORI_TO_SR",
-					"INSTRUCTION_PEA",
-					"INSTRUCTION_RESET",
-					"INSTRUCTION_ROD_MEMORY",
-					"INSTRUCTION_ROD_REGISTER",
-					"INSTRUCTION_ROXD_MEMORY",
-					"INSTRUCTION_ROXD_REGISTER",
-					"INSTRUCTION_RTE",
-					"INSTRUCTION_RTR",
-					"INSTRUCTION_RTS",
-					"INSTRUCTION_SBCD",
-					"INSTRUCTION_SCC",
-					"INSTRUCTION_STOP",
-					"INSTRUCTION_SUB",
-					"INSTRUCTION_SUBA",
-					"INSTRUCTION_SUBAQ",
-					"INSTRUCTION_SUBI",
-					"INSTRUCTION_SUBQ",
-					"INSTRUCTION_SUBX",
-					"INSTRUCTION_SWAP",
-					"INSTRUCTION_TAS",
-					"INSTRUCTION_TRAP",
-					"INSTRUCTION_TRAPV",
-					"INSTRUCTION_TST",
-					"INSTRUCTION_UNLK",
-
-					"INSTRUCTION_UNIMPLEMENTED_1",
-					"INSTRUCTION_UNIMPLEMENTED_2"
-				};
-
-				fprintf(stderr, "0x%.8" CC_PRIXLEAST32 " - %s\n", state->program_counter, instruction_strings[instruction]);
-				state->program_counter |= 0; /* Something to latch a breakpoint onto */
-			}
-		#endif
 		}
 	}
 }
