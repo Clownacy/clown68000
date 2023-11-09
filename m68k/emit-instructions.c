@@ -245,7 +245,7 @@ void EmitInstructionReadSourceOperand(const Instruction instruction)
 	if (Instruction_IsSourceOperandRead(instruction))
 	{
 		Emit("/* Read source operand. */");
-		Emit("source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);");
+		Emit("ReadSource(&stuff);");
 		Emit("");
 	}
 }
@@ -255,7 +255,7 @@ void EmitInstructionReadDestinationOperand(const Instruction instruction)
 	if (Instruction_IsDestinationOperandRead(instruction))
 	{
 		Emit("/* Read destination operand. */");
-		Emit("destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);");
+		Emit("ReadDestination(&stuff);");
 		Emit("");
 	}
 }
@@ -543,7 +543,7 @@ void EmitInstructionWriteDestinationOperand(const Instruction instruction)
 	if (Instruction_IsDestinationOperandWritten(instruction))
 	{
 		Emit("/* Write destination operand. */");
-		Emit("SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);");
+		Emit("WriteDestination(&stuff);");
 		Emit("");
 	}
 }
@@ -559,17 +559,17 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= (((stuff.source_value & stuff.destination_value) | ((stuff.source_value | stuff.destination_value) & ~stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_STANDARD_BORROW:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= ((destination_value | result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= ((stuff.destination_value | stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_CLEAR:
@@ -590,17 +590,17 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_OVERFLOW_ADD:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_SUB:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= ((destination_value & result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= ((stuff.destination_value & stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_CLEARED:
@@ -621,13 +621,13 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_ZERO_CLEAR_IF_NONZERO_UNAFFECTED_OTHERWISE:
 			Emit("/* Cleared if the result is nonzero; unchanged otherwise */");
-			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
+			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_SET_IF_ZERO_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result is zero; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_ZERO;");
-			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
+			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_UNDEFINED:
@@ -645,7 +645,7 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 		case INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result value is negative; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_NEGATIVE;");
-			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;");
+			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;");
 			break;
 
 		case INSTRUCTION_NEGATIVE_UNAFFECTED:

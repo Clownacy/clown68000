@@ -109,6 +109,7 @@ typedef struct Stuff
 	SplitOpcode opcode;
 	cc_u32f operation_size, msb_bit_index;
 	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
+	cc_u32f source_value, destination_value, result_value;
 } Stuff;
 
 /* Error callback. */
@@ -818,6 +819,21 @@ static void DecodeDestination_MOVEP(Stuff* const stuff)
 	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 }
 
+static void ReadSource(Stuff* const stuff)
+{
+	stuff->source_value = GetValueUsingDecodedAddressMode(stuff, &stuff->source_decoded_address_mode);
+}
+
+static void ReadDestination(Stuff* const stuff)
+{
+	stuff->destination_value = GetValueUsingDecodedAddressMode(stuff, &stuff->destination_decoded_address_mode);
+}
+
+static void WriteDestination(Stuff* const stuff)
+{
+	SetValueUsingDecodedAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->result_value);
+}
+
 
 /* API */
 
@@ -889,9 +905,8 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		{
 			/* Process new instruction */
 			Instruction instruction;
-			cc_u32f source_value, destination_value, result_value;
 
-			source_value = destination_value = result_value = 0;
+			stuff.source_value = stuff.destination_value = stuff.result_value = 0; /* TODO: This is unnecessary - remove this! */
 
 			/* Figure out which instruction this is */
 			instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
