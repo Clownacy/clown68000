@@ -1,15 +1,15 @@
 case INSTRUCTION_ABCD:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -27,14 +27,14 @@ case INSTRUCTION_ABCD:
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -43,17 +43,17 @@ case INSTRUCTION_ABCD:
 	break;
 
 case INSTRUCTION_ADD:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -69,18 +69,18 @@ case INSTRUCTION_ADD:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -89,17 +89,17 @@ case INSTRUCTION_ADD:
 	break;
 
 case INSTRUCTION_ADDA:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -127,11 +127,11 @@ case INSTRUCTION_ADDA:
 	break;
 
 case INSTRUCTION_ADDAQ:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -159,17 +159,17 @@ case INSTRUCTION_ADDAQ:
 	break;
 
 case INSTRUCTION_ADDI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -185,18 +185,18 @@ case INSTRUCTION_ADDI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -205,11 +205,11 @@ case INSTRUCTION_ADDI:
 	break;
 
 case INSTRUCTION_ADDQ:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -225,18 +225,18 @@ case INSTRUCTION_ADDQ:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -245,17 +245,17 @@ case INSTRUCTION_ADDQ:
 	break;
 
 case INSTRUCTION_ADDX:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -271,17 +271,17 @@ case INSTRUCTION_ADDX:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -290,17 +290,17 @@ case INSTRUCTION_ADDX:
 	break;
 
 case INSTRUCTION_AND:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -321,28 +321,28 @@ case INSTRUCTION_AND:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ANDI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -363,22 +363,22 @@ case INSTRUCTION_ANDI:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ANDI_TO_CCR:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -415,11 +415,11 @@ case INSTRUCTION_ANDI_TO_SR:
 	/* Only allow this instruction in supervisor mode. */
 	SupervisorCheck(&stuff);
 
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -453,11 +453,11 @@ case INSTRUCTION_ANDI_TO_SR:
 	break;
 
 case INSTRUCTION_ASD_MEMORY:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -478,22 +478,22 @@ case INSTRUCTION_ASD_MEMORY:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ASD_REGISTER:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -514,11 +514,11 @@ case INSTRUCTION_ASD_REGISTER:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -571,17 +571,17 @@ case INSTRUCTION_BCC_WORD:
 	break;
 
 case INSTRUCTION_BCHG_DYNAMIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -609,8 +609,8 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	break;
 
 case INSTRUCTION_BCHG_STATIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -619,7 +619,7 @@ case INSTRUCTION_BCHG_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -647,17 +647,17 @@ case INSTRUCTION_BCHG_STATIC:
 	break;
 
 case INSTRUCTION_BCLR_DYNAMIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -685,8 +685,8 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	break;
 
 case INSTRUCTION_BCLR_STATIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -695,7 +695,7 @@ case INSTRUCTION_BCLR_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -769,17 +769,17 @@ case INSTRUCTION_BRA_WORD:
 	break;
 
 case INSTRUCTION_BSET_DYNAMIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -807,8 +807,8 @@ case INSTRUCTION_BSET_DYNAMIC:
 	break;
 
 case INSTRUCTION_BSET_STATIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -817,7 +817,7 @@ case INSTRUCTION_BSET_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -891,17 +891,17 @@ case INSTRUCTION_BSR_WORD:
 	break;
 
 case INSTRUCTION_BTST_DYNAMIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -926,8 +926,8 @@ case INSTRUCTION_BTST_DYNAMIC:
 	break;
 
 case INSTRUCTION_BTST_STATIC:
-	operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -936,7 +936,7 @@ case INSTRUCTION_BTST_STATIC:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -961,11 +961,11 @@ case INSTRUCTION_BTST_STATIC:
 	break;
 
 case INSTRUCTION_CHK:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -990,11 +990,11 @@ case INSTRUCTION_CHK:
 	break;
 
 case INSTRUCTION_CLR:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1015,28 +1015,28 @@ case INSTRUCTION_CLR:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_CMP:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1049,35 +1049,35 @@ case INSTRUCTION_CMP:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_CMPA:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1090,35 +1090,35 @@ case INSTRUCTION_CMPA:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_CMPI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1131,35 +1131,35 @@ case INSTRUCTION_CMPI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_CMPM:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1172,29 +1172,29 @@ case INSTRUCTION_CMPM:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_DBCC:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1219,17 +1219,17 @@ case INSTRUCTION_DBCC:
 	break;
 
 case INSTRUCTION_DIVS:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1257,17 +1257,17 @@ case INSTRUCTION_DIVS:
 	break;
 
 case INSTRUCTION_DIVU:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1295,17 +1295,17 @@ case INSTRUCTION_DIVU:
 	break;
 
 case INSTRUCTION_EOR:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1326,28 +1326,28 @@ case INSTRUCTION_EOR:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_EORI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1368,22 +1368,22 @@ case INSTRUCTION_EORI:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_EORI_TO_CCR:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1420,11 +1420,11 @@ case INSTRUCTION_EORI_TO_SR:
 	/* Only allow this instruction in supervisor mode. */
 	SupervisorCheck(&stuff);
 
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1478,11 +1478,11 @@ case INSTRUCTION_EXG:
 	break;
 
 case INSTRUCTION_EXT:
-	operation_size = opcode.raw & 0x0040 ? 4 : 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Ext(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1503,11 +1503,11 @@ case INSTRUCTION_EXT:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1535,7 +1535,7 @@ case INSTRUCTION_ILLEGAL:
 
 case INSTRUCTION_JMP:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1561,7 +1561,7 @@ case INSTRUCTION_JMP:
 
 case INSTRUCTION_JSR:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1586,17 +1586,17 @@ case INSTRUCTION_JSR:
 	break;
 
 case INSTRUCTION_LEA:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1621,11 +1621,11 @@ case INSTRUCTION_LEA:
 	break;
 
 case INSTRUCTION_LINK:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1650,11 +1650,11 @@ case INSTRUCTION_LINK:
 	break;
 
 case INSTRUCTION_LSD_MEMORY:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1675,22 +1675,22 @@ case INSTRUCTION_LSD_MEMORY:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_LSD_REGISTER:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1711,41 +1711,28 @@ case INSTRUCTION_LSD_REGISTER:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_MOVE:
-	switch (opcode.raw & 0x3000)
-	{
-		case 0x1000:
-			operation_size = 1;
-			break;
-
-		case 0x2000:
-			operation_size = 4;
-			break;
-
-		case 0x3000:
-			operation_size = 2;
-			break;
-	}
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Move(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.secondary_address_mode, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.secondary_address_mode, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1763,19 +1750,19 @@ case INSTRUCTION_MOVE:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_MOVE_FROM_SR:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
 	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
@@ -1784,7 +1771,7 @@ case INSTRUCTION_MOVE_FROM_SR:
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
@@ -1809,11 +1796,11 @@ case INSTRUCTION_MOVE_FROM_SR:
 	break;
 
 case INSTRUCTION_MOVE_TO_CCR:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1847,11 +1834,11 @@ case INSTRUCTION_MOVE_TO_SR:
 	/* Only allow this instruction in supervisor mode. */
 	SupervisorCheck(&stuff);
 
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -1905,30 +1892,17 @@ case INSTRUCTION_MOVE_USP:
 	break;
 
 case INSTRUCTION_MOVEA:
-	switch (opcode.raw & 0x3000)
-	{
-		case 0x1000:
-			operation_size = 1;
-			break;
-
-		case 0x2000:
-			operation_size = 4;
-			break;
-
-		case 0x3000:
-			operation_size = 2;
-			break;
-	}
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Move(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEA;
@@ -1953,17 +1927,17 @@ case INSTRUCTION_MOVEA:
 	break;
 
 case INSTRUCTION_MOVEM:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -1989,7 +1963,7 @@ case INSTRUCTION_MOVEM:
 
 case INSTRUCTION_MOVEP:
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2014,11 +1988,11 @@ case INSTRUCTION_MOVEP:
 	break;
 
 case INSTRUCTION_MOVEQ:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEQ;
@@ -2036,28 +2010,28 @@ case INSTRUCTION_MOVEQ:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_MULS:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2078,28 +2052,28 @@ case INSTRUCTION_MULS:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_MULU:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2120,22 +2094,22 @@ case INSTRUCTION_MULU:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_NBCD:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2153,14 +2127,14 @@ case INSTRUCTION_NBCD:
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2169,11 +2143,11 @@ case INSTRUCTION_NBCD:
 	break;
 
 case INSTRUCTION_NEG:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2189,18 +2163,18 @@ case INSTRUCTION_NEG:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= ((destination_value | result_value) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= ((destination_value | result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= ((destination_value & result_value) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= ((destination_value & result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2209,11 +2183,11 @@ case INSTRUCTION_NEG:
 	break;
 
 case INSTRUCTION_NEGX:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2229,17 +2203,17 @@ case INSTRUCTION_NEGX:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= ((destination_value | result_value) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= ((destination_value | result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= ((destination_value & result_value) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= ((destination_value & result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2268,11 +2242,11 @@ case INSTRUCTION_NOP:
 	break;
 
 case INSTRUCTION_NOT:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2293,28 +2267,28 @@ case INSTRUCTION_NOT:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_OR:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2335,28 +2309,28 @@ case INSTRUCTION_OR:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ORI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2377,22 +2351,22 @@ case INSTRUCTION_ORI:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ORI_TO_CCR:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2429,11 +2403,11 @@ case INSTRUCTION_ORI_TO_SR:
 	/* Only allow this instruction in supervisor mode. */
 	SupervisorCheck(&stuff);
 
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2468,7 +2442,7 @@ case INSTRUCTION_ORI_TO_SR:
 
 case INSTRUCTION_PEA:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2516,11 +2490,11 @@ case INSTRUCTION_RESET:
 	break;
 
 case INSTRUCTION_ROD_MEMORY:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2541,22 +2515,22 @@ case INSTRUCTION_ROD_MEMORY:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ROD_REGISTER:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2577,22 +2551,22 @@ case INSTRUCTION_ROD_REGISTER:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ROXD_MEMORY:
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2613,22 +2587,22 @@ case INSTRUCTION_ROXD_MEMORY:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_ROXD_REGISTER:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2649,11 +2623,11 @@ case INSTRUCTION_ROXD_REGISTER:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2723,17 +2697,17 @@ case INSTRUCTION_RTS:
 	break;
 
 case INSTRUCTION_SBCD:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2751,14 +2725,14 @@ case INSTRUCTION_SBCD:
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2767,11 +2741,11 @@ case INSTRUCTION_SBCD:
 	break;
 
 case INSTRUCTION_SCC:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2802,11 +2776,11 @@ case INSTRUCTION_STOP:
 	/* Only allow this instruction in supervisor mode. */
 	SupervisorCheck(&stuff);
 
-	operation_size = 2;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -2831,17 +2805,17 @@ case INSTRUCTION_STOP:
 	break;
 
 case INSTRUCTION_SUB:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode, opcode.bit_8 ? opcode.secondary_register : opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, opcode.bit_8 ? opcode.primary_register : opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2857,18 +2831,18 @@ case INSTRUCTION_SUB:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2877,17 +2851,17 @@ case INSTRUCTION_SUB:
 	break;
 
 case INSTRUCTION_SUBA:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, opcode.bit_8 ? 4 : 2, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_ADDRESS_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2915,11 +2889,11 @@ case INSTRUCTION_SUBA:
 	break;
 
 case INSTRUCTION_SUBAQ:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2947,17 +2921,17 @@ case INSTRUCTION_SUBAQ:
 	break;
 
 case INSTRUCTION_SUBI:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -2973,18 +2947,18 @@ case INSTRUCTION_SUBI:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -2993,11 +2967,11 @@ case INSTRUCTION_SUBI:
 	break;
 
 case INSTRUCTION_SUBQ:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -3013,18 +2987,18 @@ case INSTRUCTION_SUBQ:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -3033,17 +3007,17 @@ case INSTRUCTION_SUBQ:
 	break;
 
 case INSTRUCTION_SUBX:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, (opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode.secondary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -3059,17 +3033,17 @@ case INSTRUCTION_SUBX:
 
 	/* Update CARRY condition code */
 	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 	/* Update OVERFLOW condition code */
 	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 	/* Update ZERO condition code */
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Standard behaviour: set to CARRY */
 	state->status_register &= ~CONDITION_CODE_EXTEND;
@@ -3078,11 +3052,11 @@ case INSTRUCTION_SUBX:
 	break;
 
 case INSTRUCTION_SWAP:
-	operation_size = 4;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, ADDRESS_MODE_DATA_REGISTER, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -3103,22 +3077,22 @@ case INSTRUCTION_SWAP:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
 	break;
 
 case INSTRUCTION_TAS:
-	operation_size = 1;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
 	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
@@ -3186,11 +3160,11 @@ case INSTRUCTION_TRAPV:
 	break;
 
 case INSTRUCTION_TST:
-	operation_size = 1 << opcode.bits_6_and_7;
-	msb_bit_index = operation_size * 8 - 1;
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, operation_size, opcode.primary_address_mode, opcode.primary_register);
+	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read source operand. */
 	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
@@ -3208,11 +3182,11 @@ case INSTRUCTION_TST:
 	/* Update ZERO condition code */
 	/* Standard behaviour: set if result is zero; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
 	/* Update NEGATIVE condition code */
 	/* Standard behaviour: set if result value is negative; clear otherwise */
 	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 	/* Update EXTEND condition code */
 	/* Unaffected */
 

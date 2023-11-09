@@ -106,6 +106,8 @@ typedef struct Stuff
 	{
 		jmp_buf context;
 	} exception;
+	SplitOpcode opcode;
+	cc_u32f operation_size, msb_bit_index;
 } Stuff;
 
 /* Error callback. */
@@ -621,6 +623,59 @@ static void SupervisorCheck(Stuff* const stuff)
 	}
 }
 
+static void SetSize_Byte(Stuff* const stuff)
+{
+	stuff->operation_size = 1;
+}
+
+static void SetSize_Word(Stuff* const stuff)
+{
+	stuff->operation_size = 2;
+}
+
+static void SetSize_Longword(Stuff* const stuff)
+{
+	stuff->operation_size = 4;
+}
+
+static void SetSize_LongwordRegisterByteMemory(Stuff* const stuff)
+{
+	stuff->operation_size = stuff->opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+}
+
+static void SetSize_Move(Stuff* const stuff)
+{
+	switch (stuff->opcode.raw & 0x3000)
+	{
+		case 0x1000:
+			stuff->operation_size = 1;
+			break;
+
+		case 0x2000:
+			stuff->operation_size = 4; /* Yup, this isn't a typo. */
+			break;
+
+		case 0x3000:
+			stuff->operation_size = 2;
+			break;
+	}
+}
+
+static void SetSize_Ext(Stuff* const stuff)
+{
+	stuff->operation_size = (stuff->opcode.raw & 0x0040) != 0 ? 4 : 2;
+}
+
+static void SetSize_Standard(Stuff* const stuff)
+{
+	stuff->operation_size = 1 << stuff->opcode.bits_6_and_7;
+}
+
+static void SetMSBBitIndex(Stuff* const stuff)
+{
+	stuff->msb_bit_index = stuff->operation_size * 8 - 1;
+}
+
 
 /* API */
 
@@ -691,19 +746,17 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		if (!setjmp(stuff.exception.context))
 		{
 			/* Process new instruction */
-			SplitOpcode opcode;
 			Instruction instruction;
 			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 			cc_u32f source_value, destination_value, result_value;
-			cc_u32f operation_size, msb_bit_index;
 
 			source_value = destination_value = result_value = 0;
 
 			/* Figure out which instruction this is */
-			instruction = DecodeOpcode(&opcode, ReadWord(&stuff, state->program_counter));
+			instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
 
 			/* We already pre-fetched the instruction, so just advance past it. */
-			state->instruction_register = opcode.raw;
+			state->instruction_register = stuff.opcode.raw;
 			state->program_counter += 2;
 
 			switch (instruction)

@@ -241,26 +241,26 @@
 	result_value = destination_value & source_value
 
 #define DO_INSTRUCTION_ACTION_SUBA\
-	if (!opcode.bit_8)\
+	if (!stuff.opcode.bit_8)\
 		source_value = CC_SIGN_EXTEND_ULONG(15, source_value);\
 \
 	DO_INSTRUCTION_ACTION_SUB
 
 #define DO_INSTRUCTION_ACTION_SUBQ\
-	source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
+	source_value = ((stuff.opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
 	DO_INSTRUCTION_ACTION_SUB
 
 #define DO_INSTRUCTION_ACTION_SUB\
 	result_value = destination_value - source_value
 
 #define DO_INSTRUCTION_ACTION_ADDA\
-	if (!opcode.bit_8)\
+	if (!stuff.opcode.bit_8)\
 		source_value = CC_SIGN_EXTEND_ULONG(15, source_value);\
 \
 	DO_INSTRUCTION_ACTION_ADD
 
 #define DO_INSTRUCTION_ACTION_ADDQ\
-	source_value = ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
+	source_value = ((stuff.opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */\
 	DO_INSTRUCTION_ACTION_ADD
 
 #define DO_INSTRUCTION_ACTION_ADD\
@@ -271,7 +271,7 @@
 
 #define DO_INSTRUCTION_ACTION_BTST\
 	/* Modulo the source value */\
-	source_value &= msb_bit_index;\
+	source_value &= stuff.msb_bit_index;\
 \
 	/* Set the zero flag to the specified bit */\
 	state->status_register &= ~CONDITION_CODE_ZERO;\
@@ -293,42 +293,42 @@
 	{\
 	cc_u32f memory_address = destination_value; /* TODO: Maybe get rid of this alias? */\
 \
-	switch (opcode.bits_6_and_7)\
+	switch (stuff.opcode.bits_6_and_7)\
 	{\
 		case 0:\
 			/* Memory to register (word) */\
-			state->data_registers[opcode.secondary_register] &= ~0xFFFFul;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 1;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 0;\
+			state->data_registers[stuff.opcode.secondary_register] &= ~0xFFFFul;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 1;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 0;\
 			break;\
 \
 		case 1:\
 			/* Memory to register (longword) */\
-			state->data_registers[opcode.secondary_register] = 0;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 3;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 2;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 2) << 8 * 1;\
-			state->data_registers[opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 3) << 8 * 0;\
+			state->data_registers[stuff.opcode.secondary_register] = 0;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 0) << 8 * 3;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 1) << 8 * 2;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 2) << 8 * 1;\
+			state->data_registers[stuff.opcode.secondary_register] |= ReadByte(&stuff, memory_address + 2 * 3) << 8 * 0;\
 			break;\
 \
 		case 2:\
 			/* Register to memory (word) */\
-			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 1) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 0) & 0xFF);\
 			break;\
 \
 		case 3:\
 			/* Register to memory (longword) */\
-			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[opcode.secondary_register] >> 8 * 3) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[opcode.secondary_register] >> 8 * 2) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 2, (state->data_registers[opcode.secondary_register] >> 8 * 1) & 0xFF);\
-			WriteByte(&stuff, memory_address + 2 * 3, (state->data_registers[opcode.secondary_register] >> 8 * 0) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 0, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 3) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 1, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 2) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 2, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 1) & 0xFF);\
+			WriteByte(&stuff, memory_address + 2 * 3, (state->data_registers[stuff.opcode.secondary_register] >> 8 * 0) & 0xFF);\
 			break;\
 	}\
 	}
 
 #define DO_INSTRUCTION_ACTION_MOVEA\
-	result_value = CC_SIGN_EXTEND_ULONG(msb_bit_index, source_value)
+	result_value = CC_SIGN_EXTEND_ULONG(stuff.msb_bit_index, source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVE\
 	result_value = source_value
@@ -336,10 +336,10 @@
 #define DO_INSTRUCTION_ACTION_LINK\
 	/* Push address register to stack */\
 	state->address_registers[7] -= 4;\
-	WriteLongWord(&stuff, state->address_registers[7], state->address_registers[opcode.primary_register]);\
+	WriteLongWord(&stuff, state->address_registers[7], state->address_registers[stuff.opcode.primary_register]);\
 \
 	/* Copy stack pointer to address register */\
-	state->address_registers[opcode.primary_register] = state->address_registers[7];\
+	state->address_registers[stuff.opcode.primary_register] = state->address_registers[7];\
 \
 	/* Offset the stack pointer by the immediate value */\
 	state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, source_value)
@@ -348,12 +348,12 @@
 	{\
 	cc_u32l value;\
 \
-	state->address_registers[7] = state->address_registers[opcode.primary_register];\
+	state->address_registers[7] = state->address_registers[stuff.opcode.primary_register];\
 	value = ReadLongWord(&stuff, state->address_registers[7]);\
 	state->address_registers[7] += 4;\
 \
 	/* We need to do this last in case we're writing to A7. */\
-	state->address_registers[opcode.primary_register] = value;\
+	state->address_registers[stuff.opcode.primary_register] = value;\
 	}
 
 #define DO_INSTRUCTION_ACTION_NEGX\
@@ -369,7 +369,7 @@
 	result_value = ~destination_value
 
 #define DO_INSTRUCTION_ACTION_EXT\
-	result_value = CC_SIGN_EXTEND_ULONG((opcode.raw & 0x0040) != 0 ? 15 : 7, destination_value)
+	result_value = CC_SIGN_EXTEND_ULONG((stuff.opcode.raw & 0x0040) != 0 ? 15 : 7, destination_value)
 
 #define DO_INSTRUCTION_ACTION_NBCD\
 	source_value = destination_value;\
@@ -396,14 +396,14 @@
 	result_value = destination_value | 0x80
 
 #define DO_INSTRUCTION_ACTION_TRAP\
-	source_value = opcode.raw & 0xF;\
+	source_value = stuff.opcode.raw & 0xF;\
 	Group1Or2Exception(&stuff, 32 + source_value)
 
 #define DO_INSTRUCTION_ACTION_MOVE_USP\
-	if ((opcode.raw & 8) != 0)\
-		state->address_registers[opcode.primary_register] = state->user_stack_pointer;\
+	if ((stuff.opcode.raw & 8) != 0)\
+		state->address_registers[stuff.opcode.primary_register] = state->user_stack_pointer;\
 	else\
-		state->user_stack_pointer = state->address_registers[opcode.primary_register]
+		state->user_stack_pointer = state->address_registers[stuff.opcode.primary_register]
 
 #define DO_INSTRUCTION_ACTION_RESET\
 	/* TODO */\
@@ -461,7 +461,7 @@
 	int delta;\
 	void (*write_function)(Stuff *stuff, cc_u32f address, cc_u32f value);\
 	\
-	if ((opcode.raw & 0x0040) != 0)\
+	if ((stuff.opcode.raw & 0x0040) != 0)\
 	{\
 		delta = 4;\
 		write_function = WriteLongWord;\
@@ -472,7 +472,7 @@
 		write_function = WriteWord;\
 	}\
 	\
-	if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
+	if (stuff.opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
 		delta = -delta;\
 	\
 	bitfield = source_value;\
@@ -482,10 +482,10 @@
 	{\
 		if ((bitfield & 1) != 0)\
 		{\
-			if ((opcode.raw & 0x0400) != 0)\
+			if ((stuff.opcode.raw & 0x0400) != 0)\
 			{\
 				/* Memory to register */\
-				if ((opcode.raw & 0x0040) != 0)\
+				if ((stuff.opcode.raw & 0x0040) != 0)\
 					state->data_registers[i] = ReadLongWord(&stuff, memory_address);\
 				else\
 					state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&stuff, memory_address));\
@@ -493,7 +493,7 @@
 			else\
 			{\
 				/* Register to memory */\
-				if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
+				if (stuff.opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
 					write_function(&stuff, memory_address + delta, state->address_registers[7 - i]);\
 				else\
 					write_function(&stuff, memory_address, state->data_registers[i]);\
@@ -510,10 +510,10 @@
 	{\
 		if ((bitfield & 1) != 0)\
 		{\
-			if ((opcode.raw & 0x0400) != 0)\
+			if ((stuff.opcode.raw & 0x0400) != 0)\
 			{\
 				/* Memory to register */\
-				if ((opcode.raw & 0x0040) != 0)\
+				if ((stuff.opcode.raw & 0x0040) != 0)\
 					state->address_registers[i] = ReadLongWord(&stuff, memory_address);\
 				else\
 					state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(&stuff, memory_address));\
@@ -521,7 +521,7 @@
 			else\
 			{\
 				/* Register to memory */\
-				if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
+				if (stuff.opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)\
 					write_function(&stuff, memory_address + delta, state->data_registers[7 - i]);\
 				else\
 					write_function(&stuff, memory_address, state->address_registers[i]);\
@@ -533,13 +533,13 @@
 		bitfield >>= 1;\
 	}\
 	\
-	if (opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT || opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)\
-		state->address_registers[opcode.primary_register] = memory_address;\
+	if (stuff.opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT || stuff.opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)\
+		state->address_registers[stuff.opcode.primary_register] = memory_address;\
 	}
 
 #define DO_INSTRUCTION_ACTION_CHK\
 	{\
-	const cc_u32f value = state->data_registers[opcode.secondary_register] & 0xFFFF;\
+	const cc_u32f value = state->data_registers[stuff.opcode.secondary_register] & 0xFFFF;\
 	\
 	if ((value & 0x8000) != 0)\
 	{\
@@ -561,12 +561,12 @@
 	}
 
 #define DO_INSTRUCTION_ACTION_SCC\
-	result_value = IsOpcodeConditionTrue(state, opcode.raw) ? 0xFF : 0
+	result_value = IsOpcodeConditionTrue(state, stuff.opcode.raw) ? 0xFF : 0
 
 #define DO_INSTRUCTION_ACTION_DBCC\
-	if (!IsOpcodeConditionTrue(state, opcode.raw))\
+	if (!IsOpcodeConditionTrue(state, stuff.opcode.raw))\
 	{\
-		cc_u16f loop_counter = state->data_registers[opcode.primary_register] & 0xFFFF;\
+		cc_u16f loop_counter = state->data_registers[stuff.opcode.primary_register] & 0xFFFF;\
 	\
 		if (loop_counter-- != 0)\
 		{\
@@ -574,12 +574,12 @@
 			state->program_counter += CC_SIGN_EXTEND_ULONG(15, source_value);\
 		}\
 	\
-		state->data_registers[opcode.primary_register] &= ~0xFFFFul;\
-		state->data_registers[opcode.primary_register] |= loop_counter & 0xFFFF;\
+		state->data_registers[stuff.opcode.primary_register] &= ~0xFFFFul;\
+		state->data_registers[stuff.opcode.primary_register] |= loop_counter & 0xFFFF;\
 	}
 
 #define DO_INSTRUCTION_ACTION_BRA_SHORT\
-	state->program_counter += CC_SIGN_EXTEND_ULONG(7, opcode.raw)
+	state->program_counter += CC_SIGN_EXTEND_ULONG(7, stuff.opcode.raw)
 
 #define DO_INSTRUCTION_ACTION_BRA_WORD\
 	state->program_counter -= 2;\
@@ -597,7 +597,7 @@
 	DO_INSTRUCTION_ACTION_BSR(DO_INSTRUCTION_ACTION_BRA_WORD)	
 
 #define DO_INSTRUCTION_ACTION_BCC(SUB_ACTION)\
-	if (IsOpcodeConditionTrue(state, opcode.raw))\
+	if (IsOpcodeConditionTrue(state, stuff.opcode.raw))\
 	{\
 		SUB_ACTION;\
 	}
@@ -609,7 +609,7 @@
 	DO_INSTRUCTION_ACTION_BCC(DO_INSTRUCTION_ACTION_BRA_WORD)	
 
 #define DO_INSTRUCTION_ACTION_MOVEQ\
-	result_value = CC_SIGN_EXTEND_ULONG(7, opcode.raw)
+	result_value = CC_SIGN_EXTEND_ULONG(7, stuff.opcode.raw)
 
 #define DO_INSTRUCTION_ACTION_DIV\
 	if (source_value == 0)\
@@ -711,25 +711,25 @@
 	{\
 	cc_u32f temp;\
 \
-	switch (opcode.raw & 0x00F8)\
+	switch (stuff.opcode.raw & 0x00F8)\
 	{\
 		/* TODO: What should happen when an invalid bit pattern occurs? */\
 		case 0x0040:\
-			temp = state->data_registers[opcode.secondary_register];\
-			state->data_registers[opcode.secondary_register] = state->data_registers[opcode.primary_register];\
-			state->data_registers[opcode.primary_register] = temp;\
+			temp = state->data_registers[stuff.opcode.secondary_register];\
+			state->data_registers[stuff.opcode.secondary_register] = state->data_registers[stuff.opcode.primary_register];\
+			state->data_registers[stuff.opcode.primary_register] = temp;\
 			break;\
 \
 		case 0x0048:\
-			temp = state->address_registers[opcode.secondary_register];\
-			state->address_registers[opcode.secondary_register] = state->address_registers[opcode.primary_register];\
-			state->address_registers[opcode.primary_register] = temp;\
+			temp = state->address_registers[stuff.opcode.secondary_register];\
+			state->address_registers[stuff.opcode.secondary_register] = state->address_registers[stuff.opcode.primary_register];\
+			state->address_registers[stuff.opcode.primary_register] = temp;\
 			break;\
 \
 		case 0x0088:\
-			temp = state->data_registers[opcode.secondary_register];\
-			state->data_registers[opcode.secondary_register] = state->address_registers[opcode.primary_register];\
-			state->address_registers[opcode.primary_register] = temp;\
+			temp = state->data_registers[stuff.opcode.secondary_register];\
+			state->data_registers[stuff.opcode.secondary_register] = state->address_registers[stuff.opcode.primary_register];\
+			state->address_registers[stuff.opcode.primary_register] = temp;\
 			break;\
 	}\
 	}
@@ -746,7 +746,7 @@
 	count = 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER\
-	count = (opcode.raw & 0x0020) != 0 ? state->data_registers[opcode.secondary_register] % 64 : ((opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
+	count = (stuff.opcode.raw & 0x0020) != 0 ? state->data_registers[stuff.opcode.secondary_register] % 64 : ((stuff.opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ASD\
 	result_value <<= 1;\
@@ -789,7 +789,7 @@
 
 #define DO_INSTRUCTION_ACTION_SHIFT(SUB_ACTION_1, SUB_ACTION_2, SUB_ACTION_3, SUB_ACTION_4, SUB_ACTION_5, SUB_ACTION_6)\
 	{\
-	const cc_u32f sign_bit_bitmask = (cc_u32f)1 << msb_bit_index;\
+	const cc_u32f sign_bit_bitmask = (cc_u32f)1 << stuff.msb_bit_index;\
 \
 	SUB_ACTION_1\
 \
@@ -804,7 +804,7 @@
 \
 	SUB_ACTION_6;\
 \
-	if (opcode.bit_8)\
+	if (stuff.opcode.bit_8)\
 	{\
 		/* Left */\
 		for (i = 0; i < count; ++i)\

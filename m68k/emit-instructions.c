@@ -46,50 +46,36 @@ void EmitInstructionSize(const Instruction instruction)
 		{
 			case INSTRUCTION_SIZE_BYTE:
 				/* Hardcoded to a byte. */
-				Emit("operation_size = 1;");
+				Emit("SetSize_Byte(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_WORD:
 				/* Hardcoded to a word. */
-				Emit("operation_size = 2;");
+				Emit("SetSize_Word(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_LONGWORD:
 				/* Hardcoded to a longword. */
-				Emit("operation_size = 4;");
+				Emit("SetSize_Longword(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_LONGWORD_REGISTER_BYTE_MEMORY:
 				/* 4 if register - 1 if memory. */
-				Emit("operation_size = opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;");
+				Emit("SetSize_LongwordRegisterByteMemory(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_MOVE:
 				/* Derived from an odd bitfield. */
-				Emit("switch (opcode.raw & 0x3000)");
-				Emit("{");
-				Emit("	case 0x1000:");
-				Emit("		operation_size = 1;");
-				Emit("		break;");
-				Emit("");
-				Emit("	case 0x2000:");
-				Emit("		operation_size = 4;"); /* Yup, this isn't a typo. */
-				Emit("		break;");
-				Emit("");
-				Emit("	case 0x3000:");
-				Emit("		operation_size = 2;");
-				Emit("		break;");
-				Emit("}");
-
+				Emit("SetSize_Move(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_EXT:
-				Emit("operation_size = opcode.raw & 0x0040 ? 4 : 2;");
+				Emit("SetSize_Ext(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_STANDARD:
 				/* Standard. */
-				Emit("operation_size = 1 << opcode.bits_6_and_7;");
+				Emit("SetSize_Standard(&stuff);");
 				break;
 
 			case INSTRUCTION_SIZE_NONE:
@@ -97,7 +83,7 @@ void EmitInstructionSize(const Instruction instruction)
 				break;
 		}
 
-		Emit("msb_bit_index = operation_size * 8 - 1;");
+		Emit("SetMSBBitIndex(&stuff);");
 		Emit("");
 	}
 }
@@ -122,12 +108,12 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA:
 				/* Immediate value (any size). */
-				EmitOperandSource("operation_size", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
+				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY:
 				/* Secondary data register. */
-				EmitOperandSource("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA_BYTE:
@@ -137,7 +123,7 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 
 			case INSTRUCTION_SOURCE_MEMORY_ADDRESS_PRIMARY:
 				/* Memory address */
-				EmitOperandSource("0", "opcode.primary_address_mode", "opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				EmitOperandSource("0", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 				break;
 
 			case INSTRUCTION_SOURCE_STATUS_REGISTER:
@@ -150,31 +136,31 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 				break;
 
 			case INSTRUCTION_SOURCE_BCD_X:
-				EmitOperandSource("operation_size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
+				EmitOperandSource("stuff.operation_size", "(stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit. */
-				EmitOperandSource("operation_size", "opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : opcode.primary_address_mode", "opcode.bit_8 ? opcode.secondary_register : opcode.primary_register");
+				EmitOperandSource("stuff.operation_size", "stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode", "stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_SIZED:
 				/* Word or longword based on bit 8. */
-				EmitOperandSource("opcode.bit_8 ? 4 : 2", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandSource("stuff.opcode.bit_8 ? 4 : 2", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_ADDRESS_REGISTER_PRIMARY_POSTINCREMENT:
-				EmitOperandSource("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.primary_register");
+				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode. */
-				EmitOperandSource("operation_size", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandSource("stuff.operation_size", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_WORD:
 				/* Primary address mode, hardcoded to word-size. */
-				EmitOperandSource("2", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandSource("2", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_SOURCE_NONE:
@@ -197,45 +183,45 @@ void EmitInstructionDestinationAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_PRIMARY:
 				/* Data register (primary) */
-				EmitOperandDestination("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.primary_register");
+				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY:
 				/* Data register (secondary) */
-				EmitOperandDestination("operation_size", "ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY:
 				/* Address register (secondary) */
-				EmitOperandDestination("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_SECONDARY_ADDRESS_MODE:
 				/* Secondary address mode */
-				EmitOperandDestination("operation_size", "opcode.secondary_address_mode", "opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "stuff.opcode.secondary_address_mode", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_BCD_X:
-				EmitOperandDestination("operation_size", "(opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "(stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit */
-				EmitOperandDestination("operation_size", "opcode.bit_8 ? opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER", "opcode.bit_8 ? opcode.primary_register : opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_FULL:
 				/* Full secondary address register */
-				EmitOperandDestination("4", "ADDRESS_MODE_ADDRESS_REGISTER", "opcode.secondary_register");
+				EmitOperandDestination("4", "ADDRESS_MODE_ADDRESS_REGISTER", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_POSTINCREMENT:
-				EmitOperandDestination("operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "opcode.secondary_register");
+				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "stuff.opcode.secondary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_PRIMARY_ADDRESS_MODE:
 				/* Using primary address mode */
-				EmitOperandDestination("operation_size", "opcode.primary_address_mode", "opcode.primary_register");
+				EmitOperandDestination("stuff.operation_size", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
 				break;
 
 			case INSTRUCTION_DESTINATION_CONDITION_CODE_REGISTER:
@@ -248,12 +234,12 @@ void EmitInstructionDestinationAddressMode(const Instruction instruction)
 
 			case INSTRUCTION_DESTINATION_MOVEM:
 				/* Memory address */
-				EmitOperandDestination("0", "opcode.primary_address_mode", "opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				EmitOperandDestination("0", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 				break;
 
 			case INSTRUCTION_DESTINATION_MOVEP:
 				/* Memory address */
-				EmitOperandDestination("0", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT", "opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				EmitOperandDestination("0", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 				break;
 
 			case INSTRUCTION_DESTINATION_NONE:
@@ -585,17 +571,17 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_CARRY_STANDARD_CARRY:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= (((source_value & destination_value) | ((source_value | destination_value) & ~result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_STANDARD_BORROW:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= (((source_value & ~destination_value) | ((source_value | ~destination_value) & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_CARRY;");
-			Emit("state->status_register |= ((destination_value | result_value) >> (msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
+			Emit("state->status_register |= ((destination_value | result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;");
 			break;
 
 		case INSTRUCTION_CARRY_CLEAR:
@@ -616,17 +602,17 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_OVERFLOW_ADD:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= (((source_value & destination_value & ~result_value) | (~source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_SUB:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= (((~source_value & destination_value & ~result_value) | (source_value & ~destination_value & result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_NEG:
 			Emit("state->status_register &= ~CONDITION_CODE_OVERFLOW;");
-			Emit("state->status_register |= ((destination_value & result_value) >> (msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
+			Emit("state->status_register |= ((destination_value & result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;");
 			break;
 
 		case INSTRUCTION_OVERFLOW_CLEARED:
@@ -647,13 +633,13 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 	{
 		case INSTRUCTION_ZERO_CLEAR_IF_NONZERO_UNAFFECTED_OTHERWISE:
 			Emit("/* Cleared if the result is nonzero; unchanged otherwise */");
-			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));");
+			Emit("state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_SET_IF_ZERO_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result is zero; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_ZERO;");
-			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - msb_bit_index - 1))) == 0));");
+			Emit("state->status_register |= CONDITION_CODE_ZERO & (0 - ((result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));");
 			break;
 
 		case INSTRUCTION_ZERO_UNDEFINED:
@@ -671,7 +657,7 @@ void EmitInstructionConditionCodes(const Instruction instruction)
 		case INSTRUCTION_NEGATIVE_SET_IF_NEGATIVE_CLEAR_OTHERWISE:
 			Emit("/* Standard behaviour: set if result value is negative; clear otherwise */");
 			Emit("state->status_register &= ~CONDITION_CODE_NEGATIVE;");
-			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;");
+			Emit("state->status_register |= CONDITION_CODE_NEGATIVE & (result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;");
 			break;
 
 		case INSTRUCTION_NEGATIVE_UNAFFECTED:
