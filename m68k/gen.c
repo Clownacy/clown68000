@@ -3,22 +3,22 @@ case INSTRUCTION_ABCD:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeSource_BCDX(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ABCD;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -47,22 +47,22 @@ case INSTRUCTION_ADD:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADD;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -93,22 +93,22 @@ case INSTRUCTION_ADDA:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeSized(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADDA;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -131,16 +131,16 @@ case INSTRUCTION_ADDAQ:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADDQ;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -163,22 +163,22 @@ case INSTRUCTION_ADDI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADD;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -209,16 +209,16 @@ case INSTRUCTION_ADDQ:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADDQ;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -249,22 +249,22 @@ case INSTRUCTION_ADDX:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeSource_BCDX(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ADDX;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -294,22 +294,22 @@ case INSTRUCTION_AND:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_AND;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -336,22 +336,22 @@ case INSTRUCTION_ANDI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_AND;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -378,22 +378,22 @@ case INSTRUCTION_ANDI_TO_CCR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_AND;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -419,22 +419,22 @@ case INSTRUCTION_ANDI_TO_SR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_AND;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -457,16 +457,16 @@ case INSTRUCTION_ASD_MEMORY:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ASD_MEMORY;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -493,16 +493,16 @@ case INSTRUCTION_ASD_REGISTER:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ASD_REGISTER;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -546,10 +546,10 @@ case INSTRUCTION_BCC_SHORT:
 
 case INSTRUCTION_BCC_WORD:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BCC_WORD;
@@ -575,22 +575,22 @@ case INSTRUCTION_BCHG_DYNAMIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeSource_DataRegisterSecondary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BCHG;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -613,22 +613,22 @@ case INSTRUCTION_BCHG_STATIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataByte(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BCHG;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -651,22 +651,22 @@ case INSTRUCTION_BCLR_DYNAMIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeSource_DataRegisterSecondary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BCLR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -689,22 +689,22 @@ case INSTRUCTION_BCLR_STATIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataByte(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BCLR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -744,10 +744,10 @@ case INSTRUCTION_BRA_SHORT:
 
 case INSTRUCTION_BRA_WORD:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BRA_WORD;
@@ -773,22 +773,22 @@ case INSTRUCTION_BSET_DYNAMIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeSource_DataRegisterSecondary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BSET;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -811,22 +811,22 @@ case INSTRUCTION_BSET_STATIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataByte(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BSET;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -866,10 +866,10 @@ case INSTRUCTION_BSR_SHORT:
 
 case INSTRUCTION_BSR_WORD:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BSR_WORD;
@@ -895,16 +895,16 @@ case INSTRUCTION_BTST_DYNAMIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeSource_DataRegisterSecondary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BTST;
@@ -930,16 +930,16 @@ case INSTRUCTION_BTST_STATIC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateDataByte(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_BTST;
@@ -965,10 +965,10 @@ case INSTRUCTION_CHK:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_CHK;
@@ -994,16 +994,16 @@ case INSTRUCTION_CLR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_CLR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1030,16 +1030,16 @@ case INSTRUCTION_CMP:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUB;
@@ -1071,16 +1071,16 @@ case INSTRUCTION_CMPA:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeSized(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUBA;
@@ -1112,16 +1112,16 @@ case INSTRUCTION_CMPI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUB;
@@ -1153,16 +1153,16 @@ case INSTRUCTION_CMPM:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff.opcode.primary_register);
+	DecodeSource_AddressRegisterPrimaryPostIncrement(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUB;
@@ -1194,10 +1194,10 @@ case INSTRUCTION_DBCC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_DBCC;
@@ -1223,22 +1223,22 @@ case INSTRUCTION_DIVS:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_DIV;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1261,22 +1261,22 @@ case INSTRUCTION_DIVU:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_DIV;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1299,22 +1299,22 @@ case INSTRUCTION_EOR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeSource_DataRegisterSecondary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_EOR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1341,22 +1341,22 @@ case INSTRUCTION_EORI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_EOR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1383,22 +1383,22 @@ case INSTRUCTION_EORI_TO_CCR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_EOR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1424,22 +1424,22 @@ case INSTRUCTION_EORI_TO_SR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_EOR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1482,16 +1482,16 @@ case INSTRUCTION_EXT:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_EXT;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1535,10 +1535,10 @@ case INSTRUCTION_ILLEGAL:
 
 case INSTRUCTION_JMP:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_MemoryAddressPrimary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_JMP;
@@ -1561,10 +1561,10 @@ case INSTRUCTION_JMP:
 
 case INSTRUCTION_JSR:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_MemoryAddressPrimary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_JSR;
@@ -1590,19 +1590,19 @@ case INSTRUCTION_LEA:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_MemoryAddressPrimary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1625,10 +1625,10 @@ case INSTRUCTION_LINK:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_LINK;
@@ -1654,16 +1654,16 @@ case INSTRUCTION_LSD_MEMORY:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_LSD_MEMORY;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1690,16 +1690,16 @@ case INSTRUCTION_LSD_REGISTER:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_LSD_REGISTER;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1726,19 +1726,19 @@ case INSTRUCTION_MOVE:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.secondary_address_mode, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.secondary_address_mode, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1765,19 +1765,19 @@ case INSTRUCTION_MOVE_FROM_SR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	DecodeSource_StatusRegister(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1800,19 +1800,19 @@ case INSTRUCTION_MOVE_TO_CCR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1838,19 +1838,19 @@ case INSTRUCTION_MOVE_TO_SR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1896,19 +1896,19 @@ case INSTRUCTION_MOVEA:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEA;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1931,16 +1931,16 @@ case INSTRUCTION_MOVEM:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEM;
@@ -1963,10 +1963,10 @@ case INSTRUCTION_MOVEM:
 
 case INSTRUCTION_MOVEP:
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEP;
@@ -1992,13 +1992,13 @@ case INSTRUCTION_MOVEQ:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVEQ;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2025,22 +2025,22 @@ case INSTRUCTION_MULS:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MUL;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2067,22 +2067,22 @@ case INSTRUCTION_MULU:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeWord(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MUL;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2109,16 +2109,16 @@ case INSTRUCTION_NBCD:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_NBCD;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2147,16 +2147,16 @@ case INSTRUCTION_NEG:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_NEG;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2187,16 +2187,16 @@ case INSTRUCTION_NEGX:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_NEGX;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2246,16 +2246,16 @@ case INSTRUCTION_NOT:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_NOT;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2282,22 +2282,22 @@ case INSTRUCTION_OR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_OR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2324,22 +2324,22 @@ case INSTRUCTION_ORI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_OR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2366,22 +2366,22 @@ case INSTRUCTION_ORI_TO_CCR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_OR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2407,22 +2407,22 @@ case INSTRUCTION_ORI_TO_SR:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_OR;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2442,10 +2442,10 @@ case INSTRUCTION_ORI_TO_SR:
 
 case INSTRUCTION_PEA:
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, 0, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_MemoryAddressPrimary(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_PEA;
@@ -2494,16 +2494,16 @@ case INSTRUCTION_ROD_MEMORY:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ROD_MEMORY;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2530,16 +2530,16 @@ case INSTRUCTION_ROD_REGISTER:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ROD_REGISTER;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2566,16 +2566,16 @@ case INSTRUCTION_ROXD_MEMORY:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ROXD_MEMORY;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2602,16 +2602,16 @@ case INSTRUCTION_ROXD_REGISTER:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_ROXD_REGISTER;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2701,22 +2701,22 @@ case INSTRUCTION_SBCD:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeSource_BCDX(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SBCD;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2745,16 +2745,16 @@ case INSTRUCTION_SCC:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SCC;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2780,10 +2780,10 @@ case INSTRUCTION_STOP:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_STOP;
@@ -2809,22 +2809,22 @@ case INSTRUCTION_SUB:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode, stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register);
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUB;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2855,22 +2855,22 @@ case INSTRUCTION_SUBA:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.opcode.bit_8 ? 4 : 2, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressModeSized(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUBA;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2893,16 +2893,16 @@ case INSTRUCTION_SUBAQ:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUBQ;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2925,22 +2925,22 @@ case INSTRUCTION_SUBI:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+	DecodeSource_ImmediateData(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUB;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -2971,16 +2971,16 @@ case INSTRUCTION_SUBQ:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUBQ;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3011,22 +3011,22 @@ case INSTRUCTION_SUBX:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeSource_BCDX(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, (stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff.opcode.secondary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SUBX;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3056,16 +3056,16 @@ case INSTRUCTION_SWAP:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, ADDRESS_MODE_DATA_REGISTER, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_SWAP;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3092,16 +3092,16 @@ case INSTRUCTION_TAS:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode destination address mode. */
-	DecodeAddressMode(&stuff, &destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
 
 	/* Read destination operand. */
-	destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);
+	destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_TAS;
 
 	/* Write destination operand. */
-	SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);
+	SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -3164,10 +3164,10 @@ case INSTRUCTION_TST:
 	SetMSBBitIndex(&stuff);
 
 	/* Decode source address mode. */
-	DecodeAddressMode(&stuff, &source_decoded_address_mode, stuff.operation_size, stuff.opcode.primary_address_mode, stuff.opcode.primary_register);
+	DecodeSource_PrimaryAddressMode(&stuff);
 
 	/* Read source operand. */
-	source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);
+	source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);
 
 	/* Do the actual instruction. */
 	DO_INSTRUCTION_ACTION_MOVE;

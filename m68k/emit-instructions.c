@@ -88,14 +88,9 @@ void EmitInstructionSize(const Instruction instruction)
 	}
 }
 
-static EmitOperandSource(const char* const operation_size, const char* const address_mode, const char* const address_mode_register)
+static void EmitOperandDestination(const char* const operation_size, const char* const address_mode, const char* const address_mode_register)
 {
-	EmitFormatted("DecodeAddressMode(&stuff, &source_decoded_address_mode, %s, %s, %s);", operation_size, address_mode, address_mode_register);
-}
-
-static EmitOperandDestination(const char* const operation_size, const char* const address_mode, const char* const address_mode_register)
-{
-	EmitFormatted("DecodeAddressMode(&stuff, &destination_decoded_address_mode, %s, %s, %s);", operation_size, address_mode, address_mode_register);
+	EmitFormatted("DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, %s, %s, %s);", operation_size, address_mode, address_mode_register);
 }
 
 void EmitInstructionSourceAddressMode(const Instruction instruction)
@@ -108,64 +103,63 @@ void EmitInstructionSourceAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA:
 				/* Immediate value (any size). */
-				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
+				Emit("DecodeSource_ImmediateData(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY:
 				/* Secondary data register. */
-				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
+				Emit("DecodeSource_DataRegisterSecondary(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA_BYTE:
 				/* Immediate value (byte). */
-				EmitOperandSource("1", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
+				Emit("DecodeSource_ImmediateDataByte(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_MEMORY_ADDRESS_PRIMARY:
 				/* Memory address */
-				EmitOperandSource("0", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				Emit("DecodeSource_MemoryAddressPrimary(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_STATUS_REGISTER:
-				EmitOperandSource("0", "ADDRESS_MODE_STATUS_REGISTER", "0");
+				Emit("DecodeSource_StatusRegister(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_IMMEDIATE_DATA_WORD:
 				/* Immediate value (word). */
-				EmitOperandSource("2", "ADDRESS_MODE_SPECIAL", "ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE");
+				Emit("DecodeSource_ImmediateDataWord(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_BCD_X:
-				EmitOperandSource("stuff.operation_size", "(stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.primary_register");
+				Emit("DecodeSource_BCDX(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit. */
-				EmitOperandSource("stuff.operation_size", "stuff.opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff.opcode.primary_address_mode", "stuff.opcode.bit_8 ? stuff.opcode.secondary_register : stuff.opcode.primary_register");
+				Emit("DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_SIZED:
 				/* Word or longword based on bit 8. */
-				EmitOperandSource("stuff.opcode.bit_8 ? 4 : 2", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
+				Emit("DecodeSource_PrimaryAddressModeSized(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_ADDRESS_REGISTER_PRIMARY_POSTINCREMENT:
-				EmitOperandSource("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "stuff.opcode.primary_register");
+				Emit("DecodeSource_AddressRegisterPrimaryPostIncrement(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode. */
-				EmitOperandSource("stuff.operation_size", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
+				Emit("DecodeSource_PrimaryAddressMode(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_WORD:
 				/* Primary address mode, hardcoded to word-size. */
-				EmitOperandSource("2", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
+				Emit("DecodeSource_PrimaryAddressModeWord(&stuff);");
 				break;
 
 			case INSTRUCTION_SOURCE_NONE:
 				/* Doesn't have a source address mode to decode. */
-				EmitOperandSource("0", "ADDRESS_MODE_NONE", "0");
 				break;
 		}
 
@@ -257,7 +251,7 @@ void EmitInstructionReadSourceOperand(const Instruction instruction)
 	if (Instruction_IsSourceOperandRead(instruction))
 	{
 		Emit("/* Read source operand. */");
-		Emit("source_value = GetValueUsingDecodedAddressMode(&stuff, &source_decoded_address_mode);");
+		Emit("source_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.source_decoded_address_mode);");
 		Emit("");
 	}
 }
@@ -267,7 +261,7 @@ void EmitInstructionReadDestinationOperand(const Instruction instruction)
 	if (Instruction_IsDestinationOperandRead(instruction))
 	{
 		Emit("/* Read destination operand. */");
-		Emit("destination_value = GetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode);");
+		Emit("destination_value = GetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode);");
 		Emit("");
 	}
 }
@@ -555,7 +549,7 @@ void EmitInstructionWriteDestinationOperand(const Instruction instruction)
 	if (Instruction_IsDestinationOperandWritten(instruction))
 	{
 		Emit("/* Write destination operand. */");
-		Emit("SetValueUsingDecodedAddressMode(&stuff, &destination_decoded_address_mode, result_value);");
+		Emit("SetValueUsingDecodedAddressMode(&stuff, &stuff.destination_decoded_address_mode, result_value);");
 		Emit("");
 	}
 }

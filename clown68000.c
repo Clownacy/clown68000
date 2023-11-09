@@ -108,6 +108,7 @@ typedef struct Stuff
 	} exception;
 	SplitOpcode opcode;
 	cc_u32f operation_size, msb_bit_index;
+	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 } Stuff;
 
 /* Error callback. */
@@ -676,6 +677,75 @@ static void SetMSBBitIndex(Stuff* const stuff)
 	stuff->msb_bit_index = stuff->operation_size * 8 - 1;
 }
 
+static void DecodeSource_ImmediateData(Stuff* const stuff)
+{
+	/* Immediate value (any size). */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+}
+
+static void DecodeSource_DataRegisterSecondary(Stuff* const stuff)
+{
+	/* Secondary data register. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+}
+
+static void DecodeSource_ImmediateDataByte(Stuff* const stuff)
+{
+	/* Immediate value (byte). */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+}
+
+static void DecodeSource_MemoryAddressPrimary(Stuff* const stuff)
+{
+	/* Memory address */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 0, stuff->opcode.primary_address_mode, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+}
+
+static void DecodeSource_StatusRegister(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+}
+
+static void DecodeSource_ImmediateDataWord(Stuff* const stuff)
+{
+	/* Immediate value (word). */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+}
+
+static void DecodeSource_BCDX(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, (stuff->opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.primary_register);
+}
+
+static void DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(Stuff* const stuff)
+{
+	/* Primary address mode or secondary data register, based on direction bit. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff->opcode.primary_address_mode, stuff->opcode.bit_8 ? stuff->opcode.secondary_register : stuff->opcode.primary_register);
+}
+
+static void DecodeSource_PrimaryAddressModeSized(Stuff* const stuff)
+{
+	/* Word or longword based on bit 8. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->opcode.bit_8 ? 4 : 2, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+}
+
+static void DecodeSource_AddressRegisterPrimaryPostIncrement(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode.primary_register);
+}
+
+static void DecodeSource_PrimaryAddressMode(Stuff* const stuff)
+{
+	/* Primary address mode. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+}
+
+static void DecodeSource_PrimaryAddressModeWord(Stuff* const stuff)
+{
+	/* Primary address mode, hardcoded to word-size. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 2, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+}
+
 
 /* API */
 
@@ -747,7 +817,6 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 		{
 			/* Process new instruction */
 			Instruction instruction;
-			DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 			cc_u32f source_value, destination_value, result_value;
 
 			source_value = destination_value = result_value = 0;
