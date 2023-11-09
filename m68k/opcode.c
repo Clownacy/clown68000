@@ -18,6 +18,8 @@
 
 #include "opcode.h"
 
+#include "instruction-properties.h"
+
 static Instruction GetInstruction(const SplitOpcode *opcode)
 {
 	Instruction instruction;
@@ -639,83 +641,42 @@ do\
 static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpcode* const opcode)
 {
 	/* Obtain source value. */
-	switch (decoded_opcode->instruction)
+	switch (Instruction_GetSourceOperand(decoded_opcode->instruction))
 	{
-		case INSTRUCTION_ORI_TO_CCR:
-		case INSTRUCTION_ORI_TO_SR:
-		case INSTRUCTION_ORI:
-		case INSTRUCTION_ANDI_TO_CCR:
-		case INSTRUCTION_ANDI_TO_SR:
-		case INSTRUCTION_ANDI:
-		case INSTRUCTION_SUBI:
-		case INSTRUCTION_ADDI:
-		case INSTRUCTION_EORI_TO_CCR:
-		case INSTRUCTION_EORI_TO_SR:
-		case INSTRUCTION_EORI:
-		case INSTRUCTION_CMPI:
-		case INSTRUCTION_LINK:
-		case INSTRUCTION_MOVEM:
-		case INSTRUCTION_DBCC:
-		case INSTRUCTION_STOP:
+		case INSTRUCTION_SOURCE_IMMEDIATE_DATA:
 			/* Immediate value (any size). */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 			break;
 
-		case INSTRUCTION_BTST_DYNAMIC:
-		case INSTRUCTION_BCHG_DYNAMIC:
-		case INSTRUCTION_BCLR_DYNAMIC:
-		case INSTRUCTION_BSET_DYNAMIC:
-		case INSTRUCTION_EOR:
+		case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY:
 			/* Secondary data register. */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_BTST_STATIC:
-		case INSTRUCTION_BCHG_STATIC:
-		case INSTRUCTION_BCLR_STATIC:
-		case INSTRUCTION_BSET_STATIC:
+		case INSTRUCTION_SOURCE_IMMEDIATE_DATA_BYTE:
 			/* Immediate value (byte). */
 			SET_OPERAND(1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 			break;
 
-		case INSTRUCTION_PEA:
-		case INSTRUCTION_JSR:
-		case INSTRUCTION_JMP:
-		case INSTRUCTION_LEA:
+		case INSTRUCTION_SOURCE_MEMORY_ADDRESS_PRIMARY:
 			/* Memory address */
 			SET_OPERAND(0, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
-		case INSTRUCTION_MOVE_FROM_SR:
+		case INSTRUCTION_SOURCE_STATUS_REGISTER:
 			OPERAND.address_mode = ADDRESS_MODE_STATUS_REGISTER;
 			break;
 
-		case INSTRUCTION_ADDAQ:
-		case INSTRUCTION_SUBAQ:
-		case INSTRUCTION_ADDQ:
-		case INSTRUCTION_SUBQ:
-		case INSTRUCTION_TRAP:
-			/* Doesn't need an address mode for its source. */
-			break;
-
-		case INSTRUCTION_BRA_WORD:
-		case INSTRUCTION_BSR_WORD:
-		case INSTRUCTION_BCC_WORD:
+		case INSTRUCTION_SOURCE_IMMEDIATE_DATA_WORD:
 			/* Immediate value (word). */
 			SET_OPERAND(2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 			break;
 
-		case INSTRUCTION_SBCD:
-		case INSTRUCTION_ABCD:
-		case INSTRUCTION_SUBX:
-		case INSTRUCTION_ADDX:
+		case INSTRUCTION_SOURCE_BCD_X:
 			SET_OPERAND(decoded_opcode->size, (opcode->raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_OR:
-		case INSTRUCTION_SUB:
-		case INSTRUCTION_AND:
-		case INSTRUCTION_ADD:
+		case INSTRUCTION_SOURCE_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 			/* Primary address mode or secondary data register, based on direction bit. */
 			if (opcode->bit_8)
 				SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
@@ -724,70 +685,26 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 
 			break;
 
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
+		case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_SIZED:
 			/* Word or longword based on bit 8. */
 			SET_OPERAND(opcode->bit_8 ? 4 : 2, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_CMPM:
+		case INSTRUCTION_SOURCE_ADDRESS_REGISTER_PRIMARY_POSTINCREMENT:
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_MOVEA:
-		case INSTRUCTION_MOVE:
-		case INSTRUCTION_MOVE_TO_CCR:
-		case INSTRUCTION_MOVE_TO_SR:
-		case INSTRUCTION_CHK:
-		case INSTRUCTION_CMP:
-		case INSTRUCTION_TST:
+		case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE:
 			/* Primary address mode. */
 			SET_OPERAND(decoded_opcode->size, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_DIVU:
-		case INSTRUCTION_DIVS:
-		case INSTRUCTION_MULU:
-		case INSTRUCTION_MULS:
+		case INSTRUCTION_SOURCE_PRIMARY_ADDRESS_MODE_WORD:
 			/* Primary address mode, hardcoded to word-size. */
 			SET_OPERAND(2, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_BRA_SHORT:
-		case INSTRUCTION_BSR_SHORT:
-		case INSTRUCTION_BCC_SHORT:
-		case INSTRUCTION_MOVEP:
-		case INSTRUCTION_NEGX:
-		case INSTRUCTION_CLR:
-		case INSTRUCTION_NEG:
-		case INSTRUCTION_NOT:
-		case INSTRUCTION_EXT:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_SWAP:
-		case INSTRUCTION_ILLEGAL:
-		case INSTRUCTION_TAS:
-		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
-		case INSTRUCTION_RESET:
-		case INSTRUCTION_NOP:
-		case INSTRUCTION_RTE:
-		case INSTRUCTION_RTS:
-		case INSTRUCTION_TRAPV:
-		case INSTRUCTION_RTR:
-		case INSTRUCTION_SCC:
-		case INSTRUCTION_MOVEQ:
-		case INSTRUCTION_EXG:
-		case INSTRUCTION_ASD_MEMORY:
-		case INSTRUCTION_LSD_MEMORY:
-		case INSTRUCTION_ROXD_MEMORY:
-		case INSTRUCTION_ROD_MEMORY:
-		case INSTRUCTION_ASD_REGISTER:
-		case INSTRUCTION_LSD_REGISTER:
-		case INSTRUCTION_ROXD_REGISTER:
-		case INSTRUCTION_ROD_REGISTER:
-		case INSTRUCTION_UNIMPLEMENTED_1:
-		case INSTRUCTION_UNIMPLEMENTED_2:
+		case INSTRUCTION_SOURCE_NONE:
 			/* Doesn't have a source address mode to decode. */
 			OPERAND.address_mode = ADDRESS_MODE_NONE;
 			break;
@@ -800,52 +717,33 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const SplitOpcode* const opcode)
 {
 	/* Decode destination address mode */
-	switch (decoded_opcode->instruction)
+	switch (Instruction_GetDestinationOperand(decoded_opcode->instruction))
 	{
-		case INSTRUCTION_EXT:
-		case INSTRUCTION_SWAP:
-		case INSTRUCTION_ASD_REGISTER:
-		case INSTRUCTION_LSD_REGISTER:
-		case INSTRUCTION_ROXD_REGISTER:
-		case INSTRUCTION_ROD_REGISTER:
+		case INSTRUCTION_DESTINATION_DATA_REGISTER_PRIMARY:
 			/* Data register (primary) */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_MOVEQ:
-		case INSTRUCTION_CMP:
-		case INSTRUCTION_DIVU:
-		case INSTRUCTION_DIVS:
-		case INSTRUCTION_MULU:
-		case INSTRUCTION_MULS:
+		case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY:
 			/* Data register (secondary) */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_LEA:
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
+		case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY:
 			/* Address register (secondary) */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_MOVE:
+		case INSTRUCTION_DESTINATION_SECONDARY_ADDRESS_MODE:
 			/* Secondary address mode */
 			SET_OPERAND(decoded_opcode->size, opcode->secondary_address_mode, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_SBCD:
-		case INSTRUCTION_SUBX:
-		case INSTRUCTION_ABCD:
-		case INSTRUCTION_ADDX:
+		case INSTRUCTION_DESTINATION_BCD_X:
 			SET_OPERAND(decoded_opcode->size, (opcode->raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_OR:
-		case INSTRUCTION_SUB:
-		case INSTRUCTION_AND:
-		case INSTRUCTION_ADD:
+		case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 			/* Primary address mode or secondary data register, based on direction bit */
 			if (opcode->bit_8)
 				SET_OPERAND(decoded_opcode->size, opcode->primary_address_mode, opcode->primary_register);
@@ -854,101 +752,39 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 			break;
 
-		case INSTRUCTION_MOVEA:
+		case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_FULL:
 			/* Full secondary address register */
 			SET_OPERAND(4, ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_CMPM:
+		case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_POSTINCREMENT:
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_ORI:
-		case INSTRUCTION_ANDI:
-		case INSTRUCTION_SUBI:
-		case INSTRUCTION_ADDI:
-		case INSTRUCTION_EORI:
-		case INSTRUCTION_CMPI:
-		case INSTRUCTION_BTST_STATIC:
-		case INSTRUCTION_BCHG_STATIC:
-		case INSTRUCTION_BCLR_STATIC:
-		case INSTRUCTION_BSET_STATIC:
-		case INSTRUCTION_BTST_DYNAMIC:
-		case INSTRUCTION_BCHG_DYNAMIC:
-		case INSTRUCTION_BCLR_DYNAMIC:
-		case INSTRUCTION_BSET_DYNAMIC:
-		case INSTRUCTION_NEGX:
-		case INSTRUCTION_NEG:
-		case INSTRUCTION_NOT:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_TAS:
-		case INSTRUCTION_MOVE_FROM_SR:
-		case INSTRUCTION_CLR:
-		case INSTRUCTION_ADDAQ:
-		case INSTRUCTION_SUBAQ:
-		case INSTRUCTION_ADDQ:
-		case INSTRUCTION_SUBQ:
-		case INSTRUCTION_SCC:
-		case INSTRUCTION_EOR:
-		case INSTRUCTION_ASD_MEMORY:
-		case INSTRUCTION_LSD_MEMORY:
-		case INSTRUCTION_ROXD_MEMORY:
-		case INSTRUCTION_ROD_MEMORY:
+		case INSTRUCTION_DESTINATION_PRIMARY_ADDRESS_MODE:
 			/* Using primary address mode */
 			SET_OPERAND(decoded_opcode->size, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
-		case INSTRUCTION_ORI_TO_CCR:
-		case INSTRUCTION_ANDI_TO_CCR:
-		case INSTRUCTION_EORI_TO_CCR:
-		case INSTRUCTION_MOVE_TO_CCR:
+		case INSTRUCTION_DESTINATION_CONDITION_CODE_REGISTER:
 			OPERAND.address_mode = ADDRESS_MODE_CONDITION_CODE_REGISTER;
 			break;
 
-		case INSTRUCTION_ORI_TO_SR:
-		case INSTRUCTION_ANDI_TO_SR:
-		case INSTRUCTION_EORI_TO_SR:
-		case INSTRUCTION_MOVE_TO_SR:
+		case INSTRUCTION_DESTINATION_STATUS_REGISTER:
 			OPERAND.address_mode = ADDRESS_MODE_STATUS_REGISTER;
 			break;
 
-		case INSTRUCTION_MOVEM:
+		case INSTRUCTION_DESTINATION_MOVEM:
 			/* Memory address */
 			SET_OPERAND(0, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
-		case INSTRUCTION_MOVEP:
+		case INSTRUCTION_DESTINATION_MOVEP:
 			/* Memory address */
 			SET_OPERAND(0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
-		case INSTRUCTION_PEA:
-		case INSTRUCTION_ILLEGAL:
-		case INSTRUCTION_TRAP:
-		case INSTRUCTION_LINK:
-		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
-		case INSTRUCTION_RESET:
-		case INSTRUCTION_NOP:
-		case INSTRUCTION_STOP:
-		case INSTRUCTION_RTE:
-		case INSTRUCTION_RTS:
-		case INSTRUCTION_TRAPV:
-		case INSTRUCTION_RTR:
-		case INSTRUCTION_JSR:
-		case INSTRUCTION_JMP:
-		case INSTRUCTION_CHK:
-		case INSTRUCTION_DBCC:
-		case INSTRUCTION_BRA_SHORT:
-		case INSTRUCTION_BRA_WORD:
-		case INSTRUCTION_BSR_SHORT:
-		case INSTRUCTION_BSR_WORD:
-		case INSTRUCTION_BCC_SHORT:
-		case INSTRUCTION_BCC_WORD:
-		case INSTRUCTION_EXG:
-		case INSTRUCTION_TST:
-		case INSTRUCTION_UNIMPLEMENTED_1:
-		case INSTRUCTION_UNIMPLEMENTED_2:
+		case INSTRUCTION_DESTINATION_NONE:
 			/* Doesn't have a destination address mode to decode. */
 			OPERAND.address_mode = ADDRESS_MODE_NONE;
 			break;
