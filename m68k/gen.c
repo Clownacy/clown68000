@@ -26,19 +26,13 @@ case INSTRUCTION_ABCD:
 	/* Update CARRY condition code */
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_ADD(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -68,23 +62,15 @@ case INSTRUCTION_ADD:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & stuff.destination_value) | ((stuff.source_value | stuff.destination_value) & ~stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardCarry(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_ADD(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -184,23 +170,15 @@ case INSTRUCTION_ADDI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & stuff.destination_value) | ((stuff.source_value | stuff.destination_value) & ~stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardCarry(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_ADD(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -224,23 +202,15 @@ case INSTRUCTION_ADDQ:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & stuff.destination_value) | ((stuff.source_value | stuff.destination_value) & ~stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardCarry(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_ADD(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -270,22 +240,15 @@ case INSTRUCTION_ADDX:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & stuff.destination_value) | ((stuff.source_value | stuff.destination_value) & ~stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardCarry(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((stuff.source_value & stuff.destination_value & ~stuff.result_value) | (~stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_ADD(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -315,17 +278,13 @@ case INSTRUCTION_AND:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -357,17 +316,13 @@ case INSTRUCTION_ANDI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -476,13 +431,9 @@ case INSTRUCTION_ASD_MEMORY:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -512,13 +463,9 @@ case INSTRUCTION_ASD_REGISTER:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1009,17 +956,13 @@ case INSTRUCTION_CLR:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1048,19 +991,13 @@ case INSTRUCTION_CMP:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1089,19 +1026,13 @@ case INSTRUCTION_CMPA:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1130,19 +1061,13 @@ case INSTRUCTION_CMPI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1171,19 +1096,13 @@ case INSTRUCTION_CMPM:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1244,7 +1163,7 @@ case INSTRUCTION_DIVS:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
@@ -1282,7 +1201,7 @@ case INSTRUCTION_DIVU:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
@@ -1320,17 +1239,13 @@ case INSTRUCTION_EOR:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1362,17 +1277,13 @@ case INSTRUCTION_EORI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1497,17 +1408,13 @@ case INSTRUCTION_EXT:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1673,13 +1580,9 @@ case INSTRUCTION_LSD_MEMORY:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1709,13 +1612,9 @@ case INSTRUCTION_LSD_REGISTER:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -1744,17 +1643,13 @@ case INSTRUCTION_MOVE:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2004,17 +1899,13 @@ case INSTRUCTION_MOVEQ:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2046,17 +1937,13 @@ case INSTRUCTION_MULS:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2088,17 +1975,13 @@ case INSTRUCTION_MULU:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2126,19 +2009,13 @@ case INSTRUCTION_NBCD:
 	/* Update CARRY condition code */
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2162,23 +2039,15 @@ case INSTRUCTION_NEG:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= ((stuff.destination_value | stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_NEG(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= ((stuff.destination_value & stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_NEG(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2202,22 +2071,15 @@ case INSTRUCTION_NEGX:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= ((stuff.destination_value | stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_NEG(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= ((stuff.destination_value & stuff.result_value) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_NEG(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2261,17 +2123,13 @@ case INSTRUCTION_NOT:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2303,17 +2161,13 @@ case INSTRUCTION_OR:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2345,17 +2199,13 @@ case INSTRUCTION_ORI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2513,13 +2363,9 @@ case INSTRUCTION_ROD_MEMORY:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2549,13 +2395,9 @@ case INSTRUCTION_ROD_REGISTER:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2585,13 +2427,9 @@ case INSTRUCTION_ROXD_MEMORY:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2621,13 +2459,9 @@ case INSTRUCTION_ROXD_REGISTER:
 	/* Update OVERFLOW condition code */
 	/* Unaffected */
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -2724,19 +2558,13 @@ case INSTRUCTION_SBCD:
 	/* Update CARRY condition code */
 	/* Unaffected */
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2830,23 +2658,15 @@ case INSTRUCTION_SUB:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2946,23 +2766,15 @@ case INSTRUCTION_SUBI:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -2986,23 +2798,15 @@ case INSTRUCTION_SUBQ:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -3032,22 +2836,15 @@ case INSTRUCTION_SUBX:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
-	state->status_register |= (((stuff.source_value & ~stuff.destination_value) | ((stuff.source_value | ~stuff.destination_value) & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Carry_StandardBorrow(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	state->status_register |= (((~stuff.source_value & stuff.destination_value & ~stuff.result_value) | (stuff.source_value & ~stuff.destination_value & stuff.result_value)) >> (stuff.msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Overflow_SUB(&stuff);
 	/* Update ZERO condition code */
-	/* Cleared if the result is nonzero; unchanged otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
-	/* Standard behaviour: set to CARRY */
-	state->status_register &= ~CONDITION_CODE_EXTEND;
-	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
+	Extend_SetToCarry(&stuff);
 
 	break;
 
@@ -3071,17 +2868,13 @@ case INSTRUCTION_SWAP:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 
@@ -3107,9 +2900,9 @@ case INSTRUCTION_TAS:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
 	/* Unaffected */
 	/* Update NEGATIVE condition code */
@@ -3176,17 +2969,13 @@ case INSTRUCTION_TST:
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
 
 	/* Update CARRY condition code */
-	state->status_register &= ~CONDITION_CODE_CARRY;
+	Carry_Clear(&stuff);
 	/* Update OVERFLOW condition code */
-	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Overflow_Clear(&stuff);
 	/* Update ZERO condition code */
-	/* Standard behaviour: set if result is zero; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_ZERO;
-	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff.result_value & (0xFFFFFFFF >> (32 - stuff.msb_bit_index - 1))) == 0));
+	Zero_SetIfZeroClearOtherwise(&stuff);
 	/* Update NEGATIVE condition code */
-	/* Standard behaviour: set if result value is negative; clear otherwise */
-	state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff.result_value >> (stuff.msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	Negative_SetIfNegativeClearOtherwise(&stuff);
 	/* Update EXTEND condition code */
 	/* Unaffected */
 

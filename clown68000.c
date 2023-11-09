@@ -834,6 +834,79 @@ static void WriteDestination(Stuff* const stuff)
 	SetValueUsingDecodedAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->result_value);
 }
 
+static void Carry_StandardCarry(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+	stuff->state->status_register |= (((stuff->source_value & stuff->destination_value) | ((stuff->source_value | stuff->destination_value) & ~stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+}
+
+static void Carry_StandardBorrow(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+	stuff->state->status_register |= (((stuff->source_value & ~stuff->destination_value) | ((stuff->source_value | ~stuff->destination_value) & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+}
+
+static void Carry_NEG(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+	stuff->state->status_register |= ((stuff->destination_value | stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+}
+
+static void Carry_Clear(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+}
+
+static void Overflow_ADD(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	stuff->state->status_register |= (((stuff->source_value & stuff->destination_value & ~stuff->result_value) | (~stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+}
+
+static void Overflow_SUB(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	stuff->state->status_register |= (((~stuff->source_value & stuff->destination_value & ~stuff->result_value) | (stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+}
+
+static void Overflow_NEG(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	stuff->state->status_register |= ((stuff->destination_value & stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+}
+
+static void Overflow_Clear(Stuff* const stuff)
+{
+	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+}
+
+static void Zero_ClearIfNonZeroUnaffectedOtherwise(Stuff* const stuff)
+{
+	/* Cleared if the result is nonzero; unchanged otherwise */
+	stuff->state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
+}
+
+static void Zero_SetIfZeroClearOtherwise(Stuff* const stuff)
+{
+	/* Standard behaviour: set if result is zero; clear otherwise */
+	stuff->state->status_register &= ~CONDITION_CODE_ZERO;
+	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
+}
+
+static void Negative_SetIfNegativeClearOtherwise(Stuff* const stuff)
+{
+	/* Standard behaviour: set if result value is negative; clear otherwise */
+	stuff->state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (stuff->result_value >> (stuff->msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+}
+
+static void Extend_SetToCarry(Stuff* const stuff)
+{
+	/* Standard behaviour: set to CARRY */
+	stuff->state->status_register &= ~CONDITION_CODE_EXTEND;
+	stuff->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((stuff->state->status_register & CONDITION_CODE_CARRY) != 0));
+}
+
 
 /* API */
 
