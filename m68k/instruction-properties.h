@@ -94,6 +94,18 @@ typedef enum InstructionAction
 	INSTRUCTION_ACTION_NOP
 } InstructionAction;
 
+typedef enum InstructionSize
+{
+	INSTRUCTION_SIZE_BYTE,
+	INSTRUCTION_SIZE_WORD,
+	INSTRUCTION_SIZE_LONGWORD,
+	INSTRUCTION_SIZE_LONGWORD_REGISTER_BYTE_MEMORY,
+	INSTRUCTION_SIZE_MOVE,
+	INSTRUCTION_SIZE_EXT,
+	INSTRUCTION_SIZE_STANDARD,
+	INSTRUCTION_SIZE_NONE
+} InstructionSize;
+
 typedef enum InstructionSourceOperand
 {
 	INSTRUCTION_SOURCE_IMMEDIATE_DATA,
@@ -173,6 +185,7 @@ InstructionAction Instruction_GetAction(const Instruction instruction);
 cc_bool Instruction_IsSourceOperandRead(const Instruction instruction);
 cc_bool Instruction_IsDestinationOperandRead(const Instruction instruction);
 cc_bool Instruction_IsDestinationOperandWritten(const Instruction instruction);
+InstructionSize Instruction_GetSize(const Instruction instruction);
 InstructionSourceOperand Instruction_GetSourceOperand(const Instruction instruction);
 InstructionDestinationOperand Instruction_GetDestinationOperand(const Instruction instruction);
 InstructionCarry Instruction_GetCarryModifier(const Instruction instruction);

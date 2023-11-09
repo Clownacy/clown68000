@@ -18,6 +18,8 @@
 
 #include "opcode.h"
 
+#include "instruction-properties.h"
+
 static Instruction GetInstruction(const SplitOpcode *opcode)
 {
 	Instruction instruction;
@@ -481,69 +483,29 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 
 	operation_size = 0;
 
-	switch (instruction)
+	switch (Instruction_GetSize(instruction))
 	{
-		case INSTRUCTION_ORI_TO_CCR:
-		case INSTRUCTION_ANDI_TO_CCR:
-		case INSTRUCTION_EORI_TO_CCR:
-		case INSTRUCTION_NBCD:
-		case INSTRUCTION_TAS:
-		case INSTRUCTION_SCC:
-		case INSTRUCTION_SBCD:
-		case INSTRUCTION_ABCD:
+		case INSTRUCTION_SIZE_BYTE:
 			/* Hardcoded to a byte. */
 			operation_size = 1;
 			break;
 
-		case INSTRUCTION_ORI_TO_SR:
-		case INSTRUCTION_ANDI_TO_SR:
-		case INSTRUCTION_EORI_TO_SR:
-		case INSTRUCTION_MOVE_FROM_SR:
-		case INSTRUCTION_MOVE_TO_SR:
-		case INSTRUCTION_MOVE_TO_CCR:
-		case INSTRUCTION_LINK:
-		case INSTRUCTION_MOVEM:
-		case INSTRUCTION_CHK:
-		case INSTRUCTION_DBCC:
-		case INSTRUCTION_ASD_MEMORY:
-		case INSTRUCTION_LSD_MEMORY:
-		case INSTRUCTION_ROXD_MEMORY:
-		case INSTRUCTION_ROD_MEMORY:
-		case INSTRUCTION_STOP:
+		case INSTRUCTION_SIZE_WORD:
 			/* Hardcoded to a word. */
 			operation_size = 2;
 			break;
 
-		case INSTRUCTION_ADDAQ:
-		case INSTRUCTION_SUBAQ:
-		case INSTRUCTION_SWAP:
-		case INSTRUCTION_LEA:
-		case INSTRUCTION_MOVEQ:
-		case INSTRUCTION_DIVU:
-		case INSTRUCTION_DIVS:
-		case INSTRUCTION_MULU:
-		case INSTRUCTION_MULS:
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
+		case INSTRUCTION_SIZE_LONGWORD:
 			/* Hardcoded to a longword. */
 			operation_size = 4;
 			break;
 
-		case INSTRUCTION_BTST_STATIC:
-		case INSTRUCTION_BCHG_STATIC:
-		case INSTRUCTION_BCLR_STATIC:
-		case INSTRUCTION_BSET_STATIC:
-		case INSTRUCTION_BTST_DYNAMIC:
-		case INSTRUCTION_BCHG_DYNAMIC:
-		case INSTRUCTION_BCLR_DYNAMIC:
-		case INSTRUCTION_BSET_DYNAMIC:
+		case INSTRUCTION_SIZE_LONGWORD_REGISTER_BYTE_MEMORY:
 			/* 4 if register - 1 if memory. */
 			operation_size = opcode->primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
 			break;
 
-		case INSTRUCTION_MOVEA:
-		case INSTRUCTION_MOVE:
+		case INSTRUCTION_SIZE_MOVE:
 			/* Derived from an odd bitfield. */
 			switch (opcode->raw & 0x3000)
 			{
@@ -562,63 +524,16 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 
 			break;
 
-		case INSTRUCTION_EXT:
+		case INSTRUCTION_SIZE_EXT:
 			operation_size = opcode->raw & 0x0040 ? 4 : 2;
 			break;
 
-		case INSTRUCTION_ORI:
-		case INSTRUCTION_ANDI:
-		case INSTRUCTION_SUBI:
-		case INSTRUCTION_ADDI:
-		case INSTRUCTION_EORI:
-		case INSTRUCTION_CMPI:
-		case INSTRUCTION_NEGX:
-		case INSTRUCTION_CLR:
-		case INSTRUCTION_NEG:
-		case INSTRUCTION_NOT:
-		case INSTRUCTION_TST:
-		case INSTRUCTION_OR:
-		case INSTRUCTION_SUB:
-		case INSTRUCTION_SUBX:
-		case INSTRUCTION_EOR:
-		case INSTRUCTION_CMPM:
-		case INSTRUCTION_CMP:
-		case INSTRUCTION_AND:
-		case INSTRUCTION_ADD:
-		case INSTRUCTION_ADDQ:
-		case INSTRUCTION_SUBQ:
-		case INSTRUCTION_ADDX:
-		case INSTRUCTION_ASD_REGISTER:
-		case INSTRUCTION_LSD_REGISTER:
-		case INSTRUCTION_ROXD_REGISTER:
-		case INSTRUCTION_ROD_REGISTER:
+		case INSTRUCTION_SIZE_STANDARD:
 			/* Standard. */
 			operation_size = 1 << opcode->bits_6_and_7;
 			break;
 
-		case INSTRUCTION_MOVEP:
-		case INSTRUCTION_PEA:
-		case INSTRUCTION_ILLEGAL:
-		case INSTRUCTION_TRAP:
-		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
-		case INSTRUCTION_RESET:
-		case INSTRUCTION_NOP:
-		case INSTRUCTION_RTE:
-		case INSTRUCTION_RTS:
-		case INSTRUCTION_TRAPV:
-		case INSTRUCTION_RTR:
-		case INSTRUCTION_JSR:
-		case INSTRUCTION_JMP:
-		case INSTRUCTION_BRA_SHORT:
-		case INSTRUCTION_BRA_WORD:
-		case INSTRUCTION_BSR_SHORT:
-		case INSTRUCTION_BSR_WORD:
-		case INSTRUCTION_BCC_SHORT:
-		case INSTRUCTION_BCC_WORD:
-		case INSTRUCTION_EXG:
-		case INSTRUCTION_UNIMPLEMENTED_1:
-		case INSTRUCTION_UNIMPLEMENTED_2:
+		case INSTRUCTION_SIZE_NONE:
 			/* Doesn't have a size. */
 			break;
 	}
