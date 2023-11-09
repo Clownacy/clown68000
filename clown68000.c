@@ -609,6 +609,19 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 }
 
 
+/* Microcode Operations */
+
+static void SupervisorCheck(Stuff* const stuff)
+{
+	/* Only allow this instruction in supervisor mode. */
+	if ((stuff->state->status_register & STATUS_SUPERVISOR) == 0)
+	{
+		Group1Or2Exception(stuff, 8);
+		longjmp(stuff->exception.context, 1);
+	}
+}
+
+
 /* API */
 
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
