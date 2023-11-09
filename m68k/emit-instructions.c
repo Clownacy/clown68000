@@ -88,11 +88,6 @@ void EmitInstructionSize(const Instruction instruction)
 	}
 }
 
-static void EmitOperandDestination(const char* const operation_size, const char* const address_mode, const char* const address_mode_register)
-{
-	EmitFormatted("DecodeAddressMode(&stuff, &stuff.destination_decoded_address_mode, %s, %s, %s);", operation_size, address_mode, address_mode_register);
-}
-
 void EmitInstructionSourceAddressMode(const Instruction instruction)
 {
 	if (Instruction_IsSourceOperandRead(instruction))
@@ -177,68 +172,67 @@ void EmitInstructionDestinationAddressMode(const Instruction instruction)
 		{
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_PRIMARY:
 				/* Data register (primary) */
-				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.primary_register");
+				Emit("DecodeDestination_DataRegisterPrimary(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY:
 				/* Data register (secondary) */
-				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_DataRegisterSecondary(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY:
 				/* Address register (secondary) */
-				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_AddressRegisterSecondary(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_SECONDARY_ADDRESS_MODE:
 				/* Secondary address mode */
-				EmitOperandDestination("stuff.operation_size", "stuff.opcode.secondary_address_mode", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_SecondaryAddressMode(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_BCD_X:
-				EmitOperandDestination("stuff.operation_size", "(stuff.opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_BCDX(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_DATA_REGISTER_SECONDARY_OR_PRIMARY_ADDRESS_MODE:
 				/* Primary address mode or secondary data register, based on direction bit */
-				EmitOperandDestination("stuff.operation_size", "stuff.opcode.bit_8 ? stuff.opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER", "stuff.opcode.bit_8 ? stuff.opcode.primary_register : stuff.opcode.secondary_register");
+				Emit("DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_FULL:
 				/* Full secondary address register */
-				EmitOperandDestination("4", "ADDRESS_MODE_ADDRESS_REGISTER", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_AddressRegisterSecondaryFull(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_ADDRESS_REGISTER_SECONDARY_POSTINCREMENT:
-				EmitOperandDestination("stuff.operation_size", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT", "stuff.opcode.secondary_register");
+				Emit("DecodeDestination_AddressRegisterSecondaryPostIncrement(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_PRIMARY_ADDRESS_MODE:
 				/* Using primary address mode */
-				EmitOperandDestination("stuff.operation_size", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register");
+				Emit("DecodeDestination_PrimaryAddressMode(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_CONDITION_CODE_REGISTER:
-				EmitOperandDestination("0", "ADDRESS_MODE_CONDITION_CODE_REGISTER", "0");
+				Emit("DecodeDestination_ConditionCodeRegister(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_STATUS_REGISTER:
-				EmitOperandDestination("0", "ADDRESS_MODE_STATUS_REGISTER", "0");
+				Emit("DecodeDestination_StatusRegister(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_MOVEM:
 				/* Memory address */
-				EmitOperandDestination("0", "stuff.opcode.primary_address_mode", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				Emit("DecodeDestination_MOVEM(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_MOVEP:
 				/* Memory address */
-				EmitOperandDestination("0", "ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT", "stuff.opcode.primary_register"); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+				Emit("DecodeDestination_MOVEP(&stuff);");
 				break;
 
 			case INSTRUCTION_DESTINATION_NONE:
 				/* Doesn't have a destination address mode to decode. */
-				EmitOperandDestination("0", "ADDRESS_MODE_NONE", "0");
 				break;
 		}
 

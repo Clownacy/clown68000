@@ -746,6 +746,78 @@ static void DecodeSource_PrimaryAddressModeWord(Stuff* const stuff)
 	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 2, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
 }
 
+static void DecodeDestination_DataRegisterPrimary(Stuff* const stuff)
+{
+	/* Data register (primary) */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.primary_register);
+}
+
+static void DecodeDestination_DataRegisterSecondary(Stuff* const stuff)
+{
+	/* Data register (secondary) */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_AddressRegisterSecondary(Stuff* const stuff)
+{
+	/* Address register (secondary) */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_SecondaryAddressMode(Stuff* const stuff)
+{
+	/* Secondary address mode */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.secondary_address_mode, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_BCDX(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, (stuff->opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(Stuff* const stuff)
+{
+	/* Primary address mode or secondary data register, based on direction bit */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.bit_8 ? stuff->opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.bit_8 ? stuff->opcode.primary_register : stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_AddressRegisterSecondaryFull(Stuff* const stuff)
+{
+	/* Full secondary address register */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_AddressRegisterSecondaryPostIncrement(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode.secondary_register);
+}
+
+static void DecodeDestination_PrimaryAddressMode(Stuff* const stuff)
+{
+	/* Using primary address mode */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+}
+
+static void DecodeDestination_ConditionCodeRegister(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+}
+
+static void DecodeDestination_StatusRegister(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+}
+
+static void DecodeDestination_MOVEM(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, stuff->opcode.primary_address_mode, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+}
+
+static void DecodeDestination_MOVEP(Stuff* const stuff)
+{
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+}
+
 
 /* API */
 
