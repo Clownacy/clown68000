@@ -30,6 +30,10 @@ https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
 ABCD/SBCD quirks:
 http://gendev.spritesmind.net/forum/viewtopic.php?f=2&t=1964
+
+Address error behaviour:
+https://github.com/TomHarte/ProcessorTests/issues/28
+
 */
 
 #include "clown68000.h"
