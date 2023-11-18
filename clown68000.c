@@ -112,12 +112,13 @@ typedef struct Stuff
 /* Error callback. */
 /* TODO: Remove this once all instructions are implemented. */
 
-static void (*clown68000_error_callback)(const char *format, va_list arg);
+static void (*clown68000_error_callback)(void *user_data, const char *format, va_list arg);
+static void *clown68000_error_callback_user_data;
 
-void Clown68000_SetErrorCallback(void (*error_callback)(const char *format, va_list arg))
+void Clown68000_SetErrorCallback(void (*error_callback)(void *user_data, const char *format, va_list arg), const void* const user_data)
 {
-	/* TODO - Shouldn't this use the regular state instead of global state? */
 	clown68000_error_callback = error_callback;
+	clown68000_error_callback_user_data = (void*)user_data;
 }
 
 static void Clown68000_PrintError(const char *format, ...)
@@ -126,7 +127,7 @@ static void Clown68000_PrintError(const char *format, ...)
 	{
 		va_list args;
 		va_start(args, format);
-		clown68000_error_callback(format, args);
+		clown68000_error_callback(clown68000_error_callback_user_data, format, args);
 		va_end(args);
 	}
 }

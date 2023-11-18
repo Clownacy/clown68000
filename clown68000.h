@@ -48,7 +48,7 @@ typedef struct Clown68000_ReadWriteCallbacks
 	const void *user_data;
 } Clown68000_ReadWriteCallbacks;
 
-void Clown68000_SetErrorCallback(void (*error_callback)(const char *format, va_list arg));
+void Clown68000_SetErrorCallback(void (*error_callback)(void *user_data, const char *format, va_list arg), const void *user_data);
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks);
 void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, cc_u16f level);
 void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks);
