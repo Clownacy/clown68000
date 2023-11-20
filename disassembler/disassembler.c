@@ -50,281 +50,281 @@ static const char* GetInstructionName(const Instruction instruction)
 	switch (instruction)
 	{
 		case INSTRUCTION_ABCD:
-			return "ABCD";
+			return "abcd";
 
 		case INSTRUCTION_ADD:
-			return "ADD";
+			return "add";
 
 		case INSTRUCTION_ADDA:
-			return "ADDA";
+			return "adda";
 
 		case INSTRUCTION_ADDAQ:
-			return "ADDQ";
+			return "addq";
 
 		case INSTRUCTION_ADDI:
-			return "ADDI";
+			return "addi";
 
 		case INSTRUCTION_ADDQ:
-			return "ADDQ";
+			return "addq";
 
 		case INSTRUCTION_ADDX:
-			return "ADDX";
+			return "addx";
 
 		case INSTRUCTION_AND:
-			return "AND";
+			return "and";
 
 		case INSTRUCTION_ANDI:
-			return "ANDI";
+			return "andi";
 
 		case INSTRUCTION_ANDI_TO_CCR:
-			return "ANDI";
+			return "andi";
 
 		case INSTRUCTION_ANDI_TO_SR:
-			return "ANDI";
+			return "andi";
 
 		case INSTRUCTION_ASD_MEMORY:
-			return "AS";
+			return "as";
 
 		case INSTRUCTION_ASD_REGISTER:
-			return "AS";
+			return "as";
 
 		case INSTRUCTION_BCC_SHORT:
 		case INSTRUCTION_BCC_WORD:
-			return "B";
+			return "b";
 
 		case INSTRUCTION_BCHG_DYNAMIC:
-			return "BCHG";
+			return "bchg";
 
 		case INSTRUCTION_BCHG_STATIC:
-			return "BCHG";
+			return "bchg";
 
 		case INSTRUCTION_BCLR_DYNAMIC:
-			return "BCLR";
+			return "bclr";
 
 		case INSTRUCTION_BCLR_STATIC:
-			return "BCLR";
+			return "bclr";
 
 		case INSTRUCTION_BRA_SHORT:
-			return "BRA";
+			return "bra";
 
 		case INSTRUCTION_BRA_WORD:
-			return "BRA";
+			return "bra";
 
 		case INSTRUCTION_BSET_DYNAMIC:
-			return "BSET";
+			return "bset";
 
 		case INSTRUCTION_BSET_STATIC:
-			return "BSET";
+			return "bset";
 
 		case INSTRUCTION_BSR_SHORT:
-			return "BSR";
+			return "bsr";
 
 		case INSTRUCTION_BSR_WORD:
-			return "BSR";
+			return "bsr";
 
 		case INSTRUCTION_BTST_DYNAMIC:
-			return "BTST";
+			return "btst";
 
 		case INSTRUCTION_BTST_STATIC:
-			return "BTST";
+			return "btst";
 
 		case INSTRUCTION_CHK:
-			return "CHK";
+			return "chk";
 
 		case INSTRUCTION_CLR:
-			return "CLR";
+			return "clr";
 
 		case INSTRUCTION_CMP:
-			return "CMP";
+			return "cmp";
 
 		case INSTRUCTION_CMPA:
-			return "CMPA";
+			return "cmpa";
 
 		case INSTRUCTION_CMPI:
-			return "CMPI";
+			return "cmpi";
 
 		case INSTRUCTION_CMPM:
-			return "CMPM";
+			return "cmpm";
 
 		case INSTRUCTION_DBCC:
-			return "DB";
+			return "db";
 
 		case INSTRUCTION_DIVS:
-			return "DIVS";
+			return "divs";
 
 		case INSTRUCTION_DIVU:
-			return "DIVU";
+			return "divu";
 
 		case INSTRUCTION_EOR:
-			return "EOR";
+			return "eor";
 
 		case INSTRUCTION_EORI:
-			return "EORI";
+			return "eori";
 
 		case INSTRUCTION_EORI_TO_CCR:
-			return "EORI";
+			return "eori";
 
 		case INSTRUCTION_EORI_TO_SR:
-			return "EORI";
+			return "eori";
 
 		case INSTRUCTION_EXG:
-			return "EXG";
+			return "exg";
 
 		case INSTRUCTION_EXT:
-			return "EXT";
+			return "ext";
 
 		case INSTRUCTION_ILLEGAL:
-			return "ILLEGAL";
+			return "illegal";
 
 		case INSTRUCTION_JMP:
-			return "JMP";
+			return "jmp";
 
 		case INSTRUCTION_JSR:
-			return "JSR";
+			return "jsr";
 
 		case INSTRUCTION_LEA:
-			return "LEA";
+			return "lea";
 
 		case INSTRUCTION_LINK:
-			return "LINK";
+			return "link";
 
 		case INSTRUCTION_LSD_MEMORY:
-			return "LSd";
+			return "ls";
 
 		case INSTRUCTION_LSD_REGISTER:
-			return "LSd";
+			return "ls";
 
 		case INSTRUCTION_MOVE:
-			return "MOVE";
+			return "move";
 
 		case INSTRUCTION_MOVE_FROM_SR:
-			return "MOVE";
+			return "move";
 
 		case INSTRUCTION_MOVE_TO_CCR:
-			return "MOVE";
+			return "move";
 
 		case INSTRUCTION_MOVE_TO_SR:
-			return "MOVE";
+			return "move";
 
 		case INSTRUCTION_MOVE_USP:
-			return "MOVE";
+			return "move";
 
 		case INSTRUCTION_MOVEA:
-			return "MOVEA";
+			return "movea";
 
 		case INSTRUCTION_MOVEM:
-			return "MOVEM";
+			return "movem";
 
 		case INSTRUCTION_MOVEP:
-			return "MOVEP";
+			return "movep";
 
 		case INSTRUCTION_MOVEQ:
-			return "MOVEQ";
+			return "moveq";
 
 		case INSTRUCTION_MULS:
-			return "MULS";
+			return "muls";
 
 		case INSTRUCTION_MULU:
-			return "MULU";
+			return "mulu";
 
 		case INSTRUCTION_NBCD:
-			return "NBCD";
+			return "nbcd";
 
 		case INSTRUCTION_NEG:
-			return "NEG";
+			return "neg";
 
 		case INSTRUCTION_NEGX:
-			return "NEGX";
+			return "negx";
 
 		case INSTRUCTION_NOP:
-			return "NOP";
+			return "nop";
 
 		case INSTRUCTION_NOT:
-			return "NOT";
+			return "not";
 
 		case INSTRUCTION_OR:
-			return "OR";
+			return "or";
 
 		case INSTRUCTION_ORI:
-			return "ORI";
+			return "ori";
 
 		case INSTRUCTION_ORI_TO_CCR:
-			return "ORI";
+			return "ori";
 
 		case INSTRUCTION_ORI_TO_SR:
-			return "ORI";
+			return "ori";
 
 		case INSTRUCTION_PEA:
-			return "PEA";
+			return "pea";
 
 		case INSTRUCTION_RESET:
-			return "RESET";
+			return "reset";
 
 		case INSTRUCTION_ROD_MEMORY:
-			return "RO";
+			return "ro";
 
 		case INSTRUCTION_ROD_REGISTER:
-			return "RO";
+			return "ro";
 
 		case INSTRUCTION_ROXD_MEMORY:
-			return "ROX";
+			return "rox";
 
 		case INSTRUCTION_ROXD_REGISTER:
-			return "ROX";
+			return "rox";
 
 		case INSTRUCTION_RTE:
-			return "RTE";
+			return "rte";
 
 		case INSTRUCTION_RTR:
-			return "RTR";
+			return "rtr";
 
 		case INSTRUCTION_RTS:
-			return "RTS";
+			return "rts";
 
 		case INSTRUCTION_SBCD:
-			return "SBCD";
+			return "sbcd";
 
 		case INSTRUCTION_SCC:
-			return "S";
+			return "s";
 
 		case INSTRUCTION_STOP:
-			return "STOP";
+			return "stop";
 
 		case INSTRUCTION_SUB:
-			return "SUB";
+			return "sub";
 
 		case INSTRUCTION_SUBA:
-			return "SUBA";
+			return "suba";
 
 		case INSTRUCTION_SUBAQ:
-			return "SUBAQ";
+			return "subq";
 
 		case INSTRUCTION_SUBI:
-			return "SUBI";
+			return "subi";
 
 		case INSTRUCTION_SUBQ:
-			return "SUBQ";
+			return "subq";
 
 		case INSTRUCTION_SUBX:
-			return "SUBX";
+			return "subx";
 
 		case INSTRUCTION_SWAP:
-			return "SWAP";
+			return "swap";
 
 		case INSTRUCTION_TAS:
-			return "TAS";
+			return "tas";
 
 		case INSTRUCTION_TRAP:
-			return "TRAP";
+			return "trap";
 
 		case INSTRUCTION_TRAPV:
-			return "TRAPV";
+			return "trapv";
 
 		case INSTRUCTION_TST:
-			return "TST";
+			return "tst";
 
 		case INSTRUCTION_UNLK:
-			return "UNLK";
+			return "unlk";
 
 		case INSTRUCTION_UNIMPLEMENTED_1:
 			return "[UNIMPLEMENTED1]";
@@ -368,14 +368,14 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 			switch (operand->address_mode)
 			{
 				case ADDRESS_MODE_DATA_REGISTER:
-					buffer[index++] = 'D';
+					buffer[index++] = 'd';
 					break;
 
 				case ADDRESS_MODE_ADDRESS_REGISTER:
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
-					buffer[index++] = 'A';
+					buffer[index++] = 'a';
 					break;
 
 				default:
@@ -406,7 +406,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 			const unsigned long data = read_callback((void*)user_data);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 			buffer[index++] = '(';
-			buffer[index++] = 'A';
+			buffer[index++] = 'a';
 			buffer[index++] = '0' + operand->address_mode_register;
 			buffer[index++] = ')';
 			break;
@@ -417,13 +417,13 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 			const unsigned long data = read_callback((void*)user_data);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
 			buffer[index++] = '(';
-			buffer[index++] = 'A';
+			buffer[index++] = 'a';
 			buffer[index++] = '0' + operand->address_mode_register;
 			buffer[index++] = ',';
-			buffer[index++] = (data & 0x8000) != 0 ? 'A' : 'D';
+			buffer[index++] = (data & 0x8000) != 0 ? 'a' : 'd';
 			buffer[index++] = '0' + ((data >> 12) & 7);
 			buffer[index++] = '.';
-			buffer[index++] = (data & 0x800) != 0 ? 'L' : 'W';
+			buffer[index++] = (data & 0x800) != 0 ? 'l' : 'w';
 			buffer[index++] = ')';
 			break;
 		}
@@ -453,21 +453,21 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
 					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = '(';
-					buffer[index++] = 'P';
-					buffer[index++] = 'C';
+					buffer[index++] = 'p';
+					buffer[index++] = 'c';
 					buffer[index++] = ')';
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
 					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
 					buffer[index++] = '(';
-					buffer[index++] = 'P';
-					buffer[index++] = 'C';
+					buffer[index++] = 'p';
+					buffer[index++] = 'c';
 					buffer[index++] = ',';
-					buffer[index++] = (data & 0x8000) != 0 ? 'A' : 'D';
+					buffer[index++] = (data & 0x8000) != 0 ? 'a' : 'd';
 					buffer[index++] = '0' + ((data >> 12) & 7);
 					buffer[index++] = '.';
-					buffer[index++] = (data & 0x800) != 0 ? 'L' : 'W';
+					buffer[index++] = (data & 0x800) != 0 ? 'l' : 'w';
 					buffer[index++] = ')';
 					break;
 
@@ -486,14 +486,14 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 		}
 
 		case ADDRESS_MODE_STATUS_REGISTER:
-			buffer[index++] = 'S';
-			buffer[index++] = 'P';
+			buffer[index++] = 's';
+			buffer[index++] = 'p';
 			break;
 
 		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
-			buffer[index++] = 'C';
-			buffer[index++] = 'C';
-			buffer[index++] = 'R';
+			buffer[index++] = 'c';
+			buffer[index++] = 'c';
+			buffer[index++] = 'r';
 			break;
 
 		case ADDRESS_MODE_NONE:
@@ -515,67 +515,67 @@ static const char* GetOpcodeConditionName(const unsigned int opcode)
 	{
 		case 0x0:
 			/* True */
-			return "T";
+			return "t";
 
 		case 0x1:
 			/* False */
-			return "F";
+			return "f";
 
 		case 0x2:
 			/* Higher */
-			return "HI";
+			return "hi";
 
 		case 0x3:
 			/* Lower or same */
-			return "LS";
+			return "ls";
 
 		case 0x4:
 			/* Carry clear */
-			return "CC";
+			return "cc";
 
 		case 0x5:
 			/* Carry set */
-			return "CS";
+			return "cs";
 
 		case 0x6:
 			/* Not equal */
-			return "NE";
+			return "ne";
 
 		case 0x7:
 			/* Equal */
-			return "EQ";
+			return "eq";
 
 		case 0x8:
 			/* Overflow clear */
-			return "VC";
+			return "vc";
 
 		case 0x9:
 			/* Overflow set */
-			return "VS";
+			return "vs";
 
 		case 0xA:
 			/* Plus */
-			return "PL";
+			return "pl";
 
 		case 0xB:
 			/* Minus */
-			return "MI";
+			return "mi";
 
 		case 0xC:
 			/* Greater or equal */
-			return "GE";
+			return "ge";
 
 		case 0xD:
 			/* Less than */
-			return "LT";
+			return "lt";
 
 		case 0xE:
 			/* Greater than */
-			return "GT";
+			return "gt";
 
 		case 0xF:
 			/* Less or equal */
-			return "LE";
+			return "le";
 	}
 
 	assert(cc_false);
@@ -619,7 +619,7 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 			case INSTRUCTION_ROD_REGISTER:
 			case INSTRUCTION_ROXD_MEMORY:
 			case INSTRUCTION_ROXD_REGISTER:
-				strcat(buff_buffer_owo, split_opcode.bit_8 ? "L" : "R");
+				strcat(buff_buffer_owo, split_opcode.bit_8 ? "l" : "r");
 				break;
 
 			default:
@@ -634,13 +634,17 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 			case INSTRUCTION_LEA:
 			case INSTRUCTION_MOVEQ:
 			case INSTRUCTION_PEA:
+			case INSTRUCTION_EXG:
+			case INSTRUCTION_SWAP:
+			case INSTRUCTION_LINK:
+			case INSTRUCTION_STOP:
 				break;
 
 			default:
 				if (decoded_opcode.size != OPERATION_SIZE_NONE)
 				{
 					buff_buffer_owo[index++] = '.';
-					buff_buffer_owo[index++] = decoded_opcode.size == OPERATION_SIZE_SHORT ? 'S' : decoded_opcode.size == OPERATION_SIZE_BYTE ? 'B' : decoded_opcode.size == OPERATION_SIZE_WORD ? 'W' : 'L';
+					buff_buffer_owo[index++] = decoded_opcode.size == OPERATION_SIZE_SHORT ? 's' : decoded_opcode.size == OPERATION_SIZE_BYTE ? 'b' : decoded_opcode.size == OPERATION_SIZE_WORD ? 'w' : 'l';
 				}
 
 				break;
