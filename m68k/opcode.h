@@ -37,7 +37,8 @@ typedef enum AddressMode
 	ADDRESS_MODE_STATUS_REGISTER                              = 8,
 	ADDRESS_MODE_CONDITION_CODE_REGISTER                      = 9,
 	ADDRESS_MODE_NONE                                         = 10,
-	ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11
+	ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11,
+	ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS                   = 12
 } AddressMode;
 
 typedef enum AddressModeSpecial
@@ -46,7 +47,8 @@ typedef enum AddressModeSpecial
 	ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG                     = 1,
 	ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT = 2,
 	ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX        = 3,
-	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4
+	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4,
+	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS                 = 5
 } AddressModeSpecial;
 
 typedef enum OperationSize

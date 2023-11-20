@@ -1,9 +1,23 @@
 #include "disassembler.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "../m68k/opcode.h"
+
+typedef struct Stuff
+{
+	unsigned long address;
+	Clown68000_Disassemble_ReadCallback read_callback;
+	void *user_data;
+} Stuff;
+
+static long ReadWord(Stuff* const stuff)
+{
+	stuff->address += 2;
+	return stuff->read_callback(stuff->user_data);
+}
 
 static size_t UnsignedHexToString(char* const buffer, const unsigned long hex)
 {
@@ -338,7 +352,7 @@ static const char* GetInstructionName(const Instruction instruction)
 	return "[ERROR]";
 }
 
-static size_t GetOperandName(char* const buffer, const DecodedOpcode* const decoded_opcode, const cc_bool operand_is_destination, const Clown68000_Disassemble_ReadCallback read_callback, const void* const user_data)
+static size_t GetOperandName(Stuff* const stuff, char* const buffer, const DecodedOpcode* const decoded_opcode, const cc_bool operand_is_destination)
 {
 	size_t index = 0;
 	const Operand* const operand = &decoded_opcode->operands[operand_is_destination ? 1 : 0];
@@ -403,7 +417,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 		{
-			const unsigned long data = read_callback((void*)user_data);
+			const unsigned long data = ReadWord(stuff);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 			buffer[index++] = '(';
 			buffer[index++] = 'a';
@@ -414,7 +428,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
 		{
-			const unsigned long data = read_callback((void*)user_data);
+			const unsigned long data = ReadWord(stuff);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
 			buffer[index++] = '(';
 			buffer[index++] = 'a';
@@ -430,7 +444,8 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 
 		case ADDRESS_MODE_SPECIAL:
 		{
-			const unsigned long data = read_callback((void*)user_data);
+			const unsigned long address = stuff->address;
+			const unsigned long data = ReadWord(stuff);
 
 			switch (operand->address_mode_register)
 			{
@@ -444,14 +459,14 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
 					buffer[index++] = '(';
-					index += UnsignedHexToString(&buffer[index], (data << 16) | read_callback((void*)user_data));
+					index += UnsignedHexToString(&buffer[index], (data << 16) | ReadWord(stuff));
 					buffer[index++] = ')';
 					buffer[index++] = '.';
 					buffer[index++] = 'l';
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
-					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
+					index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'p';
 					buffer[index++] = 'c';
@@ -459,7 +474,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
-					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
+					index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(7, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'p';
 					buffer[index++] = 'c';
@@ -475,9 +490,17 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 					buffer[index++] = '#';
 
 					if (operand->operation_size_in_bytes == 4)
-						index += SignedHexToString(&buffer[index], (data << 16) | read_callback((void*)user_data));
+						index += SignedHexToString(&buffer[index], (data << 16) | ReadWord(stuff));
 					else
 						index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
+
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS:
+					if (operand->operation_size_in_bytes == 4)
+						index += UnsignedHexToString(&buffer[index], address + ((data << 16) | ReadWord(stuff)));
+					else
+						index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(15, data));
 
 					break;
 			}
@@ -503,6 +526,10 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 		case ADDRESS_MODE_EMBEDDED_IMMEDIATE:
 			buffer[index++] = '#';
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(operand->operation_size_in_bytes == 1 ? 7 : operand->operation_size_in_bytes == 2 ? 15 : 31, operand->address_mode_register));
+			break;
+
+		case ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS:
+			index += UnsignedHexToString(&buffer[index], stuff->address + CC_SIGN_EXTEND_ULONG(operand->operation_size_in_bytes == 1 ? 7 : operand->operation_size_in_bytes == 2 ? 15 : 31, operand->address_mode_register));
 			break;
 	}
 
@@ -583,8 +610,13 @@ static const char* GetOpcodeConditionName(const unsigned int opcode)
 	return "[ERROR]";
 }
 
-void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callback, const Clown68000_Disassemble_PrintCallback print_callback, const void* const user_data)
+void Clown68000_Disassemble(const unsigned long address, const Clown68000_Disassemble_ReadCallback read_callback, const Clown68000_Disassemble_PrintCallback print_callback, const void* const user_data)
 {
+	Stuff stuff;
+	stuff.address = address;
+	stuff.read_callback = read_callback;
+	stuff.user_data = (void*)user_data;
+
 	for (;;)
 	{
 		char buff_buffer_owo[0x100];
@@ -592,14 +624,16 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 		DecodedOpcode decoded_opcode;
 		SplitOpcode split_opcode;
 
-		const long opcode = read_callback((void*)user_data);
+		sprintf(buff_buffer_owo, "%08lX: ", stuff.address);
+
+		const long opcode = ReadWord(&stuff);
 
 		if (opcode == -1)
 			return;
 
 		DecodeOpcode(&decoded_opcode, &split_opcode, opcode);
 
-		strcpy(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
+		strcat(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
 
 		/* Instruction name suffix and special operands. */
 		switch (decoded_opcode.instruction)
@@ -650,20 +684,20 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 				break;
 		}
 
-		while (index != 10)
+		while (index != 18)
 			buff_buffer_owo[index++] = ' ';
 
 		switch (decoded_opcode.instruction)
 		{
 			default:
 				if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
-					index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_false, read_callback, user_data);
+					index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_false);
 
 				if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
 					buff_buffer_owo[index++] = ',';
 
 				if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
-					index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_true, read_callback, user_data);
+					index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_true);
 
 				break;
 		}

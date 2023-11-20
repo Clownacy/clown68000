@@ -718,7 +718,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BSR_WORD:
 		case INSTRUCTION_BCC_WORD:
 			/* Immediate value (word). */
-			SET_OPERAND(2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+			SET_OPERAND(2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS);
 			break;
 
 		case INSTRUCTION_SBCD:
@@ -773,6 +773,9 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BRA_SHORT:
 		case INSTRUCTION_BSR_SHORT:
 		case INSTRUCTION_BCC_SHORT:
+			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS, CC_SIGN_EXTEND_UINT(7, opcode->raw));
+			break;
+
 		case INSTRUCTION_MOVEQ:
 			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE, CC_SIGN_EXTEND_UINT(7, opcode->raw));
 			break;
@@ -950,7 +953,7 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 		case INSTRUCTION_DBCC:
 			/* Immediate value (any size). */
-			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS);
 			break;
 
 		case INSTRUCTION_PEA:

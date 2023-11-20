@@ -48,8 +48,10 @@ int main(const int argc, char** const argv)
 		}
 		else
 		{
-			fseek(file, strtoul(argv[2], NULL, 0), SEEK_SET);
-			Clown68000_Disassemble(ReadCallback, PrintCallback, file);
+			const unsigned long address = strtoul(argv[2], NULL, 0);
+
+			fseek(file, address, SEEK_SET);
+			Clown68000_Disassemble(address, ReadCallback, PrintCallback, file);
 			fclose(file);
 
 			exit_code = EXIT_SUCCESS;
