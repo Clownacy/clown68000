@@ -89,10 +89,8 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "ASd";
 
 		case INSTRUCTION_BCC_SHORT:
-			return "Bcc";
-
 		case INSTRUCTION_BCC_WORD:
-			return "Bcc";
+			return "B";
 
 		case INSTRUCTION_BCHG_DYNAMIC:
 			return "BCHG";
@@ -149,7 +147,7 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "CMPM";
 
 		case INSTRUCTION_DBCC:
-			return "DBcc";
+			return "DB";
 
 		case INSTRUCTION_DIVS:
 			return "DIVS";
@@ -287,7 +285,7 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "SBCD";
 
 		case INSTRUCTION_SCC:
-			return "SCC";
+			return "S";
 
 		case INSTRUCTION_STOP:
 			return "STOP";
@@ -334,6 +332,8 @@ static const char* GetInstructionName(const Instruction instruction)
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			return "[UNIMPLEMENTED2]";
 	}
+
+	assert(cc_false);
 
 	return "[ERROR]";
 }
@@ -504,6 +504,80 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 	return index;
 }
 
+static const char* GetOpcodeConditionName(const unsigned int opcode)
+{
+	switch ((opcode >> 8) & 0xF)
+	{
+		case 0x0:
+			/* True */
+			return "T";
+
+		case 0x1:
+			/* False */
+			return "F";
+
+		case 0x2:
+			/* Higher */
+			return "HI";
+
+		case 0x3:
+			/* Lower or same */
+			return "LS";
+
+		case 0x4:
+			/* Carry clear */
+			return "CC";
+
+		case 0x5:
+			/* Carry set */
+			return "CS";
+
+		case 0x6:
+			/* Not equal */
+			return "NE";
+
+		case 0x7:
+			/* Equal */
+			return "EQ";
+
+		case 0x8:
+			/* Overflow clear */
+			return "VC";
+
+		case 0x9:
+			/* Overflow set */
+			return "VS";
+
+		case 0xA:
+			/* Plus */
+			return "PL";
+
+		case 0xB:
+			/* Minus */
+			return "MI";
+
+		case 0xC:
+			/* Greater or equal */
+			return "GE";
+
+		case 0xD:
+			/* Less than */
+			return "LT";
+
+		case 0xE:
+			/* Greater than */
+			return "GT";
+
+		case 0xF:
+			/* Less or equal */
+			return "LE";
+	}
+
+	assert(cc_false);
+
+	return "[ERROR]";
+}
+
 void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callback, const Clown68000_Disassemble_PrintCallback print_callback, const void* const user_data)
 {
 	for (;;)
@@ -520,26 +594,51 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 
 		DecodeOpcode(&decoded_opcode, &split_opcode, opcode);
 
-		if (decoded_opcode.instruction == INSTRUCTION_DBCC)
-		{
-			decoded_opcode.operands[1] = decoded_opcode.operands[0];
-			decoded_opcode.operands[0].address_mode = ADDRESS_MODE_DATA_REGISTER;
-			decoded_opcode.operands[0].address_mode_register = split_opcode.primary_register;
-		}
-
 		strcpy(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
+
+		switch (decoded_opcode.instruction)
+		{
+			case INSTRUCTION_BCC_SHORT:
+			case INSTRUCTION_BCC_WORD:
+			case INSTRUCTION_SCC:
+				strcat(buff_buffer_owo, GetOpcodeConditionName(opcode));
+				break;
+
+			case INSTRUCTION_DBCC:
+				strcat(buff_buffer_owo, GetOpcodeConditionName(opcode));
+
+				decoded_opcode.operands[1] = decoded_opcode.operands[0];
+				decoded_opcode.operands[0].address_mode = ADDRESS_MODE_DATA_REGISTER;
+				decoded_opcode.operands[0].address_mode_register = split_opcode.primary_register;
+				break;
+
+			default:
+				break;
+		}
 
 		index = strlen(buff_buffer_owo);
 
-		if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+		switch (decoded_opcode.instruction)
 		{
-			buff_buffer_owo[index++] = '.';
-			buff_buffer_owo[index++] = decoded_opcode.operands[1].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[1].operation_size_in_bytes == 2 ? 'W' : 'L';
-		}
-		else if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
-		{
-			buff_buffer_owo[index++] = '.';
-			buff_buffer_owo[index++] = decoded_opcode.operands[0].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[0].operation_size_in_bytes == 2 ? 'W' : 'L';
+			case INSTRUCTION_DBCC:
+			case INSTRUCTION_LEA:
+			case INSTRUCTION_MOVEQ:
+			case INSTRUCTION_PEA:
+				break;
+
+			default:
+				if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+				{
+					buff_buffer_owo[index++] = '.';
+					buff_buffer_owo[index++] = decoded_opcode.operands[1].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[1].operation_size_in_bytes == 2 ? 'W' : 'L';
+				}
+				else if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
+				{
+					buff_buffer_owo[index++] = '.';
+					buff_buffer_owo[index++] = decoded_opcode.operands[0].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[0].operation_size_in_bytes == 2 ? 'W' : 'L';
+				}
+
+				break;
 		}
 
 		while (index != 10)
