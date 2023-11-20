@@ -11,10 +11,8 @@ static size_t UnsignedHexToString(char* const buffer, const unsigned long hex)
 
 	size_t index, subindex;
 	unsigned int i;
-	cc_bool nonzero_encountered;
 
 	index = 0;
-	nonzero_encountered = cc_false;
 
 	if (hex >= 0xA)
 		buffer[index++] = '$';
@@ -362,6 +360,9 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = '(';
 					break;
+
+				default:
+					break;
 			}
 
 			switch (operand->address_mode)
@@ -376,6 +377,9 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = 'A';
 					break;
+
+				default:
+					break;
 			}
 
 			buffer[index++] = '0' + operand->address_mode_register;
@@ -386,6 +390,9 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
 				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = ')';
+					break;
+
+				default:
 					break;
 			}
 
