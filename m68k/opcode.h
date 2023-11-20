@@ -49,6 +49,15 @@ typedef enum AddressModeSpecial
 	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4
 } AddressModeSpecial;
 
+typedef enum OperationSize
+{
+	OPERATION_SIZE_BYTE,
+	OPERATION_SIZE_SHORT,
+	OPERATION_SIZE_WORD,
+	OPERATION_SIZE_LONGWORD,
+	OPERATION_SIZE_NONE
+} OperationSize;
+
 typedef struct Operand
 {
 	unsigned int operation_size_in_bytes;
@@ -59,7 +68,7 @@ typedef struct Operand
 typedef struct DecodedOpcode
 {
 	Instruction instruction;
-	unsigned int size;
+	OperationSize size;
 	Operand operands[2];
 } DecodedOpcode;
 

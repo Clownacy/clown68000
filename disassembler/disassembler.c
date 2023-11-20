@@ -637,10 +637,10 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 				break;
 
 			default:
-				if (decoded_opcode.size != 0)
+				if (decoded_opcode.size != OPERATION_SIZE_NONE)
 				{
 					buff_buffer_owo[index++] = '.';
-					buff_buffer_owo[index++] = decoded_opcode.size == 1 ? 'B' : decoded_opcode.size == 2 ? 'W' : 'L';
+					buff_buffer_owo[index++] = decoded_opcode.size == OPERATION_SIZE_SHORT ? 'S' : decoded_opcode.size == OPERATION_SIZE_BYTE ? 'B' : decoded_opcode.size == OPERATION_SIZE_WORD ? 'W' : 'L';
 				}
 
 				break;

@@ -475,11 +475,11 @@ static Instruction GetInstruction(const SplitOpcode *opcode)
 	return instruction;
 }
 
-static unsigned int GetSize(const Instruction instruction, const SplitOpcode* const opcode)
+static OperationSize GetSize(const Instruction instruction, const SplitOpcode* const opcode)
 {
-	unsigned int operation_size;
+	OperationSize operation_size;
 
-	operation_size = 0;
+	operation_size = OPERATION_SIZE_NONE;
 
 	switch (instruction)
 	{
@@ -492,7 +492,7 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_SBCD:
 		case INSTRUCTION_ABCD:
 			/* Hardcoded to a byte. */
-			operation_size = 1;
+			operation_size = OPERATION_SIZE_BYTE;
 			break;
 
 		case INSTRUCTION_ORI_TO_SR:
@@ -510,8 +510,11 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_ROXD_MEMORY:
 		case INSTRUCTION_ROD_MEMORY:
 		case INSTRUCTION_STOP:
+		case INSTRUCTION_BRA_WORD:
+		case INSTRUCTION_BSR_WORD:
+		case INSTRUCTION_BCC_WORD:
 			/* Hardcoded to a word. */
-			operation_size = 2;
+			operation_size = OPERATION_SIZE_WORD;
 			break;
 
 		case INSTRUCTION_ADDAQ:
@@ -527,7 +530,7 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_CMPA:
 		case INSTRUCTION_ADDA:
 			/* Hardcoded to a longword. */
-			operation_size = 4;
+			operation_size = OPERATION_SIZE_LONGWORD;
 			break;
 
 		case INSTRUCTION_BTST_STATIC:
@@ -539,7 +542,7 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_BCLR_DYNAMIC:
 		case INSTRUCTION_BSET_DYNAMIC:
 			/* 4 if register - 1 if memory. */
-			operation_size = opcode->primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+			operation_size = opcode->primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_BYTE;
 			break;
 
 		case INSTRUCTION_MOVEA:
@@ -548,22 +551,22 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 			switch (opcode->raw & 0x3000)
 			{
 				case 0x1000:
-					operation_size = 1;
+					operation_size = OPERATION_SIZE_BYTE;
 					break;
 			
 				case 0x2000:
-					operation_size = 4; /* Yup, this isn't a typo. */
+					operation_size = OPERATION_SIZE_LONGWORD; /* Yup, this isn't a typo. */
 					break;
 			
 				case 0x3000:
-					operation_size = 2;
+					operation_size = OPERATION_SIZE_WORD;
 					break;
 			}
 
 			break;
 
 		case INSTRUCTION_EXT:
-			operation_size = opcode->raw & 0x0040 ? 4 : 2;
+			operation_size = (opcode->raw & 0x0040) != 0 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD;
 			break;
 
 		case INSTRUCTION_ORI:
@@ -593,7 +596,27 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_ROXD_REGISTER:
 		case INSTRUCTION_ROD_REGISTER:
 			/* Standard. */
-			operation_size = 1 << opcode->bits_6_and_7;
+			switch (1 << opcode->bits_6_and_7)
+			{
+				case 1:
+					operation_size = OPERATION_SIZE_BYTE;
+					break;
+
+				case 2:
+					operation_size = OPERATION_SIZE_WORD;
+					break;
+
+				case 4:
+					operation_size = OPERATION_SIZE_LONGWORD;
+					break;
+			}
+
+			break;
+
+		case INSTRUCTION_BRA_SHORT:
+		case INSTRUCTION_BSR_SHORT:
+		case INSTRUCTION_BCC_SHORT:
+			operation_size = OPERATION_SIZE_SHORT;
 			break;
 
 		case INSTRUCTION_MOVEP:
@@ -610,12 +633,6 @@ static unsigned int GetSize(const Instruction instruction, const SplitOpcode* co
 		case INSTRUCTION_RTR:
 		case INSTRUCTION_JSR:
 		case INSTRUCTION_JMP:
-		case INSTRUCTION_BRA_SHORT:
-		case INSTRUCTION_BRA_WORD:
-		case INSTRUCTION_BSR_SHORT:
-		case INSTRUCTION_BSR_WORD:
-		case INSTRUCTION_BCC_SHORT:
-		case INSTRUCTION_BCC_WORD:
 		case INSTRUCTION_EXG:
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
