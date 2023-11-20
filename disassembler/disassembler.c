@@ -513,6 +513,13 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 
 		DecodeOpcode(&decoded_opcode, &split_opcode, opcode);
 
+		if (decoded_opcode.instruction == INSTRUCTION_DBCC)
+		{
+			decoded_opcode.operands[1] = decoded_opcode.operands[0];
+			decoded_opcode.operands[0].address_mode = ADDRESS_MODE_DATA_REGISTER;
+			decoded_opcode.operands[0].address_mode_register = split_opcode.primary_register;
+		}
+
 		strcpy(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
 
 		index = strlen(buff_buffer_owo);
@@ -554,6 +561,7 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 
 		print_callback((void*)user_data, buff_buffer_owo);
 
+		/* Halt when encountering a terminating instruction. */
 		switch (decoded_opcode.instruction)
 		{
 			case INSTRUCTION_BRA_SHORT:
