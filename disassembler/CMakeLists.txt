@@ -5,8 +5,8 @@ project(disassembler LANGUAGES C)
 add_library(disassembler STATIC
 	"disassembler.c"
 	"disassembler.h"
-	"../m68k/opcode.c"
-	"../m68k/opcode.h"
+	"opcode.c"
+	"opcode.h"
 )
 
 set_target_properties(disassembler PROPERTIES
