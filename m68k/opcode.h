@@ -62,7 +62,7 @@ typedef enum OperationSize
 
 typedef struct Operand
 {
-	unsigned int operation_size_in_bytes;
+	OperationSize operation_size;
 	AddressMode address_mode;
 	unsigned int address_mode_register;
 } Operand;

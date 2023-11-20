@@ -646,7 +646,7 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 #define SET_OPERAND(OPERATION_SIZE, ADDRESS_MODE, ADDRESS_MODE_REGISTER)\
 do\
 {\
-	OPERAND.operation_size_in_bytes = OPERATION_SIZE;\
+	OPERAND.operation_size = OPERATION_SIZE;\
 	OPERAND.address_mode = ADDRESS_MODE;\
 	OPERAND.address_mode_register = ADDRESS_MODE_REGISTER;\
 } while(0)
@@ -691,7 +691,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BCLR_STATIC:
 		case INSTRUCTION_BSET_STATIC:
 			/* Immediate value (byte). */
-			SET_OPERAND(1, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+			SET_OPERAND(OPERATION_SIZE_BYTE, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
 			break;
 
 		case INSTRUCTION_PEA:
@@ -699,7 +699,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_JMP:
 		case INSTRUCTION_LEA:
 			/* Memory address */
-			SET_OPERAND(0, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+			SET_OPERAND(OPERATION_SIZE_NONE, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
 		case INSTRUCTION_MOVE_FROM_SR:
@@ -718,7 +718,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BSR_WORD:
 		case INSTRUCTION_BCC_WORD:
 			/* Immediate value (word). */
-			SET_OPERAND(2, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS);
+			SET_OPERAND(OPERATION_SIZE_WORD, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS);
 			break;
 
 		case INSTRUCTION_SBCD:
@@ -744,7 +744,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_CMPA:
 		case INSTRUCTION_ADDA:
 			/* Word or longword based on bit 8. */
-			SET_OPERAND(opcode->bit_8 ? 4 : 2, opcode->primary_address_mode, opcode->primary_register);
+			SET_OPERAND(opcode->bit_8 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
 		case INSTRUCTION_CMPM:
@@ -767,28 +767,28 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_MULU:
 		case INSTRUCTION_MULS:
 			/* Primary address mode, hardcoded to word-size. */
-			SET_OPERAND(2, opcode->primary_address_mode, opcode->primary_register);
+			SET_OPERAND(OPERATION_SIZE_WORD, opcode->primary_address_mode, opcode->primary_register);
 			break;
 
 		case INSTRUCTION_BRA_SHORT:
 		case INSTRUCTION_BSR_SHORT:
 		case INSTRUCTION_BCC_SHORT:
-			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS, CC_SIGN_EXTEND_UINT(7, opcode->raw));
+			SET_OPERAND(OPERATION_SIZE_BYTE, ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS, CC_SIGN_EXTEND_UINT(7, opcode->raw));
 			break;
 
 		case INSTRUCTION_MOVEQ:
-			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE, CC_SIGN_EXTEND_UINT(7, opcode->raw));
+			SET_OPERAND(OPERATION_SIZE_BYTE, ADDRESS_MODE_EMBEDDED_IMMEDIATE, CC_SIGN_EXTEND_UINT(7, opcode->raw));
 			break;
 
 		case INSTRUCTION_DBCC:
-			SET_OPERAND(2, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
+			SET_OPERAND(OPERATION_SIZE_WORD, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
 			break;
 
 		case INSTRUCTION_ASD_REGISTER:
 		case INSTRUCTION_LSD_REGISTER:
 		case INSTRUCTION_ROXD_REGISTER:
 		case INSTRUCTION_ROD_REGISTER:
-			SET_OPERAND(2, ADDRESS_MODE_EMBEDDED_IMMEDIATE, ((opcode->secondary_register - 1u) & 7u) + 1u); /* A little math trick to turn 0 into 8 */
+			SET_OPERAND(OPERATION_SIZE_WORD, ADDRESS_MODE_EMBEDDED_IMMEDIATE, ((opcode->secondary_register - 1u) & 7u) + 1u); /* A little math trick to turn 0 into 8 */
 			break;
 
 		case INSTRUCTION_MOVEP:
@@ -885,7 +885,7 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 		case INSTRUCTION_MOVEA:
 			/* Full secondary address register */
-			SET_OPERAND(4, ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
+			SET_OPERAND(OPERATION_SIZE_LONGWORD, ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
 			break;
 
 		case INSTRUCTION_CMPM:
@@ -943,12 +943,12 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 		case INSTRUCTION_MOVEM:
 			/* Memory address */
-			SET_OPERAND(0, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+			SET_OPERAND(OPERATION_SIZE_NONE, opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
 		case INSTRUCTION_MOVEP:
 			/* Memory address */
-			SET_OPERAND(0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+			SET_OPERAND(OPERATION_SIZE_NONE, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
 		case INSTRUCTION_DBCC:

@@ -489,7 +489,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 				case ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE:
 					buffer[index++] = '#';
 
-					if (operand->operation_size_in_bytes == 4)
+					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
 						index += SignedHexToString(&buffer[index], (data << 16) | ReadWord(stuff));
 					else
 						index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
@@ -497,7 +497,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS:
-					if (operand->operation_size_in_bytes == 4)
+					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
 						index += UnsignedHexToString(&buffer[index], address + ((data << 16) | ReadWord(stuff)));
 					else
 						index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(15, data));
@@ -525,11 +525,11 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 		case ADDRESS_MODE_EMBEDDED_IMMEDIATE:
 			buffer[index++] = '#';
-			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(operand->operation_size_in_bytes == 1 ? 7 : operand->operation_size_in_bytes == 2 ? 15 : 31, operand->address_mode_register));
+			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(operand->operation_size == OPERATION_SIZE_BYTE ? 7 : operand->operation_size == OPERATION_SIZE_WORD ? 15 : 31, operand->address_mode_register));
 			break;
 
 		case ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS:
-			index += UnsignedHexToString(&buffer[index], stuff->address + CC_SIGN_EXTEND_ULONG(operand->operation_size_in_bytes == 1 ? 7 : operand->operation_size_in_bytes == 2 ? 15 : 31, operand->address_mode_register));
+			index += UnsignedHexToString(&buffer[index], stuff->address + CC_SIGN_EXTEND_ULONG(operand->operation_size == OPERATION_SIZE_BYTE ? 7 : operand->operation_size == OPERATION_SIZE_WORD ? 15 : 31, operand->address_mode_register));
 			break;
 	}
 
