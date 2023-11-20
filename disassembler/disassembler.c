@@ -404,7 +404,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 		{
 			const unsigned long data = read_callback((void*)user_data);
-			index += SignedHexToString(&buffer[index], (data & 0x7FFF) - (data & 0x8000));
+			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 			buffer[index++] = '(';
 			buffer[index++] = 'A';
 			buffer[index++] = '0' + operand->address_mode_register;
@@ -415,7 +415,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
 		{
 			const unsigned long data = read_callback((void*)user_data);
-			index += SignedHexToString(&buffer[index], (data & 0x7F) - (data & 0x80));
+			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
 			buffer[index++] = '(';
 			buffer[index++] = 'A';
 			buffer[index++] = '0' + operand->address_mode_register;
@@ -436,7 +436,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 					buffer[index++] = '(';
-					index += UnsignedHexToString(&buffer[index], (data & 0x7FFF) - (data & 0x8000));
+					index += UnsignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = ')';
 					buffer[index++] = '.';
 					buffer[index++] = 'w';
@@ -451,7 +451,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
-					index += SignedHexToString(&buffer[index], (data & 0x7FFF) - (data & 0x8000));
+					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'P';
 					buffer[index++] = 'C';
@@ -459,7 +459,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
-					index += SignedHexToString(&buffer[index], (data & 0x7F) - (data & 0x80));
+					index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(7, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'P';
 					buffer[index++] = 'C';
@@ -477,7 +477,7 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 					if (operand->operation_size_in_bytes == 4)
 						index += SignedHexToString(&buffer[index], (data << 16) | read_callback((void*)user_data));
 					else
-						index += SignedHexToString(&buffer[index], (data & 0x7FFF) - (data & 0x8000));
+						index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 
 					break;
 			}
@@ -498,6 +498,11 @@ static size_t GetOperandName(char* const buffer, const DecodedOpcode* const deco
 
 		case ADDRESS_MODE_NONE:
 			assert(0);
+			break;
+
+		case ADDRESS_MODE_EMBEDDED_IMMEDIATE:
+			buffer[index++] = '#';
+			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(operand->operation_size_in_bytes == 1 ? 7 : operand->operation_size_in_bytes == 2 ? 15 : 31, operand->address_mode_register));
 			break;
 	}
 
@@ -596,10 +601,12 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 
 		strcpy(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
 
+		/* Instruction name suffix and special operands. */
 		switch (decoded_opcode.instruction)
 		{
 			case INSTRUCTION_BCC_SHORT:
 			case INSTRUCTION_BCC_WORD:
+			case INSTRUCTION_DBCC:
 			case INSTRUCTION_SCC:
 				strcat(buff_buffer_owo, GetOpcodeConditionName(opcode));
 				break;
@@ -613,14 +620,6 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 			case INSTRUCTION_ROXD_MEMORY:
 			case INSTRUCTION_ROXD_REGISTER:
 				strcat(buff_buffer_owo, split_opcode.bit_8 ? "L" : "R");
-				break;
-
-			case INSTRUCTION_DBCC:
-				strcat(buff_buffer_owo, GetOpcodeConditionName(opcode));
-
-				decoded_opcode.operands[1] = decoded_opcode.operands[0];
-				decoded_opcode.operands[0].address_mode = ADDRESS_MODE_DATA_REGISTER;
-				decoded_opcode.operands[0].address_mode_register = split_opcode.primary_register;
 				break;
 
 			default:
@@ -655,23 +654,32 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 		while (index != 10)
 			buff_buffer_owo[index++] = ' ';
 
-		if (decoded_opcode.instruction == INSTRUCTION_MOVEQ)
+		switch (decoded_opcode.instruction)
 		{
-			buff_buffer_owo[index++] = '#';
-			index += SignedHexToString(&buff_buffer_owo[index], (opcode & 0x7F) - (opcode & 0x80));
-			buff_buffer_owo[index++] = ',';
-			index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_true, read_callback, user_data);
-		}
-		else
-		{
-			if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
-				index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_false, read_callback, user_data);
-
-			if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+			case INSTRUCTION_MOVEQ:
+				buff_buffer_owo[index++] = '#';
+				index += SignedHexToString(&buff_buffer_owo[index], CC_SIGN_EXTEND_ULONG(7, opcode));
 				buff_buffer_owo[index++] = ',';
-
-			if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
 				index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_true, read_callback, user_data);
+				break;
+
+			case INSTRUCTION_ASD_REGISTER:
+			case INSTRUCTION_LSD_REGISTER:
+			case INSTRUCTION_ROD_REGISTER:
+			case INSTRUCTION_ROXD_REGISTER:
+				break;
+
+			default:
+				if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
+					index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_false, read_callback, user_data);
+
+				if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+					buff_buffer_owo[index++] = ',';
+
+				if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+					index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_true, read_callback, user_data);
+
+				break;
 		}
 
 		buff_buffer_owo[index++] = '\0';

@@ -655,7 +655,6 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_CMPI:
 		case INSTRUCTION_LINK:
 		case INSTRUCTION_MOVEM:
-		case INSTRUCTION_DBCC:
 		case INSTRUCTION_STOP:
 			/* Immediate value (any size). */
 			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -757,6 +756,13 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BRA_SHORT:
 		case INSTRUCTION_BSR_SHORT:
 		case INSTRUCTION_BCC_SHORT:
+			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE, CC_SIGN_EXTEND_UINT(7, opcode->raw));
+			break;
+
+		case INSTRUCTION_DBCC:
+			SET_OPERAND(2, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
+			break;
+
 		case INSTRUCTION_MOVEP:
 		case INSTRUCTION_NEGX:
 		case INSTRUCTION_CLR:
@@ -922,6 +928,11 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 			SET_OPERAND(0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 			break;
 
+		case INSTRUCTION_DBCC:
+			/* Immediate value (any size). */
+			SET_OPERAND(decoded_opcode->size, ADDRESS_MODE_SPECIAL, ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
+			break;
+
 		case INSTRUCTION_PEA:
 		case INSTRUCTION_ILLEGAL:
 		case INSTRUCTION_TRAP:
@@ -938,7 +949,6 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 		case INSTRUCTION_JSR:
 		case INSTRUCTION_JMP:
 		case INSTRUCTION_CHK:
-		case INSTRUCTION_DBCC:
 		case INSTRUCTION_BRA_SHORT:
 		case INSTRUCTION_BRA_WORD:
 		case INSTRUCTION_BSR_SHORT:

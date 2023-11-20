@@ -36,7 +36,8 @@ typedef enum AddressMode
 	/* Custom - These were added for uniformity, but never actually occur in M68k opcodes. */
 	ADDRESS_MODE_STATUS_REGISTER                              = 8,
 	ADDRESS_MODE_CONDITION_CODE_REGISTER                      = 9,
-	ADDRESS_MODE_NONE                                         = 10
+	ADDRESS_MODE_NONE                                         = 10,
+	ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11
 } AddressMode;
 
 typedef enum AddressModeSpecial
