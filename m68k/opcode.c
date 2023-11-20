@@ -706,12 +706,8 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 			OPERAND.address_mode = ADDRESS_MODE_STATUS_REGISTER;
 			break;
 
-		case INSTRUCTION_ADDAQ:
-		case INSTRUCTION_SUBAQ:
-		case INSTRUCTION_ADDQ:
-		case INSTRUCTION_SUBQ:
 		case INSTRUCTION_TRAP:
-			/* Doesn't need an address mode for its source. */
+			SET_OPERAND(OPERATION_SIZE_WORD, ADDRESS_MODE_EMBEDDED_IMMEDIATE, opcode->raw & 0xF);
 			break;
 
 		case INSTRUCTION_BRA_WORD:
@@ -784,6 +780,10 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 			SET_OPERAND(OPERATION_SIZE_WORD, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
 			break;
 
+		case INSTRUCTION_ADDAQ:
+		case INSTRUCTION_SUBAQ:
+		case INSTRUCTION_ADDQ:
+		case INSTRUCTION_SUBQ:
 		case INSTRUCTION_ASD_REGISTER:
 		case INSTRUCTION_LSD_REGISTER:
 		case INSTRUCTION_ROXD_REGISTER:
