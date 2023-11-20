@@ -83,10 +83,10 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "ANDI";
 
 		case INSTRUCTION_ASD_MEMORY:
-			return "ASd";
+			return "AS";
 
 		case INSTRUCTION_ASD_REGISTER:
-			return "ASd";
+			return "AS";
 
 		case INSTRUCTION_BCC_SHORT:
 		case INSTRUCTION_BCC_WORD:
@@ -261,16 +261,16 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "RESET";
 
 		case INSTRUCTION_ROD_MEMORY:
-			return "ROd";
+			return "RO";
 
 		case INSTRUCTION_ROD_REGISTER:
-			return "ROd";
+			return "RO";
 
 		case INSTRUCTION_ROXD_MEMORY:
-			return "ROXd";
+			return "ROX";
 
 		case INSTRUCTION_ROXD_REGISTER:
-			return "ROXd";
+			return "ROX";
 
 		case INSTRUCTION_RTE:
 			return "RTE";
@@ -602,6 +602,17 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 			case INSTRUCTION_BCC_WORD:
 			case INSTRUCTION_SCC:
 				strcat(buff_buffer_owo, GetOpcodeConditionName(opcode));
+				break;
+
+			case INSTRUCTION_ASD_MEMORY:
+			case INSTRUCTION_ASD_REGISTER:
+			case INSTRUCTION_LSD_MEMORY:
+			case INSTRUCTION_LSD_REGISTER:
+			case INSTRUCTION_ROD_MEMORY:
+			case INSTRUCTION_ROD_REGISTER:
+			case INSTRUCTION_ROXD_MEMORY:
+			case INSTRUCTION_ROXD_REGISTER:
+				strcat(buff_buffer_owo, split_opcode.bit_8 ? "L" : "R");
 				break;
 
 			case INSTRUCTION_DBCC:
