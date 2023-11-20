@@ -36,7 +36,7 @@ int main(const int argc, char** const argv)
 
 	if (argc < 3)
 	{
-		fputs("Error: Path to file must be specified as file!\n", stderr);
+		fprintf(stderr, "Usage: %s [path to file] [address]\n", argv[0]);
 	}
 	else
 	{
