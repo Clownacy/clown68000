@@ -756,11 +756,19 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_BRA_SHORT:
 		case INSTRUCTION_BSR_SHORT:
 		case INSTRUCTION_BCC_SHORT:
+		case INSTRUCTION_MOVEQ:
 			SET_OPERAND(1, ADDRESS_MODE_EMBEDDED_IMMEDIATE, CC_SIGN_EXTEND_UINT(7, opcode->raw));
 			break;
 
 		case INSTRUCTION_DBCC:
 			SET_OPERAND(2, ADDRESS_MODE_DATA_REGISTER, opcode->primary_register);
+			break;
+
+		case INSTRUCTION_ASD_REGISTER:
+		case INSTRUCTION_LSD_REGISTER:
+		case INSTRUCTION_ROXD_REGISTER:
+		case INSTRUCTION_ROD_REGISTER:
+			SET_OPERAND(2, ADDRESS_MODE_EMBEDDED_IMMEDIATE, ((opcode->secondary_register - 1u) & 7u) + 1u); /* A little math trick to turn 0 into 8 */
 			break;
 
 		case INSTRUCTION_MOVEP:
@@ -782,16 +790,11 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_TRAPV:
 		case INSTRUCTION_RTR:
 		case INSTRUCTION_SCC:
-		case INSTRUCTION_MOVEQ:
 		case INSTRUCTION_EXG:
 		case INSTRUCTION_ASD_MEMORY:
 		case INSTRUCTION_LSD_MEMORY:
 		case INSTRUCTION_ROXD_MEMORY:
 		case INSTRUCTION_ROD_MEMORY:
-		case INSTRUCTION_ASD_REGISTER:
-		case INSTRUCTION_LSD_REGISTER:
-		case INSTRUCTION_ROXD_REGISTER:
-		case INSTRUCTION_ROD_REGISTER:
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			/* Doesn't have a source address mode to decode. */

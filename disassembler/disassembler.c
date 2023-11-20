@@ -637,15 +637,10 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 				break;
 
 			default:
-				if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+				if (decoded_opcode.size != 0)
 				{
 					buff_buffer_owo[index++] = '.';
-					buff_buffer_owo[index++] = decoded_opcode.operands[1].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[1].operation_size_in_bytes == 2 ? 'W' : 'L';
-				}
-				else if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
-				{
-					buff_buffer_owo[index++] = '.';
-					buff_buffer_owo[index++] = decoded_opcode.operands[0].operation_size_in_bytes == 1 ? 'B' : decoded_opcode.operands[0].operation_size_in_bytes == 2 ? 'W' : 'L';
+					buff_buffer_owo[index++] = decoded_opcode.size == 1 ? 'B' : decoded_opcode.size == 2 ? 'W' : 'L';
 				}
 
 				break;
@@ -656,19 +651,6 @@ void Clown68000_Disassemble(const Clown68000_Disassemble_ReadCallback read_callb
 
 		switch (decoded_opcode.instruction)
 		{
-			case INSTRUCTION_MOVEQ:
-				buff_buffer_owo[index++] = '#';
-				index += SignedHexToString(&buff_buffer_owo[index], CC_SIGN_EXTEND_ULONG(7, opcode));
-				buff_buffer_owo[index++] = ',';
-				index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_true, read_callback, user_data);
-				break;
-
-			case INSTRUCTION_ASD_REGISTER:
-			case INSTRUCTION_LSD_REGISTER:
-			case INSTRUCTION_ROD_REGISTER:
-			case INSTRUCTION_ROXD_REGISTER:
-				break;
-
 			default:
 				if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
 					index += GetOperandName(&buff_buffer_owo[index], &decoded_opcode, cc_false, read_callback, user_data);
