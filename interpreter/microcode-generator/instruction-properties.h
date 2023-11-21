@@ -19,9 +19,9 @@
 #ifndef M68K_INSTRUCTION_PROPERTIES_H
 #define M68K_INSTRUCTION_PROPERTIES_H
 
-#include "../clowncommon/clowncommon.h"
+#include "../../common/clowncommon/clowncommon.h"
 
-#include "instruction.h"
+#include "../../common/instruction.h"
 
 typedef enum InstructionAction
 {

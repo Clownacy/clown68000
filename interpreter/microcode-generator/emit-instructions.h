@@ -19,7 +19,7 @@
 #ifndef M68K_EMIT_INSTRUCTIONS_H
 #define M68K_EMIT_INSTRUCTIONS_H
 
-#include "instruction.h"
+#include "../../common/instruction.h"
 
 void EmitInstructionSupervisorCheck(const Instruction instruction);
 void EmitInstructionSize(const Instruction instruction);

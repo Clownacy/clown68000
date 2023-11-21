@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "../clowncommon/clowncommon.h"
+#include "../../common/clowncommon/clowncommon.h"
 
 extern FILE *emit_file;
 extern unsigned int emit_indentation;

@@ -42,6 +42,28 @@ if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-interpreter PUBLIC CC_USE_C99_INTEGERS)
 endif()
 
+# Microcode Generator
+
+add_executable(clown68000-microcode-generator
+	"interpreter/microcode-generator/emit.c"
+	"interpreter/microcode-generator/emit.h"
+	"interpreter/microcode-generator/emit-instructions.c"
+	"interpreter/microcode-generator/emit-instructions.h"
+	"interpreter/microcode-generator/instruction-properties.c"
+	"interpreter/microcode-generator/instruction-properties.h"
+	"interpreter/microcode-generator/generator.c"
+)
+
+set_target_properties(clown68000-microcode-generator PROPERTIES
+	C_STANDARD 90
+	C_STANDARD_REQUIRED OFF
+	C_EXTENSIONS OFF
+)
+
+if(CC_USE_C99_INTEGERS)
+	target_compile_definitions(clown68000-microcode-generator PUBLIC CC_USE_C99_INTEGERS)
+endif()
+
 # Disassembler
 
 add_library(clown68000-disassembler STATIC
