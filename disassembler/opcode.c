@@ -72,6 +72,7 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_SUBA:
 		case INSTRUCTION_CMPA:
 		case INSTRUCTION_ADDA:
+		case INSTRUCTION_MOVE_USP:
 			/* Hardcoded to a longword. */
 			operation_size = OPERATION_SIZE_LONGWORD;
 			break;
@@ -167,7 +168,6 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_ILLEGAL:
 		case INSTRUCTION_TRAP:
 		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
 		case INSTRUCTION_RESET:
 		case INSTRUCTION_NOP:
 		case INSTRUCTION_RTE:
@@ -334,6 +334,14 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 			SET_OPERAND(OPERATION_SIZE_WORD, OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE, ((opcode->secondary_register - 1u) & 7u) + 1u); /* A little math trick to turn 0 into 8 */
 			break;
 
+		case INSTRUCTION_MOVE_USP:
+			if ((opcode->raw & 8) != 0)
+				SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_USER_STACK_POINTER, 0);
+			else
+				SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER, opcode->primary_register);
+
+			break;
+
 		case INSTRUCTION_MOVEP:
 		case INSTRUCTION_NEGX:
 		case INSTRUCTION_CLR:
@@ -345,7 +353,6 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_ILLEGAL:
 		case INSTRUCTION_TAS:
 		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
 		case INSTRUCTION_RESET:
 		case INSTRUCTION_NOP:
 		case INSTRUCTION_RTE:
@@ -361,6 +368,7 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			/* Doesn't have a source address mode to decode. */
+			OPERAND.address_mode = OPERAND_ADDRESS_MODE_NONE;
 			break;
 	}
 }
@@ -498,12 +506,19 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_SPECIAL, OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS);
 			break;
 
+		case INSTRUCTION_MOVE_USP:
+			if ((opcode->raw & 8) != 0)
+				SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER, opcode->primary_register);
+			else
+				SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_USER_STACK_POINTER, 0);
+
+			break;
+
 		case INSTRUCTION_PEA:
 		case INSTRUCTION_ILLEGAL:
 		case INSTRUCTION_TRAP:
 		case INSTRUCTION_LINK:
 		case INSTRUCTION_UNLK:
-		case INSTRUCTION_MOVE_USP:
 		case INSTRUCTION_RESET:
 		case INSTRUCTION_NOP:
 		case INSTRUCTION_STOP:
@@ -525,6 +540,7 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 		case INSTRUCTION_UNIMPLEMENTED_1:
 		case INSTRUCTION_UNIMPLEMENTED_2:
 			/* Doesn't have a destination address mode to decode. */
+			OPERAND.address_mode = OPERAND_ADDRESS_MODE_NONE;
 			break;
 	}
 }

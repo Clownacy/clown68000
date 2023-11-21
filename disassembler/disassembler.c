@@ -492,6 +492,12 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 		case OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS:
 			index += UnsignedHexToString(&buffer[index], stuff->address + CC_SIGN_EXTEND_ULONG(operand->operation_size == OPERATION_SIZE_BYTE ? 7 : operand->operation_size == OPERATION_SIZE_WORD ? 15 : 31, operand->address_mode_register));
 			break;
+
+		case OPERAND_ADDRESS_MODE_USER_STACK_POINTER:
+			buffer[index++] = 'u';
+			buffer[index++] = 's';
+			buffer[index++] = 'p';
+			break;
 	}
 
 	return index;

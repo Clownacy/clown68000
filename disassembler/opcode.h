@@ -37,7 +37,8 @@ typedef enum OperandAddressMode
 	OPERAND_ADDRESS_MODE_CONDITION_CODE_REGISTER                      = 9,
 	OPERAND_ADDRESS_MODE_NONE                                         = 10,
 	OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11,
-	OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS                   = 12
+	OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS                   = 12,
+	OPERAND_ADDRESS_MODE_USER_STACK_POINTER                           = 13
 } OperandAddressMode;
 
 typedef enum OperandAddressModeSpecial
