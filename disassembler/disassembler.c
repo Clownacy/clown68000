@@ -297,15 +297,31 @@ static const char* GetInstructionName(const Instruction instruction)
 			return "unlk";
 
 		case INSTRUCTION_UNIMPLEMENTED_1:
-			return "[UNIMPLEMENTED1]";
+			return "[invalid instruction (1)]";
 
 		case INSTRUCTION_UNIMPLEMENTED_2:
-			return "[UNIMPLEMENTED2]";
+			return "[invalid instruction (2)]";
 	}
 
 	assert(cc_false);
 
 	return "[ERROR]";
+}
+
+static size_t GetAddressRegister(char* const buffer, unsigned int address_register)
+{
+	if (address_register == 7)
+	{
+		buffer[0] = 's';
+		buffer[1] = 'p';
+	}
+	else
+	{
+		buffer[0] = 'a';
+		buffer[1] = '0' + address_register;
+	}
+
+	return 2;
 }
 
 static size_t GetOperandName(Stuff* const stuff, char* const buffer, const DecodedOpcode* const decoded_opcode, const cc_bool operand_is_destination)
@@ -339,20 +355,19 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 			{
 				case OPERAND_ADDRESS_MODE_DATA_REGISTER:
 					buffer[index++] = 'd';
+					buffer[index++] = '0' + operand->address_mode_register;
 					break;
 
 				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER:
 				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
 				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
 				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
-					buffer[index++] = 'a';
+					index += GetAddressRegister(&buffer[index], operand->address_mode_register);
 					break;
 
 				default:
 					break;
 			}
-
-			buffer[index++] = '0' + operand->address_mode_register;
 
 			switch (operand->address_mode)
 			{
@@ -376,8 +391,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 			const unsigned long data = ReadWord(stuff);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 			buffer[index++] = '(';
-			buffer[index++] = 'a';
-			buffer[index++] = '0' + operand->address_mode_register;
+			index += GetAddressRegister(&buffer[index], operand->address_mode_register);
 			buffer[index++] = ')';
 			break;
 		}
@@ -391,11 +405,17 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 				index += SignedHexToString(&buffer[index], literal);
 
 			buffer[index++] = '(';
-			buffer[index++] = 'a';
-			buffer[index++] = '0' + operand->address_mode_register;
+			index += GetAddressRegister(&buffer[index], operand->address_mode_register);
 			buffer[index++] = ',';
-			buffer[index++] = (data & 0x8000) != 0 ? 'a' : 'd';
-			buffer[index++] = '0' + ((data >> 12) & 7);
+			if ((data & 0x8000) != 0)
+			{
+				index += GetAddressRegister(&buffer[index], ((data >> 12) & 7));
+			}
+			else
+			{
+				buffer[index++] = 'd';
+				buffer[index++] = '0' + ((data >> 12) & 7);
+			}
 			buffer[index++] = '.';
 			buffer[index++] = (data & 0x800) != 0 ? 'l' : 'w';
 			buffer[index++] = ')';
@@ -440,8 +460,17 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					buffer[index++] = 'p';
 					buffer[index++] = 'c';
 					buffer[index++] = ',';
-					buffer[index++] = (data & 0x8000) != 0 ? 'a' : 'd';
-					buffer[index++] = '0' + ((data >> 12) & 7);
+
+					if ((data & 0x8000) != 0)
+					{
+						index += GetAddressRegister(&buffer[index], ((data >> 12) & 7));
+					}
+					else
+					{
+						buffer[index++] = 'd';
+						buffer[index++] = '0' + ((data >> 12) & 7);
+					}
+
 					buffer[index++] = '.';
 					buffer[index++] = (data & 0x800) != 0 ? 'l' : 'w';
 					buffer[index++] = ')';
@@ -588,7 +617,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 
 	for (i = 0; i < max_instructions; ++i)
 	{
-		char buff_buffer_owo[128];
+		char buff_buffer_owo[0x80];
 		size_t index;
 		DecodedOpcode decoded_opcode;
 		SplitOpcode split_opcode;
@@ -654,7 +683,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 				break;
 		}
 
-		while (index != 18)
+		while (index < 18)
 			buff_buffer_owo[index++] = ' ';
 
 		if (decoded_opcode.operands[0].address_mode != OPERAND_ADDRESS_MODE_NONE)
