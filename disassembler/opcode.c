@@ -164,6 +164,9 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 			break;
 
 		case INSTRUCTION_MOVEP:
+			operation_size = (opcode->bits_6_and_7 & 1) != 0 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD;
+			break;
+
 		case INSTRUCTION_PEA:
 		case INSTRUCTION_ILLEGAL:
 		case INSTRUCTION_TRAP:
@@ -343,6 +346,13 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 			break;
 
 		case INSTRUCTION_MOVEP:
+			if ((opcode->bits_6_and_7 & 2) != 0)
+				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
+			else
+				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register);
+
+			break;
+
 		case INSTRUCTION_NEGX:
 		case INSTRUCTION_CLR:
 		case INSTRUCTION_NEG:
@@ -497,8 +507,11 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 			break;
 
 		case INSTRUCTION_MOVEP:
-			/* Memory address */
-			SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+			if ((opcode->bits_6_and_7 & 2) != 0)
+				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register);
+			else
+				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
+
 			break;
 
 		case INSTRUCTION_DBCC:
