@@ -19,10 +19,8 @@
 #ifndef INCLUDE_GUARD_707770EC_8F3D_4A9D_A5CD_FA706BC21B56
 #define INCLUDE_GUARD_707770EC_8F3D_4A9D_A5CD_FA706BC21B56
 
-#include "../clowncommon/clowncommon.h"
-
-#include "../m68k/instruction.h"
-#include "../m68k/opcode.h"
+#include "../common/instruction.h"
+#include "../common/opcode.h"
 
 typedef enum OperandAddressMode
 {

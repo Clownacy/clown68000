@@ -43,10 +43,8 @@ https://github.com/TomHarte/ProcessorTests/issues/28
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "clowncommon/clowncommon.h"
-
-#include "m68k/instruction.h"
-#include "m68k/opcode.h"
+#include "../common/instruction.h"
+#include "../common/opcode.h"
 
 enum
 {
@@ -1705,7 +1703,7 @@ void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCal
 	}
 }
 
-#include "m68k/gen.c"
+#include "microcode.c"
 
 /* This MUST match the order of the `Instruction` enum! */
 static void (* const * const microcode[])(Stuff* const stuff) = {

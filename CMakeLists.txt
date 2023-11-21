@@ -1,23 +1,82 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0...3.12)
 
 option(CC_USE_C99_INTEGERS "Use C99 integer types instead of the original C89 ones. May save RAM depending on the platform's data model." OFF)
 
 project(clown68000 LANGUAGES C)
 
-add_library(clown68000 STATIC
-	"clowncommon/clowncommon.h"
-	"clown68000.c"
-	"clown68000.h"
-	"m68k/opcode.c"
-	"m68k/opcode.h"
+# Common
+
+add_library(clown68000-common STATIC
+	"common/clowncommon/clowncommon.h"
+	"common/instruction.h"
+	"common/opcode.c"
+	"common/opcode.h"	
 )
 
-set_target_properties(clown68000 PROPERTIES
+set_target_properties(clown68000-common PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
 	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
-	target_compile_definitions(clown68000 PUBLIC CC_USE_C99_INTEGERS)
+	target_compile_definitions(clown68000-common PUBLIC CC_USE_C99_INTEGERS)
+endif()
+
+# Interpreter
+
+add_library(clown68000-interpreter STATIC
+	"interpreter/clown68000.c"
+	"interpreter/clown68000.h"
+)
+
+target_link_libraries(clown68000-interpreter PRIVATE clown68000-common) 
+
+set_target_properties(clown68000-interpreter PROPERTIES
+	C_STANDARD 90
+	C_STANDARD_REQUIRED OFF
+	C_EXTENSIONS OFF
+)
+
+if(CC_USE_C99_INTEGERS)
+	target_compile_definitions(clown68000-interpreter PUBLIC CC_USE_C99_INTEGERS)
+endif()
+
+# Disassembler
+
+add_library(clown68000-disassembler STATIC
+	"disassembler/disassembler.c"
+	"disassembler/disassembler.h"
+	"disassembler/opcode.c"
+	"disassembler/opcode.h"
+)
+
+target_link_libraries(clown68000-disassembler PRIVATE clown68000-common) 
+
+set_target_properties(clown68000-disassembler PROPERTIES
+	C_STANDARD 90
+	C_STANDARD_REQUIRED OFF
+	C_EXTENSIONS OFF
+)
+
+if(CC_USE_C99_INTEGERS)
+	target_compile_definitions(clown68000-disassembler PUBLIC CC_USE_C99_INTEGERS)
+endif()
+
+# Disassembler Tool
+
+add_executable(clown68000-disassembler-tool
+	"disassembler/main.c"
+)
+
+target_link_libraries(clown68000-disassembler-tool PRIVATE clown68000-disassembler) 
+
+set_target_properties(clown68000-disassembler-tool PROPERTIES
+	C_STANDARD 90
+	C_STANDARD_REQUIRED OFF
+	C_EXTENSIONS OFF
+)
+
+if(CC_USE_C99_INTEGERS)
+	target_compile_definitions(clown68000-disassembler-tool PUBLIC CC_USE_C99_INTEGERS)
 endif()

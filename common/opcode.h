@@ -19,7 +19,7 @@
 #ifndef M68K_OPCODE_H
 #define M68K_OPCODE_H
 
-#include "../clowncommon/clowncommon.h"
+#include "clowncommon/clowncommon.h"
 
 #include "instruction.h"
 
