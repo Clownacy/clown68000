@@ -414,18 +414,6 @@ static void DecodeAddressMode(Stuff* const stuff, DecodedAddressMode* const deco
 			decoded_address_mode->data.memory.address = DecodeMemoryAddressMode(stuff, operation_size_in_bytes, address_mode, address_mode_register);
 			decoded_address_mode->data.memory.operation_size_in_bytes = (cc_u8f)operation_size_in_bytes;
 			break;
-
-		case ADDRESS_MODE_STATUS_REGISTER:
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
-			break;
-
-		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
-			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
-			break;
-
-		case ADDRESS_MODE_NONE:
-			assert(cc_false);
-			break;
 	}
 }
 
@@ -702,7 +690,7 @@ static void DecodeSource_MemoryAddressPrimary(Stuff* const stuff)
 
 static void DecodeSource_StatusRegister(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	stuff->source_decoded_address_mode.type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
 }
 
 static void DecodeSource_ImmediateDataWord(Stuff* const stuff)
@@ -799,12 +787,12 @@ static void DecodeDestination_PrimaryAddressMode(Stuff* const stuff)
 
 static void DecodeDestination_ConditionCodeRegister(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_CONDITION_CODE_REGISTER, 0);
+	stuff->destination_decoded_address_mode.type = DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER;
 }
 
 static void DecodeDestination_StatusRegister(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_STATUS_REGISTER, 0);
+	stuff->destination_decoded_address_mode.type = DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER;
 }
 
 static void DecodeDestination_MOVEM(Stuff* const stuff)

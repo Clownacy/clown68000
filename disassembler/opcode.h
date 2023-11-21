@@ -16,40 +16,41 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef M68K_OPCODE_H
-#define M68K_OPCODE_H
+#ifndef INCLUDE_GUARD_707770EC_8F3D_4A9D_A5CD_FA706BC21B56
+#define INCLUDE_GUARD_707770EC_8F3D_4A9D_A5CD_FA706BC21B56
 
 #include "../clowncommon/clowncommon.h"
 
 #include "../m68k/instruction.h"
+#include "../m68k/opcode.h"
 
-typedef enum AddressMode
+typedef enum OperandAddressMode
 {
-	ADDRESS_MODE_DATA_REGISTER                                = 0,
-	ADDRESS_MODE_ADDRESS_REGISTER                             = 1,
-	ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT                    = 2,
-	ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT = 3,
-	ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT  = 4,
-	ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT  = 5,
-	ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX         = 6,
-	ADDRESS_MODE_SPECIAL                                      = 7,
+	OPERAND_ADDRESS_MODE_DATA_REGISTER                                = 0,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER                             = 1,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT                    = 2,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT = 3,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT  = 4,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT  = 5,
+	OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX         = 6,
+	OPERAND_ADDRESS_MODE_SPECIAL                                      = 7,
 	/* Custom - These were added for uniformity, but never actually occur in M68k opcodes. */
-	ADDRESS_MODE_STATUS_REGISTER                              = 8,
-	ADDRESS_MODE_CONDITION_CODE_REGISTER                      = 9,
-	ADDRESS_MODE_NONE                                         = 10,
-	ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11,
-	ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS                   = 12
-} AddressMode;
+	OPERAND_ADDRESS_MODE_STATUS_REGISTER                              = 8,
+	OPERAND_ADDRESS_MODE_CONDITION_CODE_REGISTER                      = 9,
+	OPERAND_ADDRESS_MODE_NONE                                         = 10,
+	OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE                           = 11,
+	OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS                   = 12
+} OperandAddressMode;
 
-typedef enum AddressModeSpecial
+typedef enum OperandAddressModeSpecial
 {
-	ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT                    = 0,
-	ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG                     = 1,
-	ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT = 2,
-	ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX        = 3,
-	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4,
-	ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS                 = 5
-} AddressModeSpecial;
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT                    = 0,
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG                     = 1,
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT = 2,
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX        = 3,
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE                         = 4,
+	OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS                 = 5
+} OperandAddressModeSpecial;
 
 typedef enum OperationSize
 {
@@ -63,7 +64,7 @@ typedef enum OperationSize
 typedef struct Operand
 {
 	OperationSize operation_size;
-	AddressMode address_mode;
+	OperandAddressMode address_mode;
 	unsigned int address_mode_register;
 } Operand;
 
@@ -74,20 +75,6 @@ typedef struct DecodedOpcode
 	Operand operands[2];
 } DecodedOpcode;
 
-typedef struct SplitOpcode
-{
-	unsigned int raw;
+void DecodeOpcodeAndOperands(DecodedOpcode *decoded_opcode, SplitOpcode *split_opcode, unsigned int opcode);
 
-	unsigned int primary_register;
-	unsigned int secondary_register;
-	unsigned int bits_6_and_7;
-
-	AddressMode primary_address_mode;
-	AddressMode secondary_address_mode;
-
-	cc_bool bit_8;
-} SplitOpcode;
-
-void DecodeOpcode(DecodedOpcode *decoded_opcode, SplitOpcode *split_opcode, unsigned int opcode);
-
-#endif /* M68K_OPCODE_H */
+#endif /* INCLUDE_GUARD_707770EC_8F3D_4A9D_A5CD_FA706BC21B56 */

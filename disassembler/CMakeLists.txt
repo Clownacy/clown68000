@@ -7,6 +7,8 @@ add_library(disassembler STATIC
 	"disassembler.h"
 	"opcode.c"
 	"opcode.h"
+	"../m68k/opcode.c"
+	"../m68k/opcode.h"
 )
 
 set_target_properties(disassembler PROPERTIES

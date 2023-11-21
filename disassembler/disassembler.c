@@ -315,19 +315,19 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 	switch (operand->address_mode)
 	{
-		case ADDRESS_MODE_DATA_REGISTER:
-		case ADDRESS_MODE_ADDRESS_REGISTER:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
-			if (operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+		case OPERAND_ADDRESS_MODE_DATA_REGISTER:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
+			if (operand->address_mode == OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 				buffer[index++] = '-';
 
 			switch (operand->address_mode)
 			{
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = '(';
 					break;
 
@@ -337,14 +337,14 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 			switch (operand->address_mode)
 			{
-				case ADDRESS_MODE_DATA_REGISTER:
+				case OPERAND_ADDRESS_MODE_DATA_REGISTER:
 					buffer[index++] = 'd';
 					break;
 
-				case ADDRESS_MODE_ADDRESS_REGISTER:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = 'a';
 					break;
 
@@ -356,9 +356,9 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 			switch (operand->address_mode)
 			{
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
-				case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT:
+				case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT:
 					buffer[index++] = ')';
 					break;
 
@@ -366,12 +366,12 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					break;
 			}
 
-			if (operand->address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
+			if (operand->address_mode == OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
 				buffer[index++] = '+';
 
 			break;
 
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 		{
 			const unsigned long data = ReadWord(stuff);
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
@@ -382,7 +382,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 			break;
 		}
 
-		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
+		case OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
 		{
 			const unsigned long data = ReadWord(stuff);
 			const unsigned long literal = CC_SIGN_EXTEND_ULONG(7, data);
@@ -403,14 +403,14 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 			break;
 		}
 
-		case ADDRESS_MODE_SPECIAL:
+		case OPERAND_ADDRESS_MODE_SPECIAL:
 		{
 			const unsigned long address = stuff->address;
 			const unsigned long data = ReadWord(stuff);
 
 			switch (operand->address_mode_register)
 			{
-				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 					buffer[index++] = '(';
 					index += UnsignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = ')';
@@ -418,7 +418,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					buffer[index++] = 'w';
 					break;
 
-				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
 					buffer[index++] = '(';
 					index += UnsignedHexToString(&buffer[index], (data << 16) | ReadWord(stuff));
 					buffer[index++] = ')';
@@ -426,7 +426,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					buffer[index++] = 'l';
 					break;
 
-				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
 					index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(15, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'p';
@@ -434,7 +434,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					buffer[index++] = ')';
 					break;
 
-				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
 					index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(7, data));
 					buffer[index++] = '(';
 					buffer[index++] = 'p';
@@ -447,7 +447,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					buffer[index++] = ')';
 					break;
 
-				case ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE:
 					buffer[index++] = '#';
 
 					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
@@ -457,7 +457,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 					break;
 
-				case ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS:
 					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
 						index += UnsignedHexToString(&buffer[index], address + ((data << 16) | ReadWord(stuff)));
 					else
@@ -469,27 +469,27 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 			break;
 		}
 
-		case ADDRESS_MODE_STATUS_REGISTER:
+		case OPERAND_ADDRESS_MODE_STATUS_REGISTER:
 			buffer[index++] = 's';
 			buffer[index++] = 'p';
 			break;
 
-		case ADDRESS_MODE_CONDITION_CODE_REGISTER:
+		case OPERAND_ADDRESS_MODE_CONDITION_CODE_REGISTER:
 			buffer[index++] = 'c';
 			buffer[index++] = 'c';
 			buffer[index++] = 'r';
 			break;
 
-		case ADDRESS_MODE_NONE:
+		case OPERAND_ADDRESS_MODE_NONE:
 			assert(0);
 			break;
 
-		case ADDRESS_MODE_EMBEDDED_IMMEDIATE:
+		case OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE:
 			buffer[index++] = '#';
 			index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(operand->operation_size == OPERATION_SIZE_BYTE ? 7 : operand->operation_size == OPERATION_SIZE_WORD ? 15 : 31, operand->address_mode_register));
 			break;
 
-		case ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS:
+		case OPERAND_ADDRESS_MODE_EMBEDDED_IMMEDIATE_ADDRESS:
 			index += UnsignedHexToString(&buffer[index], stuff->address + CC_SIGN_EXTEND_ULONG(operand->operation_size == OPERATION_SIZE_BYTE ? 7 : operand->operation_size == OPERATION_SIZE_WORD ? 15 : 31, operand->address_mode_register));
 			break;
 	}
@@ -595,7 +595,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 		if (opcode == -1)
 			return;
 
-		DecodeOpcode(&decoded_opcode, &split_opcode, opcode);
+		DecodeOpcodeAndOperands(&decoded_opcode, &split_opcode, opcode);
 
 		strcat(buff_buffer_owo, GetInstructionName(decoded_opcode.instruction));
 
@@ -651,13 +651,13 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 		while (index != 18)
 			buff_buffer_owo[index++] = ' ';
 
-		if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE)
+		if (decoded_opcode.operands[0].address_mode != OPERAND_ADDRESS_MODE_NONE)
 			index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_false);
 
-		if (decoded_opcode.operands[0].address_mode != ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+		if (decoded_opcode.operands[0].address_mode != OPERAND_ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != OPERAND_ADDRESS_MODE_NONE)
 			buff_buffer_owo[index++] = ',';
 
-		if (decoded_opcode.operands[1].address_mode != ADDRESS_MODE_NONE)
+		if (decoded_opcode.operands[1].address_mode != OPERAND_ADDRESS_MODE_NONE)
 			index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_true);
 
 		buff_buffer_owo[index++] = '\0';
