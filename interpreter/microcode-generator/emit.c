@@ -39,7 +39,7 @@ void Emit(const char* const line)
 	}
 }
 
-CC_ATTRIBUTE_PRINTF(1, 2) void EmitFormatted(const char* const line, ...)
+void EmitFormatted(const char* const line, ...)
 {
 	unsigned int i;
 	va_list args;

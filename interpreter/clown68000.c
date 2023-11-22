@@ -119,7 +119,7 @@ void Clown68000_SetErrorCallback(void (*error_callback)(void *user_data, const c
 	clown68000_error_callback_user_data = (void*)user_data;
 }
 
-static void Clown68000_PrintError(const char *format, ...)
+CC_ATTRIBUTE_PRINTF(1, 2) static void Clown68000_PrintError(const char *format, ...)
 {
 	if (clown68000_error_callback != NULL)
 	{

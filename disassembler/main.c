@@ -1,4 +1,3 @@
-#include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,17 +16,11 @@ static long ReadCallback(void *user_data)
 	return ((long)bytes[0] << 8) | bytes[1];
 }
 
-static void PrintCallback(void *user_data, const char *format, ...)
+static void PrintCallback(void *user_data, const char *string)
 {
-	va_list args;
-
 	(void)user_data;
 
-	va_start(args, format);
-	vfprintf(stdout, format, args);
-	va_end(args);
-
-	fputc('\n', stdout);
+	fprintf(stdout, "%s\n", string);
 }
 
 int main(const int argc, char** const argv)
