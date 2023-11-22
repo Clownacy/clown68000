@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef M68K_INSTRUCTION_H
-#define M68K_INSTRUCTION_H
+#ifndef INCLUDE_GUARD_6B0AEAE2_3B04_4765_8C50_0B1F08F445C1
+#define INCLUDE_GUARD_6B0AEAE2_3B04_4765_8C50_0B1F08F445C1
 
 #include "clowncommon/clowncommon.h"
 
@@ -121,4 +121,4 @@ typedef enum Instruction
 	INSTRUCTION_UNIMPLEMENTED_2
 } Instruction;
 
-#endif /* M68K_INSTRUCTION_H */
+#endif /* INCLUDE_GUARD_6B0AEAE2_3B04_4765_8C50_0B1F08F445C1 */

@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef CLOWN68000_H
-#define CLOWN68000_H
+#ifndef INCLUDE_GUARD_8BAB17D5_7D64_4CA2_998B_F3F43D7FD80F
+#define INCLUDE_GUARD_8BAB17D5_7D64_4CA2_998B_F3F43D7FD80F
 
 #include <stdarg.h>
 
@@ -57,4 +57,4 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 }
 #endif
 
-#endif /* CLOWN68000_H */
+#endif /* INCLUDE_GUARD_8BAB17D5_7D64_4CA2_998B_F3F43D7FD80F */

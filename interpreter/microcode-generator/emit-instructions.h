@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef M68K_EMIT_INSTRUCTIONS_H
-#define M68K_EMIT_INSTRUCTIONS_H
+#ifndef INCLUDE_GUARD_0BB73C0B_EA27_45D8_AA97_E98FBFD79EFC
+#define INCLUDE_GUARD_0BB73C0B_EA27_45D8_AA97_E98FBFD79EFC
 
 #include "../../common/instruction.h"
 
@@ -31,4 +31,4 @@ void EmitInstructionAction(const Instruction instruction);
 void EmitInstructionWriteDestinationOperand(const Instruction instruction);
 void EmitInstructionConditionCodes(const Instruction instruction);
 
-#endif /* M68K_EMIT_INSTRUCTIONS_H */
+#endif /* INCLUDE_GUARD_0BB73C0B_EA27_45D8_AA97_E98FBFD79EFC */

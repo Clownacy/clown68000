@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef M68K_INSTRUCTION_PROPERTIES_H
-#define M68K_INSTRUCTION_PROPERTIES_H
+#ifndef INCLUDE_GUARD_FB923D67_894A_4DE9_A848_05748F0BFEE7
+#define INCLUDE_GUARD_FB923D67_894A_4DE9_A848_05748F0BFEE7
 
 #include "../../common/clowncommon/clowncommon.h"
 
@@ -197,4 +197,4 @@ InstructionNegative Instruction_GetNegativeModifier(const Instruction instructio
 InstructionExtend Instruction_GetExtendModifier(const Instruction instruction);
 cc_bool Instruction_IsPrivileged(const Instruction instruction);
 
-#endif /* M68K_INSTRUCTION_PROPERTIES_H */
+#endif /* INCLUDE_GUARD_FB923D67_894A_4DE9_A848_05748F0BFEE7 */

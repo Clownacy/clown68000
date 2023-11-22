@@ -16,8 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef M68K_EMIT_H
-#define M68K_EMIT_H
+#ifndef INCLUDE_GUARD_A3BEF769_9DE7_478E_BF00_AF24854A823C
+#define INCLUDE_GUARD_A3BEF769_9DE7_478E_BF00_AF24854A823C
 
 #include <stdio.h>
 
@@ -29,4 +29,4 @@ extern unsigned int emit_indentation;
 void Emit(const char* const line);
 CC_ATTRIBUTE_PRINTF(1, 2) void EmitFormatted(const char* const line, ...);
 
-#endif /* M68K_EMIT_H */
+#endif /* INCLUDE_GUARD_A3BEF769_9DE7_478E_BF00_AF24854A823C */

@@ -1,5 +1,5 @@
-#ifndef CLOWN68000_DISASSEMBLER_H
-#define CLOWN68000_DISASSEMBLER_H
+#ifndef INCLUDE_GUARD_B0B82496_E262_49CB_927E_C4CA05531920
+#define INCLUDE_GUARD_B0B82496_E262_49CB_927E_C4CA05531920
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,4 +14,4 @@ void Clown68000_Disassemble(unsigned long address, unsigned int max_instructions
 }
 #endif
 
-#endif /* CLOWN68000_DISASSEMBLER_H */
+#endif /* INCLUDE_GUARD_B0B82496_E262_49CB_927E_C4CA05531920 */
