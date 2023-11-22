@@ -700,13 +700,13 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 
 	for (i = 0; i < max_instructions; ++i)
 	{
-		char buff_buffer_owo[0x80];
+		char string_buffer[0x80];
 		size_t index;
 		DecodedOpcode decoded_opcode;
 		SplitOpcode split_opcode;
 		long opcode;
 
-		sprintf(buff_buffer_owo, "%08lX: ", stuff.address);
+		sprintf(string_buffer, "%08lX: ", stuff.address);
 		index = 8 + 2;
 
 		opcode = ReadWord(&stuff);
@@ -716,7 +716,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 
 		DecodeOpcodeAndOperands(&decoded_opcode, &split_opcode, opcode);
 
-		index += GetInstructionName(&buff_buffer_owo[index], decoded_opcode.instruction);
+		index += GetInstructionName(&string_buffer[index], decoded_opcode.instruction);
 
 		/* Instruction name suffix and special operands. */
 		switch (decoded_opcode.instruction)
@@ -725,7 +725,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 			case INSTRUCTION_BCC_WORD:
 			case INSTRUCTION_DBCC:
 			case INSTRUCTION_SCC:
-				index += GetOpcodeConditionName(&buff_buffer_owo[index], opcode);
+				index += GetOpcodeConditionName(&string_buffer[index], opcode);
 				break;
 
 			case INSTRUCTION_ASD_MEMORY:
@@ -736,7 +736,7 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 			case INSTRUCTION_ROD_REGISTER:
 			case INSTRUCTION_ROXD_MEMORY:
 			case INSTRUCTION_ROXD_REGISTER:
-				buff_buffer_owo[index++] = split_opcode.bit_8 ? 'l' : 'r';
+				string_buffer[index++] = split_opcode.bit_8 ? 'l' : 'r';
 				break;
 
 			default:
@@ -758,28 +758,28 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 			default:
 				if (decoded_opcode.size != OPERATION_SIZE_NONE)
 				{
-					buff_buffer_owo[index++] = '.';
-					buff_buffer_owo[index++] = decoded_opcode.size == OPERATION_SIZE_SHORT ? 's' : decoded_opcode.size == OPERATION_SIZE_BYTE ? 'b' : decoded_opcode.size == OPERATION_SIZE_WORD ? 'w' : 'l';
+					string_buffer[index++] = '.';
+					string_buffer[index++] = decoded_opcode.size == OPERATION_SIZE_SHORT ? 's' : decoded_opcode.size == OPERATION_SIZE_BYTE ? 'b' : decoded_opcode.size == OPERATION_SIZE_WORD ? 'w' : 'l';
 				}
 
 				break;
 		}
 
 		while (index < 18)
-			buff_buffer_owo[index++] = ' ';
+			string_buffer[index++] = ' ';
 
 		if (decoded_opcode.operands[0].address_mode != OPERAND_ADDRESS_MODE_NONE)
-			index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_false);
+			index += GetOperandName(&stuff, &string_buffer[index], &decoded_opcode, cc_false);
 
 		if (decoded_opcode.operands[0].address_mode != OPERAND_ADDRESS_MODE_NONE && decoded_opcode.operands[1].address_mode != OPERAND_ADDRESS_MODE_NONE)
-			buff_buffer_owo[index++] = ',';
+			string_buffer[index++] = ',';
 
 		if (decoded_opcode.operands[1].address_mode != OPERAND_ADDRESS_MODE_NONE)
-			index += GetOperandName(&stuff, &buff_buffer_owo[index], &decoded_opcode, cc_true);
+			index += GetOperandName(&stuff, &string_buffer[index], &decoded_opcode, cc_true);
 
-		buff_buffer_owo[index++] = '\0';
+		string_buffer[index++] = '\0';
 
-		print_callback((void*)user_data, buff_buffer_owo);
+		print_callback((void*)user_data, string_buffer);
 
 		/* Halt when encountering a terminating instruction. */
 		switch (decoded_opcode.instruction)
