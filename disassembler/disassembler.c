@@ -544,13 +544,13 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 							buffer[index++] = registers[i][0];
 							buffer[index++] = registers[i][1];
 
-							if (i + 1 < 16 && (data & (1 << ((i + 1) ^ xor_mask))) != 0)
+							++i;
+
+							if (i < 16 && (data & (1 << (i ^ xor_mask))) != 0)
 							{
 								for (i = i + 1; i < 16; ++i)
-								{
 									if ((data & (1 << (i ^ xor_mask))) == 0)
 										break;
-								}
 
 								--i;
 
