@@ -45,7 +45,6 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_MOVE_TO_SR:
 		case INSTRUCTION_MOVE_TO_CCR:
 		case INSTRUCTION_LINK:
-		case INSTRUCTION_MOVEM:
 		case INSTRUCTION_CHK:
 		case INSTRUCTION_DBCC:
 		case INSTRUCTION_ASD_MEMORY:
@@ -164,6 +163,7 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 			break;
 
 		case INSTRUCTION_MOVEP:
+		case INSTRUCTION_MOVEM:
 			operation_size = (opcode->bits_6_and_7 & 1) != 0 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD;
 			break;
 
@@ -217,7 +217,6 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_EORI:
 		case INSTRUCTION_CMPI:
 		case INSTRUCTION_LINK:
-		case INSTRUCTION_MOVEM:
 		case INSTRUCTION_STOP:
 			/* Immediate value (any size). */
 			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_SPECIAL, OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE);
@@ -350,6 +349,21 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			else
 				SET_OPERAND(OPERATION_SIZE_NONE, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, opcode->primary_register);
+
+			break;
+
+		case INSTRUCTION_MOVEM:
+			if ((opcode->raw & 0x0400) != 0)
+			{
+				SET_OPERAND(OPERATION_SIZE_NONE, (OperandAddressMode)opcode->primary_address_mode, opcode->primary_register); /* OPERATION_SIZE_NONE is a special value that means to obtain the address rather than the data at that address. */
+			}
+			else
+			{
+				if (opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+					SET_OPERAND(OPERATION_SIZE_WORD, OPERAND_ADDRESS_MODE_SPECIAL, OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST_REVERSED);
+				else
+					SET_OPERAND(OPERATION_SIZE_WORD, OPERAND_ADDRESS_MODE_SPECIAL, OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST);
+			}
 
 			break;
 
@@ -502,8 +516,11 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 			break;
 
 		case INSTRUCTION_MOVEM:
-			/* Memory address */
-			SET_OPERAND(OPERATION_SIZE_NONE, (OperandAddressMode)opcode->primary_address_mode, opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+			if ((opcode->raw & 0x0400) != 0)
+				SET_OPERAND(OPERATION_SIZE_WORD, OPERAND_ADDRESS_MODE_SPECIAL, OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST);
+			else
+				SET_OPERAND(OPERATION_SIZE_NONE, (OperandAddressMode)opcode->primary_address_mode, opcode->primary_register); /* OPERATION_SIZE_NONE is a special value that means to obtain the address rather than the data at that address. */
+
 			break;
 
 		case INSTRUCTION_MOVEP:

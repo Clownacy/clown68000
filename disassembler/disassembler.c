@@ -477,14 +477,37 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 					break;
 
 				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE:
+				{
+					unsigned long full_data, sign_extended_full_data;
+
 					buffer[index++] = '#';
 
-					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
-						index += SignedHexToString(&buffer[index], (data << 16) | ReadWord(stuff));
+					switch (operand->operation_size)
+					{
+						case OPERATION_SIZE_LONGWORD:
+							full_data = (data << 16) | ReadWord(stuff);
+							sign_extended_full_data = full_data;
+							break;
+
+						case OPERATION_SIZE_WORD:
+							full_data = data;
+							sign_extended_full_data = CC_SIGN_EXTEND_ULONG(15, data);
+							break;
+
+						case OPERATION_SIZE_BYTE:
+						default:
+							full_data = data;
+							sign_extended_full_data = CC_SIGN_EXTEND_ULONG(7, data);
+							break;
+					}
+
+					if (sign_extended_full_data >= (unsigned long)-0x10)
+						index += SignedHexToString(&buffer[index], sign_extended_full_data);
 					else
-						index += SignedHexToString(&buffer[index], CC_SIGN_EXTEND_ULONG(15, data));
+						index += UnsignedHexToString(&buffer[index], full_data);
 
 					break;
+				}
 
 				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE_ADDRESS:
 					if (operand->operation_size == OPERATION_SIZE_LONGWORD)
@@ -493,6 +516,53 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 						index += UnsignedHexToString(&buffer[index], address + CC_SIGN_EXTEND_ULONG(15, data));
 
 					break;
+
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST:
+				case OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST_REVERSED:
+				{
+					const unsigned int xor_mask = operand->address_mode_register == OPERAND_ADDRESS_MODE_REGISTER_SPECIAL_REGISTER_LIST_REVERSED ? 0xF : 0;
+
+					unsigned int i;
+					cc_bool first;
+
+					first = cc_true;
+
+					for (i = 0; i < 16; ++i)
+					{
+						if ((data & (1 << (i ^ xor_mask))) != 0)
+						{
+							static const char registers[][3] = {
+								"d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7",
+								"a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7",
+							};
+
+							if (first)
+								first = cc_false;
+							else
+								buffer[index++] = '/';
+
+							buffer[index++] = registers[i][0];
+							buffer[index++] = registers[i][1];
+
+							if (i + 1 < 16 && (data & (1 << ((i + 1) ^ xor_mask))) != 0)
+							{
+								for (i = i + 1; i < 16; ++i)
+								{
+									if ((data & (1 << (i ^ xor_mask))) == 0)
+										break;
+								}
+
+								--i;
+
+								buffer[index++] = '-';
+								buffer[index++] = registers[i][0];
+								buffer[index++] = registers[i][1];
+							}
+						}
+					}
+
+					break;
+				}
 			}
 
 			break;
@@ -500,7 +570,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 		case OPERAND_ADDRESS_MODE_STATUS_REGISTER:
 			buffer[index++] = 's';
-			buffer[index++] = 'p';
+			buffer[index++] = 'r';
 			break;
 
 		case OPERAND_ADDRESS_MODE_CONDITION_CODE_REGISTER:
