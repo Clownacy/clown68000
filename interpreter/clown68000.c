@@ -633,6 +633,7 @@ static void SetSize_Move(Stuff* const stuff)
 {
 	switch (stuff->opcode.raw & 0x3000)
 	{
+		case 0x0000: /* TODO: Verify this. */
 		case 0x1000:
 			stuff->operation_size = 1;
 			break;
@@ -654,7 +655,8 @@ static void SetSize_Ext(Stuff* const stuff)
 
 static void SetSize_Standard(Stuff* const stuff)
 {
-	stuff->operation_size = 1 << stuff->opcode.bits_6_and_7;
+	static const cc_u8l sizes[] = {1, 2, 4, 4}; /* TODO: Verify that last one... */
+	stuff->operation_size = sizes[stuff->opcode.bits_6_and_7];
 }
 
 static void SetMSBBitIndex(Stuff* const stuff)
