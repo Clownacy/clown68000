@@ -1,380 +1,3043 @@
-static void (* const microcode_ABCD[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeSource_BCDX, ReadSource, DecodeDestination_BCDX, ReadDestination, Action_ABCD, WriteDestination, Overflow_ADD, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_ADD[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode, ReadSource, DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode, ReadDestination, Action_ADD, WriteDestination, Carry_StandardCarry, Overflow_ADD, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_ADDA[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeSized, ReadSource, DecodeDestination_AddressRegisterSecondary, ReadDestination, Action_ADDA, WriteDestination, NULL
-};
-
-static void (* const microcode_ADDAQ[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ADDQ, WriteDestination, NULL
-};
-
-static void (* const microcode_ADDI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ADD, WriteDestination, Carry_StandardCarry, Overflow_ADD, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_ADDQ[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ADDQ, WriteDestination, Carry_StandardCarry, Overflow_ADD, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_ADDX[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_BCDX, ReadSource, DecodeDestination_BCDX, ReadDestination, Action_ADDX, WriteDestination, Carry_StandardCarry, Overflow_ADD, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_AND[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode, ReadSource, DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode, ReadDestination, Action_AND, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ANDI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_AND, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ANDI_TO_CCR[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_ConditionCodeRegister, ReadDestination, Action_AND, WriteDestination, NULL
-};
-
-static void (* const microcode_ANDI_TO_SR[])(Stuff* const stuff) = {
-	SupervisorCheck, SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_StatusRegister, ReadDestination, Action_AND, WriteDestination, NULL
-};
-
-static void (* const microcode_ASD_MEMORY[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ASD_MEMORY, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ASD_REGISTER[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_ASD_REGISTER, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_BCC_SHORT[])(Stuff* const stuff) = {
-	Action_BCC_SHORT, NULL
-};
-
-static void (* const microcode_BCC_WORD[])(Stuff* const stuff) = {
-	DecodeSource_ImmediateDataWord, ReadSource, Action_BCC_WORD, NULL
-};
-
-static void (* const microcode_BCHG_DYNAMIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_DataRegisterSecondary, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BCHG, WriteDestination, NULL
-};
-
-static void (* const microcode_BCHG_STATIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_ImmediateDataByte, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BCHG, WriteDestination, NULL
-};
-
-static void (* const microcode_BCLR_DYNAMIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_DataRegisterSecondary, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BCLR, WriteDestination, NULL
-};
-
-static void (* const microcode_BCLR_STATIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_ImmediateDataByte, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BCLR, WriteDestination, NULL
-};
-
-static void (* const microcode_BRA_SHORT[])(Stuff* const stuff) = {
-	Action_BRA_SHORT, NULL
-};
-
-static void (* const microcode_BRA_WORD[])(Stuff* const stuff) = {
-	DecodeSource_ImmediateDataWord, ReadSource, Action_BRA_WORD, NULL
-};
-
-static void (* const microcode_BSET_DYNAMIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_DataRegisterSecondary, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BSET, WriteDestination, NULL
-};
-
-static void (* const microcode_BSET_STATIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_ImmediateDataByte, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BSET, WriteDestination, NULL
-};
-
-static void (* const microcode_BSR_SHORT[])(Stuff* const stuff) = {
-	Action_BSR_SHORT, NULL
-};
-
-static void (* const microcode_BSR_WORD[])(Stuff* const stuff) = {
-	DecodeSource_ImmediateDataWord, ReadSource, Action_BSR_WORD, NULL
-};
-
-static void (* const microcode_BTST_DYNAMIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_DataRegisterSecondary, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BTST, NULL
-};
-
-static void (* const microcode_BTST_STATIC[])(Stuff* const stuff) = {
-	SetSize_LongwordRegisterByteMemory, SetMSBBitIndex, DecodeSource_ImmediateDataByte, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_BTST, NULL
-};
-
-static void (* const microcode_CHK[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, Action_CHK, NULL
-};
-
-static void (* const microcode_CLR[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_CLR, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_CMP[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_SUB, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_CMPA[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeSized, ReadSource, DecodeDestination_AddressRegisterSecondary, ReadDestination, Action_SUBA, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_CMPI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_SUB, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_CMPM[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_AddressRegisterPrimaryPostIncrement, ReadSource, DecodeDestination_AddressRegisterSecondaryPostIncrement, ReadDestination, Action_SUB, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_DBCC[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, Action_DBCC, NULL
-};
-
-static void (* const microcode_DIVS[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIVS, WriteDestination, Carry_Clear, NULL
-};
-
-static void (* const microcode_DIVU[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_DIVU, WriteDestination, Carry_Clear, NULL
-};
-
-static void (* const microcode_EOR[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_DataRegisterSecondary, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_EOR, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_EORI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_EOR, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_EORI_TO_CCR[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_ConditionCodeRegister, ReadDestination, Action_EOR, WriteDestination, NULL
-};
-
-static void (* const microcode_EORI_TO_SR[])(Stuff* const stuff) = {
-	SupervisorCheck, SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_StatusRegister, ReadDestination, Action_EOR, WriteDestination, NULL
-};
-
-static void (* const microcode_EXG[])(Stuff* const stuff) = {
-	Action_EXG, NULL
-};
-
-static void (* const microcode_EXT[])(Stuff* const stuff) = {
-	SetSize_Ext, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_EXT, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ILLEGAL[])(Stuff* const stuff) = {
-	Action_ILLEGAL, NULL
-};
-
-static void (* const microcode_JMP[])(Stuff* const stuff) = {
-	DecodeSource_MemoryAddressPrimary, ReadSource, Action_JMP, NULL
-};
-
-static void (* const microcode_JSR[])(Stuff* const stuff) = {
-	DecodeSource_MemoryAddressPrimary, ReadSource, Action_JSR, NULL
-};
-
-static void (* const microcode_LEA[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_MemoryAddressPrimary, ReadSource, DecodeDestination_AddressRegisterSecondary, Action_MOVE, WriteDestination, NULL
-};
-
-static void (* const microcode_LINK[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, Action_LINK, NULL
-};
-
-static void (* const microcode_LSD_MEMORY[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_LSD_MEMORY, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_LSD_REGISTER[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_LSD_REGISTER, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_MOVE[])(Stuff* const stuff) = {
-	SetSize_Move, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, DecodeDestination_SecondaryAddressMode, Action_MOVE, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_MOVE_FROM_SR[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_StatusRegister, ReadSource, DecodeDestination_PrimaryAddressMode, Action_MOVE, WriteDestination, NULL
-};
-
-static void (* const microcode_MOVE_TO_CCR[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, DecodeDestination_ConditionCodeRegister, Action_MOVE, WriteDestination, NULL
-};
-
-static void (* const microcode_MOVE_TO_SR[])(Stuff* const stuff) = {
-	SupervisorCheck, SetSize_Word, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, DecodeDestination_StatusRegister, Action_MOVE, WriteDestination, NULL
-};
-
-static void (* const microcode_MOVE_USP[])(Stuff* const stuff) = {
-	SupervisorCheck, Action_MOVE_USP, NULL
-};
-
-static void (* const microcode_MOVEA[])(Stuff* const stuff) = {
-	SetSize_Move, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, DecodeDestination_AddressRegisterSecondaryFull, Action_MOVEA, WriteDestination, NULL
-};
-
-static void (* const microcode_MOVEM[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_MOVEM, ReadDestination, Action_MOVEM, NULL
-};
-
-static void (* const microcode_MOVEP[])(Stuff* const stuff) = {
-	DecodeDestination_MOVEP, ReadDestination, Action_MOVEP, NULL
-};
-
-static void (* const microcode_MOVEQ[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeDestination_DataRegisterSecondary, Action_MOVEQ, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_MULS[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MULS, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_MULU[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeWord, ReadSource, DecodeDestination_DataRegisterSecondary, ReadDestination, Action_MULU, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_NBCD[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_NBCD, WriteDestination, Overflow_SUB, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_NEG[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_NEG, WriteDestination, Carry_NEG, Overflow_NEG, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_NEGX[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_NEGX, WriteDestination, Carry_NEG, Overflow_NEG, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_NOP[])(Stuff* const stuff) = {
-	Action_NOP, NULL
-};
-
-static void (* const microcode_NOT[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_NOT, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_OR[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode, ReadSource, DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode, ReadDestination, Action_OR, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ORI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_OR, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ORI_TO_CCR[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_ConditionCodeRegister, ReadDestination, Action_OR, WriteDestination, NULL
-};
-
-static void (* const microcode_ORI_TO_SR[])(Stuff* const stuff) = {
-	SupervisorCheck, SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_StatusRegister, ReadDestination, Action_OR, WriteDestination, NULL
-};
-
-static void (* const microcode_PEA[])(Stuff* const stuff) = {
-	DecodeSource_MemoryAddressPrimary, ReadSource, Action_PEA, NULL
-};
-
-static void (* const microcode_RESET[])(Stuff* const stuff) = {
-	SupervisorCheck, Action_RESET, NULL
-};
-
-static void (* const microcode_ROD_MEMORY[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ROD_MEMORY, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ROD_REGISTER[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_ROD_REGISTER, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ROXD_MEMORY[])(Stuff* const stuff) = {
-	SetSize_Word, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_ROXD_MEMORY, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_ROXD_REGISTER[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_ROXD_REGISTER, WriteDestination, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_RTE[])(Stuff* const stuff) = {
-	SupervisorCheck, Action_RTE, NULL
-};
-
-static void (* const microcode_RTR[])(Stuff* const stuff) = {
-	Action_RTR, NULL
-};
-
-static void (* const microcode_RTS[])(Stuff* const stuff) = {
-	Action_RTS, NULL
-};
-
-static void (* const microcode_SBCD[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeSource_BCDX, ReadSource, DecodeDestination_BCDX, ReadDestination, Action_SBCD, WriteDestination, Overflow_SUB, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_SCC[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_SCC, WriteDestination, NULL
-};
-
-static void (* const microcode_STOP[])(Stuff* const stuff) = {
-	SupervisorCheck, SetSize_Word, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, Action_STOP, NULL
-};
-
-static void (* const microcode_SUB[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode, ReadSource, DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode, ReadDestination, Action_SUB, WriteDestination, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_SUBA[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeSource_PrimaryAddressModeSized, ReadSource, DecodeDestination_AddressRegisterSecondary, ReadDestination, Action_SUBA, WriteDestination, NULL
-};
-
-static void (* const microcode_SUBAQ[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_SUBQ, WriteDestination, NULL
-};
-
-static void (* const microcode_SUBI[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_ImmediateData, ReadSource, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_SUB, WriteDestination, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_SUBQ[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_SUBQ, WriteDestination, Carry_StandardBorrow, Overflow_SUB, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_SUBX[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_BCDX, ReadSource, DecodeDestination_BCDX, ReadDestination, Action_SUBX, WriteDestination, Carry_StandardBorrow, Overflow_SUB, Zero_ClearIfNonZeroUnaffectedOtherwise, Negative_SetIfNegativeClearOtherwise, Extend_SetToCarry, NULL
-};
-
-static void (* const microcode_SWAP[])(Stuff* const stuff) = {
-	SetSize_Longword, SetMSBBitIndex, DecodeDestination_DataRegisterPrimary, ReadDestination, Action_SWAP, WriteDestination, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_TAS[])(Stuff* const stuff) = {
-	SetSize_Byte, SetMSBBitIndex, DecodeDestination_PrimaryAddressMode, ReadDestination, Action_TAS, WriteDestination, Carry_Clear, Overflow_Clear, NULL
-};
-
-static void (* const microcode_TRAP[])(Stuff* const stuff) = {
-	Action_TRAP, NULL
-};
-
-static void (* const microcode_TRAPV[])(Stuff* const stuff) = {
-	Action_TRAPV, NULL
-};
-
-static void (* const microcode_TST[])(Stuff* const stuff) = {
-	SetSize_Standard, SetMSBBitIndex, DecodeSource_PrimaryAddressMode, ReadSource, Action_MOVE, Carry_Clear, Overflow_Clear, Zero_SetIfZeroClearOtherwise, Negative_SetIfNegativeClearOtherwise, NULL
-};
-
-static void (* const microcode_UNLK[])(Stuff* const stuff) = {
-	Action_UNLK, NULL
-};
-
-static void (* const microcode_UNIMPLEMENTED_1[])(Stuff* const stuff) = {
-	Action_UNIMPLEMENTED_1, NULL
-};
-
-static void (* const microcode_UNIMPLEMENTED_2[])(Stuff* const stuff) = {
-	Action_UNIMPLEMENTED_2, NULL
-};
+case INSTRUCTION_ABCD:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_BCDX(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_BCDX(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ABCD(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	Overflow_ADD(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_ADD:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADD(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardCarry(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_ADD(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_ADDA:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeSized(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADDA(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ADDAQ:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADDQ(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ADDI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADD(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardCarry(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_ADD(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_ADDQ:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADDQ(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardCarry(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_ADD(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_ADDX:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_BCDX(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_BCDX(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ADDX(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardCarry(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_ADD(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_AND:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_AND(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ANDI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_AND(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ANDI_TO_CCR:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_ConditionCodeRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_AND(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ANDI_TO_SR:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_StatusRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_AND(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ASD_MEMORY:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ASD_MEMORY(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ASD_REGISTER:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ASD_REGISTER(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCC_SHORT:
+	/* Do the actual instruction. */
+	Action_BCC_SHORT(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCC_WORD:
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BCC_WORD(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCHG_DYNAMIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BCHG(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCHG_STATIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataByte(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BCHG(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCLR_DYNAMIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BCLR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BCLR_STATIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataByte(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BCLR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BRA_SHORT:
+	/* Do the actual instruction. */
+	Action_BRA_SHORT(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BRA_WORD:
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BRA_WORD(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BSET_DYNAMIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BSET(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BSET_STATIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataByte(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BSET(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BSR_SHORT:
+	/* Do the actual instruction. */
+	Action_BSR_SHORT(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BSR_WORD:
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BSR_WORD(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BTST_DYNAMIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BTST(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_BTST_STATIC:
+	SetSize_LongwordRegisterByteMemory(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateDataByte(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_BTST(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CHK:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_CHK(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Undefined */
+	/* Update OVERFLOW condition code */
+	/* Undefined */
+	/* Update ZERO condition code */
+	/* Undefined */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CLR:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_CLR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CMP:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUB(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CMPA:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeSized(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUBA(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CMPI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUB(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_CMPM:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_AddressRegisterPrimaryPostIncrement(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondaryPostIncrement(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUB(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_DBCC:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_DBCC(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_DIVS:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_DIVS(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_DIVU:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_DIVU(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EOR:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_EOR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EORI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_EOR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EORI_TO_CCR:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_ConditionCodeRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_EOR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EORI_TO_SR:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_StatusRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_EOR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EXG:
+	/* Do the actual instruction. */
+	Action_EXG(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_EXT:
+	SetSize_Ext(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_EXT(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ILLEGAL:
+	/* Do the actual instruction. */
+	Action_ILLEGAL(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_JMP:
+	/* Decode source address mode. */
+	DecodeSource_MemoryAddressPrimary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_JMP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_JSR:
+	/* Decode source address mode. */
+	DecodeSource_MemoryAddressPrimary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_JSR(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_LEA:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_MemoryAddressPrimary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondary(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_LINK:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_LINK(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_LSD_MEMORY:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_LSD_MEMORY(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_LSD_REGISTER:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_LSD_REGISTER(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVE:
+	SetSize_Move(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_SecondaryAddressMode(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVE_FROM_SR:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_StatusRegister(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVE_TO_CCR:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_ConditionCodeRegister(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVE_TO_SR:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_StatusRegister(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVE_USP:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE_USP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVEA:
+	SetSize_Move(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondaryFull(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVEA(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVEM:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_MOVEM(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVEM(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVEP:
+	/* Decode destination address mode. */
+	DecodeDestination_MOVEP(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVEP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MOVEQ:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVEQ(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MULS:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MULS(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_MULU:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeWord(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MULU(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_NBCD:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_NBCD(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_NEG:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_NEG(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_NEG(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_NEG(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_NEGX:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_NEGX(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_NEG(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_NEG(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_NOP:
+	/* Do the actual instruction. */
+	Action_NOP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_NOT:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_NOT(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_OR:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_OR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ORI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_OR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ORI_TO_CCR:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_ConditionCodeRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_OR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ORI_TO_SR:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_StatusRegister(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_OR(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_PEA:
+	/* Decode source address mode. */
+	DecodeSource_MemoryAddressPrimary(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_PEA(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_RESET:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	/* Do the actual instruction. */
+	Action_RESET(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ROD_MEMORY:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ROD_MEMORY(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ROD_REGISTER:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ROD_REGISTER(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ROXD_MEMORY:
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ROXD_MEMORY(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_ROXD_REGISTER:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_ROXD_REGISTER(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_RTE:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	/* Do the actual instruction. */
+	Action_RTE(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_RTR:
+	/* Do the actual instruction. */
+	Action_RTR(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_RTS:
+	/* Do the actual instruction. */
+	Action_RTS(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_SBCD:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_BCDX(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_BCDX(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SBCD(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_SCC:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SCC(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_STOP:
+	/* Only allow this instruction in supervisor mode. */
+	SupervisorCheck(&stuff);
+
+	SetSize_Word(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_STOP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_SUB:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUB(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_SUBA:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressModeSized(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_AddressRegisterSecondary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUBA(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_SUBAQ:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUBQ(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_SUBI:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_ImmediateData(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUB(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_SUBQ:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUBQ(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_SUBX:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_BCDX(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_BCDX(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SUBX(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_StandardBorrow(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_SUB(&stuff);
+	/* Update ZERO condition code */
+	Zero_ClearIfNonZeroUnaffectedOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	Extend_SetToCarry(&stuff);
+
+	break;
+
+case INSTRUCTION_SWAP:
+	SetSize_Longword(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_DataRegisterPrimary(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_SWAP(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_TAS:
+	SetSize_Byte(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode destination address mode. */
+	DecodeDestination_PrimaryAddressMode(&stuff);
+
+	/* Read destination operand. */
+	ReadDestination(&stuff);
+
+	/* Do the actual instruction. */
+	Action_TAS(&stuff);
+
+	/* Write destination operand. */
+	WriteDestination(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_TRAP:
+	/* Do the actual instruction. */
+	Action_TRAP(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_TRAPV:
+	/* Do the actual instruction. */
+	Action_TRAPV(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_TST:
+	SetSize_Standard(&stuff);
+	SetMSBBitIndex(&stuff);
+
+	/* Decode source address mode. */
+	DecodeSource_PrimaryAddressMode(&stuff);
+
+	/* Read source operand. */
+	ReadSource(&stuff);
+
+	/* Do the actual instruction. */
+	Action_MOVE(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	Carry_Clear(&stuff);
+	/* Update OVERFLOW condition code */
+	Overflow_Clear(&stuff);
+	/* Update ZERO condition code */
+	Zero_SetIfZeroClearOtherwise(&stuff);
+	/* Update NEGATIVE condition code */
+	Negative_SetIfNegativeClearOtherwise(&stuff);
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_UNLK:
+	/* Do the actual instruction. */
+	Action_UNLK(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_UNIMPLEMENTED_1:
+	/* Do the actual instruction. */
+	Action_UNIMPLEMENTED_1(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
+
+case INSTRUCTION_UNIMPLEMENTED_2:
+	/* Do the actual instruction. */
+	Action_UNIMPLEMENTED_2(&stuff);
+
+	/* Update the condition codes in the following order: */
+	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
+
+	/* Update CARRY condition code */
+	/* Unaffected */
+	/* Update OVERFLOW condition code */
+	/* Unaffected */
+	/* Update ZERO condition code */
+	/* Unaffected */
+	/* Update NEGATIVE condition code */
+	/* Unaffected */
+	/* Update EXTEND condition code */
+	/* Unaffected */
+
+	break;
 

@@ -1705,107 +1705,6 @@ void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCal
 	}
 }
 
-#include "microcode.c"
-
-/* This MUST match the order of the `Instruction` enum! */
-static void (* const * const microcode[])(Stuff* const stuff) = {
-	microcode_ABCD,
-	microcode_ADD,
-	microcode_ADDA,
-	microcode_ADDAQ,
-	microcode_ADDI,
-	microcode_ADDQ,
-	microcode_ADDX,
-	microcode_AND,
-	microcode_ANDI,
-	microcode_ANDI_TO_CCR,
-	microcode_ANDI_TO_SR,
-	microcode_ASD_MEMORY,
-	microcode_ASD_REGISTER,
-	microcode_BCC_SHORT,
-	microcode_BCC_WORD,
-	microcode_BCHG_DYNAMIC,
-	microcode_BCHG_STATIC,
-	microcode_BCLR_DYNAMIC,
-	microcode_BCLR_STATIC,
-	microcode_BRA_SHORT,
-	microcode_BRA_WORD,
-	microcode_BSET_DYNAMIC,
-	microcode_BSET_STATIC,
-	microcode_BSR_SHORT,
-	microcode_BSR_WORD,
-	microcode_BTST_DYNAMIC,
-	microcode_BTST_STATIC,
-	microcode_CHK,
-	microcode_CLR,
-	microcode_CMP,
-	microcode_CMPA,
-	microcode_CMPI,
-	microcode_CMPM,
-	microcode_DBCC,
-	microcode_DIVS,
-	microcode_DIVU,
-	microcode_EOR,
-	microcode_EORI,
-	microcode_EORI_TO_CCR,
-	microcode_EORI_TO_SR,
-	microcode_EXG,
-	microcode_EXT,
-	microcode_ILLEGAL,
-	microcode_JMP,
-	microcode_JSR,
-	microcode_LEA,
-	microcode_LINK,
-	microcode_LSD_MEMORY,
-	microcode_LSD_REGISTER,
-	microcode_MOVE,
-	microcode_MOVE_FROM_SR,
-	microcode_MOVE_TO_CCR,
-	microcode_MOVE_TO_SR,
-	microcode_MOVE_USP,
-	microcode_MOVEA,
-	microcode_MOVEM,
-	microcode_MOVEP,
-	microcode_MOVEQ,
-	microcode_MULS,
-	microcode_MULU,
-	microcode_NBCD,
-	microcode_NEG,
-	microcode_NEGX,
-	microcode_NOP,
-	microcode_NOT,
-	microcode_OR,
-	microcode_ORI,
-	microcode_ORI_TO_CCR,
-	microcode_ORI_TO_SR,
-	microcode_PEA,
-	microcode_RESET,
-	microcode_ROD_MEMORY,
-	microcode_ROD_REGISTER,
-	microcode_ROXD_MEMORY,
-	microcode_ROXD_REGISTER,
-	microcode_RTE,
-	microcode_RTR,
-	microcode_RTS,
-	microcode_SBCD,
-	microcode_SCC,
-	microcode_STOP,
-	microcode_SUB,
-	microcode_SUBA,
-	microcode_SUBAQ,
-	microcode_SUBI,
-	microcode_SUBQ,
-	microcode_SUBX,
-	microcode_SWAP,
-	microcode_TAS,
-	microcode_TRAP,
-	microcode_TRAPV,
-	microcode_TST,
-	microcode_UNLK,
-	microcode_UNIMPLEMENTED_1,
-	microcode_UNIMPLEMENTED_2
-};
-
 void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	if (state->halted)
@@ -1827,9 +1726,6 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 		if (!setjmp(stuff.exception.context))
 		{
-			/* Process new instruction. */
-			unsigned int i;
-
 			/* Figure out which instruction this is. */
 			const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
 
@@ -1837,9 +1733,10 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 			state->instruction_register = stuff.opcode.raw;
 			state->program_counter += 2;
 
-			/* Execute the instruction's microcode. */
-			for (i = 0; microcode[instruction][i] != NULL; ++i)
-				microcode[instruction][i](&stuff);
+			switch (instruction)
+			{
+				#include "microcode.c"
+			}
 		}
 	}
 }
