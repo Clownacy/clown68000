@@ -1350,8 +1350,14 @@ static void Action_MOVEQ(Stuff* const stuff)
 
 static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 {
+	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+
 	if (stuff->source_value == 0)
 	{
+		/* TODO: These hacks are needed for the validator. Is the validator actually correct? */
+		stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
+		stuff->state->program_counter -= 4;
+
 		Group1Or2Exception(stuff, 5);
 		longjmp(stuff->exception.context, 1);
 	}
