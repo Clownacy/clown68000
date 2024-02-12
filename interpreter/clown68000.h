@@ -36,7 +36,7 @@ typedef struct Clown68000_State
 	cc_u32l program_counter;
 	cc_u16l status_register;
 	cc_u16l instruction_register;
-	cc_bool halted;
+	cc_bool halted, stopped;
 
 	cc_u8l cycles_left_in_instruction;
 } Clown68000_State;

@@ -1124,7 +1124,8 @@ static void Action_RESET(Stuff* const stuff)
 static void Action_STOP(Stuff* const stuff)
 {
 	/* TODO */
-	UNIMPLEMENTED_INSTRUCTION("STOP");
+	stuff->state->status_register = stuff->source_value;
+	stuff->state->stopped = cc_true;
 }
 
 static void Action_RTE(Stuff* const stuff)
@@ -1676,6 +1677,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	if (!setjmp(stuff.exception.context))
 	{
 		state->halted = cc_false;
+		state->stopped = cc_false;
 
 		/* Disable trace mode. */
 		state->status_register &= ~STATUS_TRACE;
@@ -1698,6 +1700,7 @@ void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCal
 
 	if (!setjmp(stuff.exception.context))
 	{
+		state->stopped = cc_false;
 		assert(level >= 1 && level <= 7);
 
 		if (level == 7 || level > (((cc_u16f)state->status_register >> 8) & 7))
@@ -1713,7 +1716,7 @@ void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCal
 
 void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
-	if (state->halted)
+	if (state->halted || state->stopped)
 	{
 		/* Nope, we're not doing anything. */
 	}
