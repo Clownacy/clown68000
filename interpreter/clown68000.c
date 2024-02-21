@@ -184,7 +184,7 @@ static void WriteByte(const Stuff *stuff, cc_u32f address, cc_u32f value)
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	callbacks->write_callback(callbacks->user_data, (address & 0xFFFFFF) / 2, (cc_bool)!odd, odd, value << (odd ? 0 : 8));
+	callbacks->write_callback(callbacks->user_data, (address & 0xFFFFFF) / 2, (cc_bool)!odd, odd, value | value << 8);
 }
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
