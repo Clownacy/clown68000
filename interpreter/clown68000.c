@@ -75,6 +75,13 @@ typedef	enum DecodedAddressModeType
 	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
 } DecodedAddressModeType;
 
+typedef struct DecodedMemoryAddressMode
+{
+	cc_u32f address;
+	cc_u32f(*read)(struct Stuff *stuff, cc_u32f address);
+	void (*write)(struct Stuff *stuff, cc_u32f address, cc_u32f value);
+} DecodedMemoryAddressMode;
+
 typedef struct DecodedAddressMode
 {
 	DecodedAddressModeType type;
@@ -85,11 +92,7 @@ typedef struct DecodedAddressMode
 			cc_u32l *address;
 			cc_u32f operation_size_bitmask;
 		} reg;
-		struct
-		{
-			cc_u32f address;
-			cc_u8f operation_size_in_bytes;
-		} memory;
+		DecodedMemoryAddressMode memory;
 	} data;
 } DecodedAddressMode;
 
@@ -137,7 +140,14 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 /* Memory reads */
 
-static cc_u32f ReadByte(const Stuff *stuff, cc_u32f address)
+static cc_u32f ReadAddress(Stuff *stuff, cc_u32f address)
+{
+	(void)stuff;
+
+	return address;
+}
+
+static cc_u32f ReadByte(Stuff *stuff, cc_u32f address)
 {
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
@@ -165,14 +175,26 @@ static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
 
 	value = 0;
 	value |= (cc_u32f)ReadWord(stuff, address + 0) << 16;
-	value |= (cc_u32f)ReadWord(stuff, address + 2) <<  0;
+	value |= (cc_u32f)ReadWord(stuff, address + 2) << 0;
+
+	return value;
+}
+
+/* Used for pre-decrement and stack. */
+static cc_u32f ReadLongWordBackwards(Stuff *stuff, cc_u32f address)
+{
+	cc_u32f value;
+
+	value = 0;
+	value |= (cc_u32f)ReadWord(stuff, address + 2) << 0;
+	value |= (cc_u32f)ReadWord(stuff, address + 0) << 16;
 
 	return value;
 }
 
 /* Memory writes */
 
-static void WriteByte(const Stuff *stuff, cc_u32f address, cc_u32f value)
+static void WriteByte(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
@@ -198,7 +220,14 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
 	WriteWord(stuff, address + 0, value >> 16);
-	WriteWord(stuff, address + 2, value >>  0);
+	WriteWord(stuff, address + 2, value >> 0);
+}
+
+/* Used for pre-decrement and stack. */
+static void WriteLongWordBackwards(Stuff *stuff, cc_u32f address, cc_u32f value)
+{
+	WriteWord(stuff, address + 2, value >> 0);
+	WriteWord(stuff, address + 0, value >> 16);
 }
 
 /* Supervisor mode */
@@ -240,7 +269,7 @@ static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 	SetSupervisorMode(stuff->state, cc_true);
 
 	state->address_registers[7] -= 4;
-	WriteLongWord(stuff, state->address_registers[7], state->program_counter);
+	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
 	state->address_registers[7] -= 2;
 	WriteWord(stuff, state->address_registers[7], copy_status_register);
 
@@ -264,7 +293,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 		state->address_registers[7] -= 2;
 		WriteWord(stuff, state->address_registers[7], state->instruction_register);
 		state->address_registers[7] -= 4;
-		WriteLongWord(stuff, state->address_registers[7], access_address);
+		WriteLongWordBackwards(stuff, state->address_registers[7], access_address);
 		state->address_registers[7] -= 2;
 		/* TODO - Function code and 'Instruction/Not' bit. */
 		/* According to the test suite, there really is a partial phantom copy of the intruction register here. */
@@ -274,11 +303,46 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 
 /* Misc. utility */
 
-static cc_u32f DecodeMemoryAddressMode(Stuff* const stuff, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
+static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode* const decoded_memory_address_mode, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
 {
 	Clown68000_State* const state = stuff->state;
 
 	cc_u32f address;
+
+	switch (operation_size_in_bytes)
+	{
+		case 0:
+			decoded_memory_address_mode->read = ReadAddress;
+			decoded_memory_address_mode->write = NULL;
+			break;
+
+		default:
+			assert(cc_false);
+			/* Fallthrough */
+		case 1:
+			decoded_memory_address_mode->read = ReadByte;
+			decoded_memory_address_mode->write = WriteByte;
+			break;
+
+		case 2:
+			decoded_memory_address_mode->read = ReadWord;
+			decoded_memory_address_mode->write = WriteWord;
+			break;
+
+		case 4:
+			if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+			{
+				decoded_memory_address_mode->read = ReadLongWordBackwards;
+				decoded_memory_address_mode->write = WriteLongWordBackwards;
+			}
+			else
+			{
+				decoded_memory_address_mode->read = ReadLongWord;
+				decoded_memory_address_mode->write = WriteLongWord;
+			}
+
+			break;
+	}
 
 	if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT)
 	{
@@ -371,7 +435,7 @@ static cc_u32f DecodeMemoryAddressMode(Stuff* const stuff, const unsigned int op
 		}
 	}
 
-	return address;
+	decoded_memory_address_mode->address = address;
 }
 
 static void DecodeAddressMode(Stuff* const stuff, DecodedAddressMode* const decoded_address_mode, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
@@ -396,8 +460,7 @@ static void DecodeAddressMode(Stuff* const stuff, DecodedAddressMode* const deco
 		case ADDRESS_MODE_SPECIAL:
 			/* Memory access */
 			decoded_address_mode->type = DECODED_ADDRESS_MODE_TYPE_MEMORY;
-			decoded_address_mode->data.memory.address = DecodeMemoryAddressMode(stuff, operation_size_in_bytes, address_mode, address_mode_register);
-			decoded_address_mode->data.memory.operation_size_in_bytes = (cc_u8f)operation_size_in_bytes;
+			DecodeMemoryAddressMode(stuff, &decoded_address_mode->data.memory, operation_size_in_bytes, address_mode, address_mode_register);
 			break;
 	}
 }
@@ -415,30 +478,8 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 			break;
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
-		{
-			const cc_u32f address = decoded_address_mode->data.memory.address;
-
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
-			{
-				case 0:
-					value = address;
-					break;
-
-				case 1:
-					value = ReadByte(stuff, address);
-					break;
-
-				case 2:
-					value = ReadWord(stuff, address);
-					break;
-
-				case 4:
-					value = ReadLongWord(stuff, address);
-					break;
-			}
-
+			value = decoded_address_mode->data.memory.read(stuff, decoded_address_mode->data.memory.address);
 			break;
-		}
 
 		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
 			value = state->status_register;
@@ -467,31 +508,8 @@ static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *de
 		}
 
 		case DECODED_ADDRESS_MODE_TYPE_MEMORY:
-		{
-			const cc_u32f address = decoded_address_mode->data.memory.address;
-
-			switch (decoded_address_mode->data.memory.operation_size_in_bytes)
-			{
-				case 0:
-					/* This should never happen. */
-					assert(cc_false);
-					break;
-
-				case 1:
-					WriteByte(stuff, address, value);
-					break;
-
-				case 2:
-					WriteWord(stuff, address, value);
-					break;
-
-				case 4:
-					WriteLongWord(stuff, address, value);
-					break;
-			}
-
+			decoded_address_mode->data.memory.write(stuff, decoded_address_mode->data.memory.address, value);
 			break;
-		}
 
 		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
 			SetSupervisorMode(stuff->state, (value & STATUS_SUPERVISOR) != 0);
@@ -1013,7 +1031,7 @@ static void Action_LINK(Stuff* const stuff)
 {
 	/* Push address register to stack */
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWord(stuff, stuff->state->address_registers[7], stuff->state->address_registers[stuff->opcode.primary_register]);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->address_registers[stuff->opcode.primary_register]);
 
 	/* Copy stack pointer to address register */
 	stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->address_registers[7];
@@ -1067,7 +1085,7 @@ static void Action_SWAP(Stuff* const stuff)
 static void Action_PEA(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWord(stuff, stuff->state->address_registers[7], stuff->source_value);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->source_value);
 }
 
 static void Action_ILLEGAL(Stuff* const stuff)
@@ -1154,7 +1172,7 @@ static void Action_RTR(Stuff* const stuff)
 static void Action_JSR(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWord(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
 	stuff->state->program_counter = stuff->source_value;
 }
 
@@ -1173,19 +1191,32 @@ static void Action_MOVEM(Stuff* const stuff)
 	int delta;
 	void (*write_function)(Stuff *stuff, cc_u32f address, cc_u32f value);
 
-	if ((stuff->opcode.raw & 0x0040) != 0)
+	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
-		delta = 4;
-		write_function = WriteLongWord;
+		if ((stuff->opcode.raw & 0x0040) != 0)
+		{
+			delta = -4;
+			write_function = WriteLongWordBackwards;
+		}
+		else
+		{
+			delta = -2;
+			write_function = WriteWord;
+		}
 	}
 	else
 	{
-		delta = 2;
-		write_function = WriteWord;
+		if ((stuff->opcode.raw & 0x0040) != 0)
+		{
+			delta = 4;
+			write_function = WriteLongWord;
+		}
+		else
+		{
+			delta = 2;
+			write_function = WriteWord;
+		}
 	}
-
-	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-		delta = -delta;
 
 	bitfield = stuff->source_value;
 
@@ -1308,14 +1339,14 @@ static void Action_BRA_WORD(Stuff* const stuff)
 static void Action_BSR_SHORT(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWord(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
 	Action_BRA_SHORT(stuff);
 }
 
 static void Action_BSR_WORD(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWord(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
 	Action_BRA_WORD(stuff);
 }
 
