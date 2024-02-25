@@ -163,18 +163,9 @@ static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
 {
 	cc_u32f value;
 
-	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
-
-	/* TODO: I've heard that the exception should occur after the read is completed. */
-	if ((address & 1) != 0)
-	{
-		Group0Exception(stuff, 3, address, cc_true);
-		longjmp(stuff->exception.context, 1);
-	}
-
 	value = 0;
-	value |= (cc_u32f)callbacks->read_callback(callbacks->user_data, (address / 2 + 0) & 0x7FFFFF, cc_true, cc_true) << 16;
-	value |= (cc_u32f)callbacks->read_callback(callbacks->user_data, (address / 2 + 1) & 0x7FFFFF, cc_true, cc_true) <<  0;
+	value |= (cc_u32f)ReadWord(stuff, address + 0) << 16;
+	value |= (cc_u32f)ReadWord(stuff, address + 2) <<  0;
 
 	return value;
 }
@@ -206,17 +197,8 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
-	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
-
-	/* TODO: I've heard that the exception should occur after the write is completed. */
-	if ((address & 1) != 0)
-	{
-		Group0Exception(stuff, 3, address, cc_false);
-		longjmp(stuff->exception.context, 1);
-	}
-
-	callbacks->write_callback(callbacks->user_data, (address / 2 + 0) & 0x7FFFFF, cc_true, cc_true, (value >> 16) & 0xFFFF);
-	callbacks->write_callback(callbacks->user_data, (address / 2 + 1) & 0x7FFFFF, cc_true, cc_true, (value >>  0) & 0xFFFF);
+	WriteWord(stuff, address + 0, value >> 16);
+	WriteWord(stuff, address + 2, value >>  0);
 }
 
 /* Supervisor mode */
