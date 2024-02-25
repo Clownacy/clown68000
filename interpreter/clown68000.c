@@ -149,6 +149,7 @@ static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 {
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
+	/* TODO: I've heard that the exception should occur after the read is completed. */
 	if ((address & 1) != 0)
 	{
 		Group0Exception(stuff, 3, address, cc_true);
@@ -164,6 +165,7 @@ static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
 
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
+	/* TODO: I've heard that the exception should occur after the read is completed. */
 	if ((address & 1) != 0)
 	{
 		Group0Exception(stuff, 3, address, cc_true);
@@ -192,6 +194,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
+	/* TODO: I've heard that the exception should occur after the write is completed. */
 	if ((address & 1) != 0)
 	{
 		Group0Exception(stuff, 3, address, cc_false);
@@ -205,6 +208,7 @@ static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
+	/* TODO: I've heard that the exception should occur after the write is completed. */
 	if ((address & 1) != 0)
 	{
 		Group0Exception(stuff, 3, address, cc_false);
