@@ -75,6 +75,8 @@ typedef	enum DecodedAddressModeType
 	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
 } DecodedAddressModeType;
 
+struct Stuff;
+
 typedef struct DecodedMemoryAddressMode
 {
 	cc_u32f address;
