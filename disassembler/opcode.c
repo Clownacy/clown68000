@@ -55,6 +55,10 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_BRA_WORD:
 		case INSTRUCTION_BSR_WORD:
 		case INSTRUCTION_BCC_WORD:
+		case INSTRUCTION_DIVU:
+		case INSTRUCTION_DIVS:
+		case INSTRUCTION_MULU:
+		case INSTRUCTION_MULS:
 			/* Hardcoded to a word. */
 			operation_size = OPERATION_SIZE_WORD;
 			break;
@@ -64,10 +68,6 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_SWAP:
 		case INSTRUCTION_LEA:
 		case INSTRUCTION_MOVEQ:
-		case INSTRUCTION_DIVU:
-		case INSTRUCTION_DIVS:
-		case INSTRUCTION_MULU:
-		case INSTRUCTION_MULS:
 		case INSTRUCTION_SUBA:
 		case INSTRUCTION_CMPA:
 		case INSTRUCTION_ADDA:
@@ -417,12 +417,16 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 		case INSTRUCTION_MOVEQ:
 		case INSTRUCTION_CMP:
+			/* Data register (secondary) */
+			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
+			break;
+
 		case INSTRUCTION_DIVU:
 		case INSTRUCTION_DIVS:
 		case INSTRUCTION_MULU:
 		case INSTRUCTION_MULS:
-			/* Data register (secondary) */
-			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
+			/* Full secondary data register */
+			SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			break;
 
 		case INSTRUCTION_LEA:
