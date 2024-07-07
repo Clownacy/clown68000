@@ -791,7 +791,6 @@ void Clown68000_Disassemble(const unsigned long address, const unsigned int max_
 			case INSTRUCTION_RTE:
 			case INSTRUCTION_RTR:
 			case INSTRUCTION_RTS:
-			case INSTRUCTION_STOP:
 			case INSTRUCTION_TRAP:
 			case INSTRUCTION_TRAPV:
 				return;
