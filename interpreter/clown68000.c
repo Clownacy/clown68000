@@ -1093,6 +1093,7 @@ static void Action_PEA(Stuff* const stuff)
 static void Action_ILLEGAL(Stuff* const stuff)
 {
 	/* Illegal instruction. */
+	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 4);
 }
 
@@ -1669,11 +1670,13 @@ static void Action_ROXD_REGISTER(Stuff* const stuff)
 
 static void Action_UNIMPLEMENTED_1(Stuff* const stuff)
 {
+	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 10);
 }
 
 static void Action_UNIMPLEMENTED_2(Stuff* const stuff)
 {
+	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 11);
 }
 
