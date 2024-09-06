@@ -68,12 +68,16 @@ static OperationSize GetSize(const Instruction instruction, const SplitOpcode* c
 		case INSTRUCTION_SWAP:
 		case INSTRUCTION_LEA:
 		case INSTRUCTION_MOVEQ:
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
 		case INSTRUCTION_MOVE_USP:
 			/* Hardcoded to a longword. */
 			operation_size = OPERATION_SIZE_LONGWORD;
+			break;
+
+		case INSTRUCTION_SUBA:
+		case INSTRUCTION_CMPA:
+		case INSTRUCTION_ADDA:
+			/* Word or longword based on bit 8. */
+			operation_size = opcode->bit_8 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD;
 			break;
 
 		case INSTRUCTION_BTST_STATIC:
@@ -281,13 +285,6 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 
 			break;
 
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
-			/* Word or longword based on bit 8. */
-			SET_OPERAND(opcode->bit_8 ? OPERATION_SIZE_LONGWORD : OPERATION_SIZE_WORD, (OperandAddressMode)opcode->primary_address_mode, opcode->primary_register);
-			break;
-
 		case INSTRUCTION_CMPM:
 			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, opcode->primary_register);
 			break;
@@ -299,6 +296,9 @@ static void GetSourceOperand(DecodedOpcode* const decoded_opcode, const SplitOpc
 		case INSTRUCTION_CHK:
 		case INSTRUCTION_CMP:
 		case INSTRUCTION_TST:
+		case INSTRUCTION_SUBA:
+		case INSTRUCTION_CMPA:
+		case INSTRUCTION_ADDA:
 			/* Primary address mode. */
 			SET_OPERAND(decoded_opcode->size, (OperandAddressMode)opcode->primary_address_mode, opcode->primary_register);
 			break;
@@ -429,14 +429,6 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 			SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_DATA_REGISTER, opcode->secondary_register);
 			break;
 
-		case INSTRUCTION_LEA:
-		case INSTRUCTION_SUBA:
-		case INSTRUCTION_CMPA:
-		case INSTRUCTION_ADDA:
-			/* Address register (secondary) */
-			SET_OPERAND(decoded_opcode->size, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
-			break;
-
 		case INSTRUCTION_MOVE:
 			/* Secondary address mode */
 			SET_OPERAND(decoded_opcode->size, (OperandAddressMode)opcode->secondary_address_mode, opcode->secondary_register);
@@ -461,6 +453,10 @@ static void GetDestinationOperand(DecodedOpcode* const decoded_opcode, const Spl
 
 			break;
 
+		case INSTRUCTION_LEA:
+		case INSTRUCTION_SUBA:
+		case INSTRUCTION_CMPA:
+		case INSTRUCTION_ADDA:
 		case INSTRUCTION_MOVEA:
 			/* Full secondary address register */
 			SET_OPERAND(OPERATION_SIZE_LONGWORD, OPERAND_ADDRESS_MODE_ADDRESS_REGISTER, opcode->secondary_register);
