@@ -1421,6 +1421,10 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 		if (absolute_quotient > (!is_signed ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))
 		{
 			stuff->state->status_register |= CONDITION_CODE_OVERFLOW;
+			/* These two are officially undefined, but SingleStepTests show them consistently being set to these values. */
+			/* https://github.com/SingleStepTests/m68000 */
+			stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
+			stuff->state->status_register &= ~CONDITION_CODE_ZERO;
 
 			stuff->result_value = stuff->destination_value;
 		}
