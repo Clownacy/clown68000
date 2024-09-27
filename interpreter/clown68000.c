@@ -1134,6 +1134,13 @@ static void ProgramCounterChanged(Stuff* const stuff)
 	}
 }
 
+static void SetStatusRegister(Stuff* const stuff, const cc_u16f value)
+{
+	SetSupervisorMode(stuff->state, (value & STATUS_SUPERVISOR) != 0);
+	/* Keep only the bits that are actually used. */
+	stuff->state->status_register = value & STATUS_REGISTER_MASK;
+}
+
 static void Action_RESET(Stuff* const stuff)
 {
 	/* TODO */
@@ -1142,8 +1149,7 @@ static void Action_RESET(Stuff* const stuff)
 
 static void Action_STOP(Stuff* const stuff)
 {
-	/* TODO */
-	stuff->state->status_register = stuff->source_value;
+	SetStatusRegister(stuff, stuff->source_value);
 	stuff->state->stopped = cc_true;
 }
 
@@ -1151,16 +1157,11 @@ static void Action_RTE(Stuff* const stuff)
 {
 	const cc_u16f new_status = ReadWord(stuff, stuff->state->address_registers[7]) & STATUS_REGISTER_MASK;
 
-	stuff->state->status_register = new_status;
 	stuff->state->address_registers[7] += 2;
 	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
 	stuff->state->address_registers[7] += 4;
 
-	/* Restore the previous supervisor bit so we can toggle properly. */
-	/* TODO: Maybe redesign SetSupervisorMode so that it isn't so clunky to use here. */
-	stuff->state->status_register |= STATUS_SUPERVISOR;
-	SetSupervisorMode(stuff->state, (new_status & STATUS_SUPERVISOR) != 0);
-
+	SetStatusRegister(stuff, new_status);
 	ProgramCounterChanged(stuff);
 }
 
