@@ -1032,8 +1032,10 @@ static void Action_MOVE(Stuff* const stuff)
 static void Action_LINK(Stuff* const stuff)
 {
 	/* Push address register to stack */
+	const cc_u32l address_register_contents = stuff->state->address_registers[stuff->opcode.primary_register];
+
 	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->address_registers[stuff->opcode.primary_register]);
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], address_register_contents);
 
 	/* Copy stack pointer to address register */
 	stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->address_registers[7];
@@ -1044,13 +1046,10 @@ static void Action_LINK(Stuff* const stuff)
 
 static void Action_UNLK(Stuff* const stuff)
 {
-	cc_u32l value;
+	const cc_u32l address_register_contents = stuff->state->address_registers[stuff->opcode.primary_register];
+	const cc_u32l value = ReadLongWord(stuff, address_register_contents);
 
-	stuff->state->address_registers[7] = stuff->state->address_registers[stuff->opcode.primary_register];
-	value = ReadLongWord(stuff, stuff->state->address_registers[7]);
-	stuff->state->address_registers[7] += 4;
-
-	/* We need to do this last in case we're writing to A7. */
+	stuff->state->address_registers[7] = address_register_contents + 4;
 	stuff->state->address_registers[stuff->opcode.primary_register] = value;
 }
 
