@@ -1123,6 +1123,18 @@ static void Action_MOVE_USP(Stuff* const stuff)
 
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
 
+static void ProgramCounterChanged(Stuff* const stuff)
+{
+	const cc_u32f program_counter = stuff->state->program_counter;
+
+	/* TODO: Instruction prefetch is normally what causes this, but that is not yet emulated so we have to do this manually instead. */
+	if ((program_counter & 1) != 0)
+	{
+		Group0Exception(stuff, 3, program_counter, cc_true);
+		longjmp(stuff->exception.context, 1);
+	}
+}
+
 static void Action_RESET(Stuff* const stuff)
 {
 	/* TODO */
@@ -1149,12 +1161,16 @@ static void Action_RTE(Stuff* const stuff)
 	/* TODO: Maybe redesign SetSupervisorMode so that it isn't so clunky to use here. */
 	stuff->state->status_register |= STATUS_SUPERVISOR;
 	SetSupervisorMode(stuff->state, (new_status & STATUS_SUPERVISOR) != 0);
+
+	ProgramCounterChanged(stuff);
 }
 
 static void Action_RTS(Stuff* const stuff)
 {
 	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
 	stuff->state->address_registers[7] += 4;
+
+	ProgramCounterChanged(stuff);
 }
 
 static void Action_TRAPV(Stuff* const stuff)
@@ -1170,18 +1186,22 @@ static void Action_RTR(Stuff* const stuff)
 	stuff->state->address_registers[7] += 2;
 	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
 	stuff->state->address_registers[7] += 4;
+
+	ProgramCounterChanged(stuff);
+}
+
+static void Action_JMP(Stuff* const stuff)
+{
+	stuff->state->program_counter = stuff->source_value;
+
+	ProgramCounterChanged(stuff);
 }
 
 static void Action_JSR(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
 	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
-	stuff->state->program_counter = stuff->source_value;
-}
-
-static void Action_JMP(Stuff* const stuff)
-{
-	stuff->state->program_counter = stuff->source_value;
+	Action_JMP(stuff);
 }
 
 static void Action_MOVEM(Stuff* const stuff)
@@ -1321,6 +1341,8 @@ static void Action_DBCC(Stuff* const stuff)
 		{
 			stuff->state->program_counter -= 2;
 			stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+
+			ProgramCounterChanged(stuff);
 		}
 
 		stuff->state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
@@ -1331,12 +1353,16 @@ static void Action_DBCC(Stuff* const stuff)
 static void Action_BRA_SHORT(Stuff* const stuff)
 {
 	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
+
+	ProgramCounterChanged(stuff);
 }
 
 static void Action_BRA_WORD(Stuff* const stuff)
 {
 	stuff->state->program_counter -= 2;
 	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+
+	ProgramCounterChanged(stuff);
 }
 
 static void Action_BSR_SHORT(Stuff* const stuff)
