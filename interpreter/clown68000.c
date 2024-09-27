@@ -1313,16 +1313,11 @@ static void Action_CHK(Stuff* const stuff)
 		stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
 		Group1Or2Exception(stuff, 6);
 	}
-	else
+	else if ((value ^ 0x8000) > (stuff->source_value ^ 0x8000))
 	{
-		const cc_u32f delta = value - stuff->source_value;
-
-		if ((delta & 0x8000) == 0 && delta != 0)
-		{
-			/* Value is greater than upper bound. */
-			stuff->state->status_register &= ~CONDITION_CODE_NEGATIVE;
-			Group1Or2Exception(stuff, 6);
-		}
+		/* Value is greater than upper bound. */
+		stuff->state->status_register &= ~CONDITION_CODE_NEGATIVE;
+		Group1Or2Exception(stuff, 6);
 	}
 }
 
