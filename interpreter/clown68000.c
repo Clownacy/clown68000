@@ -1307,6 +1307,8 @@ static void Action_CHK(Stuff* const stuff)
 {
 	const cc_u32f value = stuff->state->data_registers[stuff->opcode.secondary_register] & 0xFFFF;
 
+	stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_CARRY | CONDITION_CODE_OVERFLOW | CONDITION_CODE_ZERO);
+
 	if ((value & 0x8000) != 0)
 	{
 		/* Value is smaller than 0. */
@@ -1316,7 +1318,6 @@ static void Action_CHK(Stuff* const stuff)
 	else if ((value ^ 0x8000) > (stuff->source_value ^ 0x8000))
 	{
 		/* Value is greater than upper bound. */
-		stuff->state->status_register &= ~CONDITION_CODE_NEGATIVE;
 		Group1Or2Exception(stuff, 6);
 	}
 }
