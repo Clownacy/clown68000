@@ -1727,6 +1727,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	{
 		state->halted = cc_false;
 		state->stopped = cc_false;
+		state->pending_interrupt = 0; /* TODO: Does a reset actually clear the pending interrupt? */
 
 		/* Disable trace mode. */
 		state->status_register &= ~STATUS_TRACE;
@@ -1740,32 +1741,15 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	}
 }
 
-void Clown68000_Interrupt(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, cc_u16f level)
+void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 {
-	Stuff stuff;
-
-	stuff.state = state;
-	stuff.callbacks = callbacks;
-
-	if (!setjmp(stuff.exception.context))
-	{
-		state->stopped = cc_false;
-		assert(level >= 1 && level <= 7);
-
-		if (level == 7 || level > (((cc_u16f)state->status_register >> 8) & 7))
-		{
-			Group1Or2Exception(&stuff, 24 + level);
-
-			/* Set interrupt mask set to current level */
-			state->status_register &= ~STATUS_INTERRUPT_MASK;
-			state->status_register |= level << 8;
-		}
-	}
+	assert(level >= 1 && level <= 7);
+	state->pending_interrupt = level;
 }
 
 void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
-	if (state->halted || state->stopped)
+	if (state->halted)
 	{
 		/* Nope, we're not doing anything. */
 	}
@@ -1784,16 +1768,37 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 		if (!setjmp(stuff.exception.context))
 		{
-			/* Figure out which instruction this is. */
-			const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
-
-			/* We already pre-fetched the instruction, so just advance past it. */
-			state->instruction_register = stuff.opcode.raw;
-			state->program_counter += 2;
-
-			switch (instruction)
+			if (!state->stopped)
 			{
-				#include "microcode.c"
+				/* Process next instruction. */
+
+				/* Figure out which instruction this is. */
+				const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+
+				/* We already pre-fetched the instruction, so just advance past it. */
+				state->instruction_register = stuff.opcode.raw;
+				state->program_counter += 2;
+
+				switch (instruction)
+				{
+					#include "microcode.c"
+				}
+			}
+
+			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street games depends on a one-instruction latency.
+			   https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
+			/* Process pending interrupt. */
+			if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
+			{
+				state->stopped = cc_false;
+
+				Group1Or2Exception(&stuff, 24 + state->pending_interrupt);
+
+				/* Set interrupt mask set to current level */
+				state->status_register &= ~STATUS_INTERRUPT_MASK;
+				state->status_register |= state->pending_interrupt << 8;
+
+				state->pending_interrupt = 0;
 			}
 		}
 	}
