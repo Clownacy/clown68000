@@ -1199,9 +1199,12 @@ static void Action_JMP(Stuff* const stuff)
 
 static void Action_JSR(Stuff* const stuff)
 {
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	const cc_u32f program_counter = stuff->state->program_counter;
+
+	/* According to SingleStepTests, this needs to be done first. */
 	Action_JMP(stuff);
+	stuff->state->address_registers[7] -= 4;
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], program_counter);
 }
 
 static void Action_MOVEM(Stuff* const stuff)
