@@ -102,6 +102,7 @@ typedef struct Stuff
 {
 	Clown68000_State *state;
 	const Clown68000_ReadWriteCallbacks *callbacks;
+	cc_u8f cycles_left_in_instruction;
 	struct
 	{
 		jmp_buf context;
@@ -308,6 +309,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode* const decoded_memory_address_mode, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
 {
 	Clown68000_State* const state = stuff->state;
+	const cc_bool longword = operation_size_in_bytes == 4;
 
 	cc_u32f address;
 
@@ -353,12 +355,16 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 		address = CC_SIGN_EXTEND_ULONG(15, short_address);
 		state->program_counter += 2;
+
+		stuff->cycles_left_in_instruction += longword ? 12 : 8;
 	}
 	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
 	{
 		/* Absolute long */
 		address = ReadLongWord(stuff, state->program_counter);
 		state->program_counter += 4;
+
+		stuff->cycles_left_in_instruction += longword ? 16 : 12;
 	}
 	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
 	{
@@ -374,11 +380,15 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			address = state->program_counter;
 			state->program_counter += operation_size_in_bytes;
 		}
+
+		stuff->cycles_left_in_instruction += longword ? 8 : 4;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
 	{
 		/* Address register indirect */
 		address = state->address_registers[address_mode_register];
+
+		stuff->cycles_left_in_instruction += longword ? 8 : 4;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
@@ -389,6 +399,8 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 		state->address_registers[address_mode_register] -= increment_decrement_size;
 		address = state->address_registers[address_mode_register];
+
+		stuff->cycles_left_in_instruction += longword ? 10 : 6;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
 	{
@@ -399,6 +411,8 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 		address = state->address_registers[address_mode_register];
 		state->address_registers[address_mode_register] += increment_decrement_size;
+
+		stuff->cycles_left_in_instruction += longword ? 8 : 4;
 	}
 	else
 	{
@@ -420,6 +434,8 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 			address += CC_SIGN_EXTEND_ULONG(15, displacement);
 			state->program_counter += 2;
+
+			stuff->cycles_left_in_instruction += longword ? 12 : 8;
 		}
 		else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX || (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
 		{
@@ -434,6 +450,8 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			address += displacement_reg_value;
 			address += displacement_literal_value;
 			state->program_counter += 2;
+
+			stuff->cycles_left_in_instruction += longword ? 14 : 10;
 		}
 	}
 
@@ -601,6 +619,45 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 
 	assert(cc_false);
 	return cc_false;
+}
+
+
+/* Instruction Duration */
+
+static void SingleOperandInstructionExecutionTimeWordOnly(Stuff* const stuff, const cc_u8f register_word, const cc_u8f memory_word)
+{
+	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_word : memory_word;
+}
+
+static void SingleOperandInstructionExecutionTimeLongwordOnly(Stuff* const stuff, const cc_u8f register_longword, const cc_u8f memory_longword)
+{
+	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_longword : memory_longword;
+}
+
+static void SingleOperandInstructionExecutionTime(Stuff* const stuff, const cc_u8f register_word, const cc_u8f memory_word, const cc_u8f register_longword, const cc_u8f memory_longword)
+{
+	if (stuff->operation_size == 4)
+		SingleOperandInstructionExecutionTimeLongwordOnly(stuff, register_longword, memory_longword);
+	else
+		SingleOperandInstructionExecutionTimeWordOnly(stuff, register_word, memory_word);
+}
+
+static void SingleOperandInstructionExecutionTimeCommon(Stuff* const stuff)
+{
+	SingleOperandInstructionExecutionTime(stuff, 4, 8, 6, 12);
+}
+
+static void ShiftRotateInstructionExecutionTimeRegister(Stuff* const stuff, const cc_u8f count)
+{
+	stuff->cycles_left_in_instruction += 6 + 2 * count;
+
+	if (stuff->operation_size == 4)
+		stuff->cycles_left_in_instruction += 2;
+}
+
+static void ShiftRotateInstructionExecutionTimeMemory(Stuff* const stuff)
+{
+	stuff->cycles_left_in_instruction += 8;
 }
 
 
@@ -953,7 +1010,7 @@ static void Action_EOR(Stuff* const stuff)
 	stuff->result_value = stuff->destination_value ^ stuff->source_value;
 }
 
-static void Action_BTST(Stuff* const stuff)
+static void Action_Bxxx(Stuff* const stuff)
 {
 	/* Modulo the source value */
 	stuff->source_value &= stuff->msb_bit_index;
@@ -963,22 +1020,49 @@ static void Action_BTST(Stuff* const stuff)
 	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->destination_value & (1ul << stuff->source_value)) == 0));
 }
 
+static void Action_BTST(Stuff* const stuff)
+{
+	Action_Bxxx(stuff);
+
+	stuff->cycles_left_in_instruction += 4;
+
+	if (stuff->operation_size == 4)
+		stuff->cycles_left_in_instruction += 2;
+
+	/* TODO: 'BTST d0,#' timing. */
+}
+
 static void Action_BCHG(Stuff* const stuff)
 {
-	Action_BTST(stuff);
+	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value ^ (1ul << stuff->source_value);
+
+	stuff->cycles_left_in_instruction += 8;
+
+	if (stuff->operation_size == 4 && stuff->source_value < 16)
+		stuff->cycles_left_in_instruction -= 2;
 }
 
 static void Action_BCLR(Stuff* const stuff)
 {
-	Action_BTST(stuff);
+	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value & ~(1ul << stuff->source_value);
+
+	stuff->cycles_left_in_instruction += 8;
+
+	if (stuff->operation_size == 4 && stuff->source_value >= 16)
+		stuff->cycles_left_in_instruction += 2;
 }
 
 static void Action_BSET(Stuff* const stuff)
 {
-	Action_BTST(stuff);
+	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value | (1ul << stuff->source_value);
+
+	stuff->cycles_left_in_instruction += 8;
+
+	if (stuff->operation_size == 4 && stuff->source_value < 16)
+		stuff->cycles_left_in_instruction -= 2;
 }
 
 static void Action_MOVEP(Stuff* const stuff)
@@ -1056,21 +1140,25 @@ static void Action_UNLK(Stuff* const stuff)
 static void Action_NEGX(Stuff* const stuff)
 {
 	stuff->result_value = 0 - stuff->destination_value - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+	SingleOperandInstructionExecutionTimeCommon(stuff);
 }
 
 static void Action_CLR(Stuff* const stuff)
 {
 	stuff->result_value = 0;
+	SingleOperandInstructionExecutionTimeCommon(stuff);
 }
 
 static void Action_NEG(Stuff* const stuff)
 {
 	stuff->result_value = 0 - stuff->destination_value;
+	SingleOperandInstructionExecutionTimeCommon(stuff);
 }
 
 static void Action_NOT(Stuff* const stuff)
 {
 	stuff->result_value = ~stuff->destination_value;
+	SingleOperandInstructionExecutionTimeCommon(stuff);
 }
 
 static void Action_EXT(Stuff* const stuff)
@@ -1104,6 +1192,8 @@ static void Action_TAS(Stuff* const stuff)
 	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (stuff->destination_value == 0));
 
 	stuff->result_value = stuff->destination_value | 0x80;
+
+	SingleOperandInstructionExecutionTimeWordOnly(stuff, 4, 10); /* TODO: Documentation says 14 but tests say 10. */
 }
 
 static void Action_TRAP(Stuff* const stuff)
@@ -1327,7 +1417,69 @@ static void Action_CHK(Stuff* const stuff)
 
 static void Action_SCC(Stuff* const stuff)
 {
-	stuff->result_value = IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw) ? 0xFF : 0;
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	{
+		stuff->result_value = 0xFF;
+		SingleOperandInstructionExecutionTimeWordOnly(stuff, 6, 8);
+	}
+	else
+	{
+		stuff->result_value = 0;
+		SingleOperandInstructionExecutionTimeWordOnly(stuff, 4, 8);
+	}
+}
+
+static void Action_BRA_SHORT(Stuff* const stuff)
+{
+	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
+
+	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction += 10;
+}
+
+static void Action_BRA_WORD(Stuff* const stuff)
+{
+	stuff->state->program_counter -= 2;
+	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+
+	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction += 6;
+}
+
+static void Action_BSR_SHORT(Stuff* const stuff)
+{
+	stuff->state->address_registers[7] -= 4;
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	Action_BRA_SHORT(stuff);
+
+	stuff->cycles_left_in_instruction += 8;
+}
+
+static void Action_BSR_WORD(Stuff* const stuff)
+{
+	stuff->state->address_registers[7] -= 4;
+	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	Action_BRA_WORD(stuff);
+
+	stuff->cycles_left_in_instruction += 8;
+}
+
+static void Action_BCC_SHORT(Stuff* const stuff)
+{
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+		Action_BRA_SHORT(stuff);
+	else
+		stuff->cycles_left_in_instruction += 8;
+}
+
+static void Action_BCC_WORD(Stuff* const stuff)
+{
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+		Action_BRA_WORD(stuff);
+	else
+		stuff->cycles_left_in_instruction += 8;
 }
 
 static void Action_DBCC(Stuff* const stuff)
@@ -1337,57 +1489,17 @@ static void Action_DBCC(Stuff* const stuff)
 		cc_u16f loop_counter = stuff->state->data_registers[stuff->opcode.primary_register] & 0xFFFF;
 
 		if (loop_counter-- != 0)
-		{
-			stuff->state->program_counter -= 2;
-			stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
-
-			ProgramCounterChanged(stuff);
-		}
+			Action_BRA_WORD(stuff);
+		else
+			stuff->cycles_left_in_instruction += 10;
 
 		stuff->state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
 		stuff->state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
 	}
-}
-
-static void Action_BRA_SHORT(Stuff* const stuff)
-{
-	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
-
-	ProgramCounterChanged(stuff);
-}
-
-static void Action_BRA_WORD(Stuff* const stuff)
-{
-	stuff->state->program_counter -= 2;
-	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
-
-	ProgramCounterChanged(stuff);
-}
-
-static void Action_BSR_SHORT(Stuff* const stuff)
-{
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
-	Action_BRA_SHORT(stuff);
-}
-
-static void Action_BSR_WORD(Stuff* const stuff)
-{
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
-	Action_BRA_WORD(stuff);
-}
-
-static void Action_BCC_SHORT(Stuff* const stuff)
-{
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
-		Action_BRA_SHORT(stuff);
-}
-
-static void Action_BCC_WORD(Stuff* const stuff)
-{
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
-		Action_BRA_WORD(stuff);
+	else
+	{
+		stuff->cycles_left_in_instruction += 8;
+	}
 }
 
 static void Action_MOVEQ(Stuff* const stuff)
@@ -1475,6 +1587,8 @@ static void Action_SBCD(Stuff* const stuff)
 
 	Action_SUB(stuff);
 
+	stuff->cycles_left_in_instruction += 6;
+
 	/* Manually set the carry flag here. */
 	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
 	stuff->state->status_register |= (stuff->source_value & 0x40) != 0 || (~stuff->destination_value & stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
@@ -1485,6 +1599,7 @@ static void Action_NBCD(Stuff* const stuff)
 	stuff->source_value = stuff->destination_value;
 	stuff->destination_value = 0;
 	Action_SBCD(stuff);
+	SingleOperandInstructionExecutionTimeWordOnly(stuff, 0, 2);
 }
 
 static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
@@ -1660,41 +1775,49 @@ static void Action_EXG(Stuff* const stuff)
 static void Action_ASD_MEMORY(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ASD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ASD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ASD_REGISTER(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ASD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ASD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_LSD_MEMORY(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_LSD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_LSD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_LSD_REGISTER(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_LSD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_LSD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_ROD_MEMORY(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ROD, DO_INSTRUCTION_ACTION_SHIFT_4_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ROD_REGISTER(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ROD, DO_INSTRUCTION_ACTION_SHIFT_4_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
+	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_ROXD_MEMORY(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ROXD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROXD, DO_INSTRUCTION_ACTION_SHIFT_6_ROXD)
+	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ROXD_REGISTER(Stuff* const stuff)
 {
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ROXD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROXD, DO_INSTRUCTION_ACTION_SHIFT_6_ROXD)
+	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_UNIMPLEMENTED_1(Stuff* const stuff)
@@ -1750,16 +1873,12 @@ void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 	state->pending_interrupt = level;
 }
 
-void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
+cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	if (state->halted)
 	{
 		/* Nope, we're not doing anything. */
-	}
-	else if (state->cycles_left_in_instruction != 0)
-	{
-		/* Wait for current instruction to finish. */
-		--state->cycles_left_in_instruction;
+		return 1;
 	}
 	else
 	{
@@ -1768,6 +1887,7 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 
 		stuff.state = state;
 		stuff.callbacks = callbacks;
+		stuff.cycles_left_in_instruction = 0;
 
 		if (!setjmp(stuff.exception.context))
 		{
@@ -1804,5 +1924,8 @@ void Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallb
 				state->pending_interrupt = 0;
 			}
 		}
+
+		/* TODO: Stop making this part of the state. */
+		return stuff.cycles_left_in_instruction;
 	}
 }
