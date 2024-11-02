@@ -644,12 +644,12 @@ static void SingleOperandInstructionExecutionTime(Stuff* const stuff, const cc_u
 
 static void SingleOperandInstructionExecutionTimeCommon(Stuff* const stuff)
 {
-	SingleOperandInstructionExecutionTime(stuff, 4, 8, 6, 12);
+	SingleOperandInstructionExecutionTime(stuff, 0, 4, 2, 8);
 }
 
 static void ShiftRotateInstructionExecutionTimeRegister(Stuff* const stuff, const cc_u8f count)
 {
-	stuff->cycles_left_in_instruction += 6 + 2 * count;
+	stuff->cycles_left_in_instruction += 2 + 2 * count;
 
 	if (stuff->operation_size == 4)
 		stuff->cycles_left_in_instruction += 2;
@@ -657,27 +657,17 @@ static void ShiftRotateInstructionExecutionTimeRegister(Stuff* const stuff, cons
 
 static void ShiftRotateInstructionExecutionTimeMemory(Stuff* const stuff)
 {
-	stuff->cycles_left_in_instruction += 8;
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void ADDXSUBXExecutionTime(Stuff* const stuff)
 {
-	SingleOperandInstructionExecutionTime(stuff, 4, 6, 8, 10);
-}
-
-static void WordOrLongwordExecutionTime(Stuff* const stuff, const cc_u8f word, const cc_u8f longword)
-{
-	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? longword : word;
-}
-
-static void RegisterOrMemoryExecutionTime(Stuff* const stuff, const cc_u8f register_cycles, const cc_u8f memory_cycles)
-{
-	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_cycles : memory_cycles;
+	SingleOperandInstructionExecutionTime(stuff, 0, 2, 4, 6);
 }
 
 static void StandardInstructionExecutionTime(Stuff* const stuff)
 {
-	SingleOperandInstructionExecutionTime(stuff, 4, 8, 6, 12);
+	SingleOperandInstructionExecutionTimeCommon(stuff);
 
 	switch (stuff->destination_decoded_address_mode.type)
 	{
@@ -1063,14 +1053,12 @@ static void Action_CMP(Stuff* const stuff)
 {
 	Action_SUBCommon(stuff);
 
-	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? 6 : 4;
+	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? 2 : 0;
 }
 
 static void Action_CMPI(Stuff* const stuff)
 {
 	Action_SUBCommon(stuff);
-
-	stuff->cycles_left_in_instruction += 4;
 
 	if (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER)
 		stuff->cycles_left_in_instruction += 2;
@@ -1079,8 +1067,6 @@ static void Action_CMPI(Stuff* const stuff)
 static void Action_CMPM(Stuff* const stuff)
 {
 	Action_SUBCommon(stuff);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_SUB(Stuff* const stuff)
@@ -1166,8 +1152,6 @@ static void Action_BTST(Stuff* const stuff)
 {
 	Action_Bxxx(stuff);
 
-	stuff->cycles_left_in_instruction += 4;
-
 	if (stuff->operation_size == 4 || (stuff->opcode.primary_address_mode == ADDRESS_MODE_SPECIAL && stuff->opcode.primary_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE))
 		stuff->cycles_left_in_instruction += 2;
 
@@ -1179,7 +1163,7 @@ static void Action_BCHG(Stuff* const stuff)
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value ^ (1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 8;
+	stuff->cycles_left_in_instruction += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value < 16)
 		stuff->cycles_left_in_instruction -= 2;
@@ -1190,7 +1174,7 @@ static void Action_BCLR(Stuff* const stuff)
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value & ~(1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 8;
+	stuff->cycles_left_in_instruction += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value >= 16)
 		stuff->cycles_left_in_instruction += 2;
@@ -1201,7 +1185,7 @@ static void Action_BSET(Stuff* const stuff)
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value | (1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 8;
+	stuff->cycles_left_in_instruction += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value < 16)
 		stuff->cycles_left_in_instruction -= 2;
@@ -1219,7 +1203,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 0;
 
-			stuff->cycles_left_in_instruction += 8;
+			stuff->cycles_left_in_instruction += 4;
 			break;
 
 		case 1:
@@ -1230,7 +1214,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 2) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 3) << 8 * 0;
 
-			stuff->cycles_left_in_instruction += 16;
+			stuff->cycles_left_in_instruction += 12;
 			break;
 
 		case 2:
@@ -1238,7 +1222,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
 
-			stuff->cycles_left_in_instruction += 8;
+			stuff->cycles_left_in_instruction += 4;
 			break;
 
 		case 3:
@@ -1248,7 +1232,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			WriteByte(stuff, stuff->destination_value + 2 * 2, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 3, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
 
-			stuff->cycles_left_in_instruction += 16;
+			stuff->cycles_left_in_instruction += 12;
 			break;
 	}
 }
@@ -1256,8 +1240,6 @@ static void Action_MOVEP(Stuff* const stuff)
 static void Action_MOVEA(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(stuff->msb_bit_index, stuff->source_value);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_MOVECommon(Stuff* const stuff)
@@ -1268,8 +1250,6 @@ static void Action_MOVECommon(Stuff* const stuff)
 static void Action_MOVE(Stuff* const stuff)
 {
 	Action_MOVECommon(stuff);
-
-	stuff->cycles_left_in_instruction += 4;
 
 	if (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER)
 	{
@@ -1302,7 +1282,7 @@ static void Action_LINK(Stuff* const stuff)
 	/* Offset the stack pointer by the immediate value */
 	stuff->state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 12;
+	stuff->cycles_left_in_instruction += 8;
 }
 
 static void Action_UNLK(Stuff* const stuff)
@@ -1313,7 +1293,7 @@ static void Action_UNLK(Stuff* const stuff)
 	stuff->state->address_registers[7] = address_register_contents + 4;
 	stuff->state->address_registers[stuff->opcode.primary_register] = value;
 
-	stuff->cycles_left_in_instruction += 12;
+	stuff->cycles_left_in_instruction += 8;
 }
 
 static void Action_NEGX(Stuff* const stuff)
@@ -1343,15 +1323,11 @@ static void Action_NOT(Stuff* const stuff)
 static void Action_EXT(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG((stuff->opcode.raw & 0x0040) != 0 ? 15 : 7, stuff->destination_value);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_SWAP(Stuff* const stuff)
 {
 	stuff->result_value = ((stuff->destination_value & 0x0000FFFF) << 16) | ((stuff->destination_value & 0xFFFF0000) >> 16);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_PEA(Stuff* const stuff)
@@ -1379,7 +1355,7 @@ static void Action_TAS(Stuff* const stuff)
 
 	stuff->result_value = stuff->destination_value | 0x80;
 
-	SingleOperandInstructionExecutionTimeWordOnly(stuff, 4, 10); /* TODO: Documentation says 14 but tests say 10. */
+	SingleOperandInstructionExecutionTimeWordOnly(stuff, 0, 6);
 }
 
 static void Action_TRAP(Stuff* const stuff)
@@ -1394,8 +1370,6 @@ static void Action_MOVE_USP(Stuff* const stuff)
 		stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->user_stack_pointer;
 	else
 		stuff->state->user_stack_pointer = stuff->state->address_registers[stuff->opcode.primary_register];
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
@@ -1424,13 +1398,15 @@ static void Action_RESET(Stuff* const stuff)
 	/* TODO */
 	UNIMPLEMENTED_INSTRUCTION("RESET");
 
-	stuff->cycles_left_in_instruction += 132;
+	stuff->cycles_left_in_instruction += 128;
 }
 
 static void Action_STOP(Stuff* const stuff)
 {
 	SetStatusRegister(stuff, stuff->source_value);
 	stuff->state->stopped = cc_true;
+
+	stuff->cycles_left_in_instruction -= 4;
 }
 
 static void Action_RTE(Stuff* const stuff)
@@ -1444,7 +1420,7 @@ static void Action_RTE(Stuff* const stuff)
 	SetStatusRegister(stuff, new_status);
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 20;
+	stuff->cycles_left_in_instruction += 16;
 }
 
 static void Action_RTS(Stuff* const stuff)
@@ -1454,15 +1430,13 @@ static void Action_RTS(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 16;
+	stuff->cycles_left_in_instruction += 12;
 }
 
 static void Action_TRAPV(Stuff* const stuff)
 {
 	if ((stuff->state->status_register & CONDITION_CODE_OVERFLOW) != 0)
 		Group1Or2Exception(stuff, 7);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_RTR(Stuff* const stuff)
@@ -1475,7 +1449,7 @@ static void Action_RTR(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 20;
+	stuff->cycles_left_in_instruction += 16;
 }
 
 static void Action_JMP(Stuff* const stuff)
@@ -1546,8 +1520,6 @@ static void Action_LEA(Stuff* const stuff)
 static void Action_TST(Stuff* const stuff)
 {
 	Action_MOVECommon(stuff);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_MOVEM(Stuff* const stuff)
@@ -1667,7 +1639,7 @@ static void Action_CHK(Stuff* const stuff)
 		Group1Or2Exception(stuff, 6);
 	}
 
-	stuff->cycles_left_in_instruction += 10;
+	stuff->cycles_left_in_instruction += 6;
 }
 
 static void Action_SCC(Stuff* const stuff)
@@ -1675,12 +1647,12 @@ static void Action_SCC(Stuff* const stuff)
 	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
 	{
 		stuff->result_value = 0xFF;
-		SingleOperandInstructionExecutionTimeWordOnly(stuff, 6, 8);
+		SingleOperandInstructionExecutionTimeWordOnly(stuff, 2, 4);
 	}
 	else
 	{
 		stuff->result_value = 0;
-		SingleOperandInstructionExecutionTimeWordOnly(stuff, 4, 8);
+		SingleOperandInstructionExecutionTimeWordOnly(stuff, 0, 4);
 	}
 }
 
@@ -1690,7 +1662,7 @@ static void Action_BRA_SHORT(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 10;
+	stuff->cycles_left_in_instruction += 6;
 }
 
 static void Action_BRA_WORD(Stuff* const stuff)
@@ -1700,7 +1672,7 @@ static void Action_BRA_WORD(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 6;
+	stuff->cycles_left_in_instruction += 2;
 }
 
 static void Action_BSR_SHORT(Stuff* const stuff)
@@ -1726,7 +1698,7 @@ static void Action_BCC_SHORT(Stuff* const stuff)
 	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
 		Action_BRA_SHORT(stuff);
 	else
-		stuff->cycles_left_in_instruction += 8;
+		stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_BCC_WORD(Stuff* const stuff)
@@ -1734,7 +1706,7 @@ static void Action_BCC_WORD(Stuff* const stuff)
 	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
 		Action_BRA_WORD(stuff);
 	else
-		stuff->cycles_left_in_instruction += 8;
+		stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_DBCC(Stuff* const stuff)
@@ -1746,22 +1718,20 @@ static void Action_DBCC(Stuff* const stuff)
 		if (loop_counter-- != 0)
 			Action_BRA_WORD(stuff);
 		else
-			stuff->cycles_left_in_instruction += 10;
+			stuff->cycles_left_in_instruction += 6;
 
 		stuff->state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
 		stuff->state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
 	}
 	else
 	{
-		stuff->cycles_left_in_instruction += 8;
+		stuff->cycles_left_in_instruction += 4;
 	}
 }
 
 static void Action_MOVEQ(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
-
-	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
@@ -1867,7 +1837,7 @@ static void Action_NBCD(Stuff* const stuff)
 	stuff->destination_value = 0;
 	Action_SBCDCommon(stuff);
 
-	SingleOperandInstructionExecutionTimeWordOnly(stuff, 6, 8);
+	SingleOperandInstructionExecutionTimeWordOnly(stuff, 2, 4);
 }
 
 static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
@@ -1950,7 +1920,7 @@ static void Action_EXG(Stuff* const stuff)
 			break;
 	}
 
-	stuff->cycles_left_in_instruction += 6;
+	stuff->cycles_left_in_instruction += 2;
 }
 
 #define DO_INSTRUCTION_ACTION_SHIFT_1_ASD \
@@ -2108,9 +2078,9 @@ static void Action_UNIMPLEMENTED_2(Stuff* const stuff)
 
 static void Action_NOP(Stuff* const stuff)
 {
-	/* Doesn't do anything */
+	(void)stuff;
 
-	stuff->cycles_left_in_instruction += 4;
+	/* Doesn't do anything */
 }
 
 
@@ -2149,20 +2119,15 @@ void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 
 cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
-	if (state->halted)
-	{
-		/* Nope, we're not doing anything. */
-		return 1;
-	}
-	else
-	{
-		/* Initialise closure and exception stuff. */
-		Stuff stuff;
+	/* Initialise closure and exception stuff. */
+	Stuff stuff;
 
-		stuff.state = state;
-		stuff.callbacks = callbacks;
-		stuff.cycles_left_in_instruction = 0;
+	stuff.state = state;
+	stuff.callbacks = callbacks;
+	stuff.cycles_left_in_instruction = 4;
 
+	if (!state->halted)
+	{
 		if (!setjmp(stuff.exception.context))
 		{
 			if (!state->stopped)
@@ -2198,8 +2163,8 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 				state->pending_interrupt = 0;
 			}
 		}
-
-		/* TODO: Stop making this part of the state. */
-		return stuff.cycles_left_in_instruction;
 	}
+
+	/* TODO: Stop making this part of the state. */
+	return stuff.cycles_left_in_instruction;
 }
