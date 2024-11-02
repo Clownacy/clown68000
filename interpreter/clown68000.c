@@ -660,6 +660,21 @@ static void ShiftRotateInstructionExecutionTimeMemory(Stuff* const stuff)
 	stuff->cycles_left_in_instruction += 8;
 }
 
+static void ADDXSUBXExecutionTime(Stuff* const stuff)
+{
+	SingleOperandInstructionExecutionTime(stuff, 4, 6, 8, 10);
+}
+
+static void WordOrLongwordExecutionTime(Stuff* const stuff, const cc_u8f word, const cc_u8f longword)
+{
+	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? longword : word;
+}
+
+static void RegisterOrMemoryExecutionTime(Stuff* const stuff, const cc_u8f register_cycles, const cc_u8f memory_cycles)
+{
+	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_cycles : memory_cycles;
+}
+
 
 /* Microcode Operations */
 
@@ -1076,6 +1091,8 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] &= ~0xFFFFul;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 0;
+
+			stuff->cycles_left_in_instruction += 8;
 			break;
 
 		case 1:
@@ -1085,12 +1102,16 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 2;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 2) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 3) << 8 * 0;
+
+			stuff->cycles_left_in_instruction += 16;
 			break;
 
 		case 2:
 			/* Register to memory (word) */
 			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
+
+			stuff->cycles_left_in_instruction += 8;
 			break;
 
 		case 3:
@@ -1099,6 +1120,8 @@ static void Action_MOVEP(Stuff* const stuff)
 			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 2) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 2, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 3, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
+
+			stuff->cycles_left_in_instruction += 16;
 			break;
 	}
 }
@@ -1126,6 +1149,8 @@ static void Action_LINK(Stuff* const stuff)
 
 	/* Offset the stack pointer by the immediate value */
 	stuff->state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+
+	stuff->cycles_left_in_instruction += 12;
 }
 
 static void Action_UNLK(Stuff* const stuff)
@@ -1135,6 +1160,8 @@ static void Action_UNLK(Stuff* const stuff)
 
 	stuff->state->address_registers[7] = address_register_contents + 4;
 	stuff->state->address_registers[stuff->opcode.primary_register] = value;
+
+	stuff->cycles_left_in_instruction += 12;
 }
 
 static void Action_NEGX(Stuff* const stuff)
@@ -1164,11 +1191,15 @@ static void Action_NOT(Stuff* const stuff)
 static void Action_EXT(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG((stuff->opcode.raw & 0x0040) != 0 ? 15 : 7, stuff->destination_value);
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_SWAP(Stuff* const stuff)
 {
 	stuff->result_value = ((stuff->destination_value & 0x0000FFFF) << 16) | ((stuff->destination_value & 0xFFFF0000) >> 16);
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_PEA(Stuff* const stuff)
@@ -1208,6 +1239,8 @@ static void Action_MOVE_USP(Stuff* const stuff)
 		stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->user_stack_pointer;
 	else
 		stuff->state->user_stack_pointer = stuff->state->address_registers[stuff->opcode.primary_register];
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
@@ -1235,6 +1268,8 @@ static void Action_RESET(Stuff* const stuff)
 {
 	/* TODO */
 	UNIMPLEMENTED_INSTRUCTION("RESET");
+
+	stuff->cycles_left_in_instruction += 132;
 }
 
 static void Action_STOP(Stuff* const stuff)
@@ -1253,6 +1288,8 @@ static void Action_RTE(Stuff* const stuff)
 
 	SetStatusRegister(stuff, new_status);
 	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction += 20;
 }
 
 static void Action_RTS(Stuff* const stuff)
@@ -1261,12 +1298,16 @@ static void Action_RTS(Stuff* const stuff)
 	stuff->state->address_registers[7] += 4;
 
 	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction += 16;
 }
 
 static void Action_TRAPV(Stuff* const stuff)
 {
 	if ((stuff->state->status_register & CONDITION_CODE_OVERFLOW) != 0)
 		Group1Or2Exception(stuff, 7);
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_RTR(Stuff* const stuff)
@@ -1278,6 +1319,8 @@ static void Action_RTR(Stuff* const stuff)
 	stuff->state->address_registers[7] += 4;
 
 	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction += 20;
 }
 
 static void Action_JMP(Stuff* const stuff)
@@ -1413,6 +1456,8 @@ static void Action_CHK(Stuff* const stuff)
 		/* Value is greater than upper bound. */
 		Group1Or2Exception(stuff, 6);
 	}
+
+	stuff->cycles_left_in_instruction += 10;
 }
 
 static void Action_SCC(Stuff* const stuff)
@@ -1570,6 +1615,8 @@ static void Action_DIVU(Stuff* const stuff)
 static void Action_SUBX(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value - stuff->source_value - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+
+	ADDXSUBXExecutionTime(stuff);
 }
 
 static void Action_SBCD(Stuff* const stuff)
@@ -1586,8 +1633,6 @@ static void Action_SBCD(Stuff* const stuff)
 	stuff->destination_value = stuff->result_value;
 
 	Action_SUB(stuff);
-
-	stuff->cycles_left_in_instruction += 6;
 
 	/* Manually set the carry flag here. */
 	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
@@ -1629,6 +1674,8 @@ static void Action_MULU(Stuff* const stuff)
 static void Action_ADDX(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value + stuff->source_value + ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+
+	ADDXSUBXExecutionTime(stuff);
 }
 
 static void Action_ABCD(Stuff* const stuff)
@@ -1677,6 +1724,8 @@ static void Action_EXG(Stuff* const stuff)
 			stuff->state->address_registers[stuff->opcode.primary_register] = temp;
 			break;
 	}
+
+	stuff->cycles_left_in_instruction += 6;
 }
 
 #define DO_INSTRUCTION_ACTION_SHIFT_1_ASD \
@@ -1834,9 +1883,9 @@ static void Action_UNIMPLEMENTED_2(Stuff* const stuff)
 
 static void Action_NOP(Stuff* const stuff)
 {
-	(void)stuff;
-
 	/* Doesn't do anything */
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 
