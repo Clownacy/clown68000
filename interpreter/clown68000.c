@@ -1256,11 +1256,36 @@ static void Action_MOVEP(Stuff* const stuff)
 static void Action_MOVEA(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(stuff->msb_bit_index, stuff->source_value);
+
+	stuff->cycles_left_in_instruction += 4;
+}
+
+static void Action_MOVECommon(Stuff* const stuff)
+{
+	stuff->result_value = stuff->source_value;
 }
 
 static void Action_MOVE(Stuff* const stuff)
 {
-	stuff->result_value = stuff->source_value;
+	Action_MOVECommon(stuff);
+
+	stuff->cycles_left_in_instruction += 4;
+
+	if (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER)
+	{
+		if (stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER)
+			stuff->cycles_left_in_instruction += 2;
+		else
+			stuff->cycles_left_in_instruction += 4;
+	}
+	else if (stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER || stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER)
+	{
+		stuff->cycles_left_in_instruction += 8;
+	}
+	else if (stuff->opcode.secondary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+	{
+		stuff->cycles_left_in_instruction -= 2;
+	}
 }
 
 static void Action_LINK(Stuff* const stuff)
@@ -1512,7 +1537,7 @@ static void Action_JSR(Stuff* const stuff)
 
 static void Action_LEA(Stuff* const stuff)
 {
-	Action_MOVE(stuff);
+	Action_MOVECommon(stuff);
 
 	stuff->cycles_left_in_instruction = 4;
 	LEAPEAInstructionExecutionTime(stuff);
@@ -1520,7 +1545,7 @@ static void Action_LEA(Stuff* const stuff)
 
 static void Action_TST(Stuff* const stuff)
 {
-	Action_MOVE(stuff);
+	Action_MOVECommon(stuff);
 
 	stuff->cycles_left_in_instruction += 4;
 }
@@ -1735,6 +1760,8 @@ static void Action_DBCC(Stuff* const stuff)
 static void Action_MOVEQ(Stuff* const stuff)
 {
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
