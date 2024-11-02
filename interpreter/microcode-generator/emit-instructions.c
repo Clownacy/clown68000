@@ -271,6 +271,22 @@ void EmitInstructionAction(const Instruction instruction)
 			Emit("Action_AND(&stuff);");
 			break;
 
+		case INSTRUCTION_ACTION_CMPA:
+			Emit("Action_CMPA(&stuff);");
+			break;
+
+		case INSTRUCTION_ACTION_CMP:
+			Emit("Action_CMP(&stuff);");
+			break;
+
+		case INSTRUCTION_ACTION_CMPM:
+			Emit("Action_CMPM(&stuff);");
+			break;
+
+		case INSTRUCTION_ACTION_CMPI:
+			Emit("Action_CMPI(&stuff);");
+			break;
+
 		case INSTRUCTION_ACTION_SUBA:
 			Emit("Action_SUBA(&stuff);");
 			break;
@@ -297,6 +313,10 @@ void EmitInstructionAction(const Instruction instruction)
 
 		case INSTRUCTION_ACTION_EOR:
 			Emit("Action_EOR(&stuff);");
+			break;
+
+		case INSTRUCTION_ACTION_TST:
+			Emit("Action_TST(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_BCHG:
@@ -413,6 +433,10 @@ void EmitInstructionAction(const Instruction instruction)
 
 		case INSTRUCTION_ACTION_JMP:
 			Emit("Action_JMP(&stuff);");
+			break;
+
+		case INSTRUCTION_ACTION_LEA:
+			Emit("Action_LEA(&stuff);");
 			break;
 
 		case INSTRUCTION_ACTION_MOVEM:

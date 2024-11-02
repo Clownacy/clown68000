@@ -985,7 +985,7 @@ case INSTRUCTION_CMP:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	Action_SUB(&stuff);
+	Action_CMP(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1020,7 +1020,7 @@ case INSTRUCTION_CMPA:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	Action_SUBA(&stuff);
+	Action_CMPA(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1055,7 +1055,7 @@ case INSTRUCTION_CMPI:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	Action_SUB(&stuff);
+	Action_CMPI(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1090,7 +1090,7 @@ case INSTRUCTION_CMPM:
 	ReadDestination(&stuff);
 
 	/* Do the actual instruction. */
-	Action_SUB(&stuff);
+	Action_CMPM(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */
@@ -1506,7 +1506,7 @@ case INSTRUCTION_LEA:
 	DecodeDestination_AddressRegisterSecondary(&stuff);
 
 	/* Do the actual instruction. */
-	Action_MOVE(&stuff);
+	Action_LEA(&stuff);
 
 	/* Write destination operand. */
 	WriteDestination(&stuff);
@@ -2963,7 +2963,7 @@ case INSTRUCTION_TST:
 	ReadSource(&stuff);
 
 	/* Do the actual instruction. */
-	Action_MOVE(&stuff);
+	Action_TST(&stuff);
 
 	/* Update the condition codes in the following order: */
 	/* CARRY, OVERFLOW, ZERO, NEGATIVE, EXTEND */

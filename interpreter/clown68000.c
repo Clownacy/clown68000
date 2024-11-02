@@ -675,6 +675,74 @@ static void RegisterOrMemoryExecutionTime(Stuff* const stuff, const cc_u8f regis
 	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_cycles : memory_cycles;
 }
 
+static void StandardInstructionExecutionTime(Stuff* const stuff)
+{
+	SingleOperandInstructionExecutionTime(stuff, 4, 8, 6, 12);
+
+	switch (stuff->destination_decoded_address_mode.type)
+	{
+		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
+			if (stuff->operation_size == 4 && (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER || (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_MEMORY && stuff->source_decoded_address_mode.data.memory.address == stuff->state->program_counter - 4)))
+				stuff->cycles_left_in_instruction += 2;
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
+		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
+			stuff->cycles_left_in_instruction += 8;
+			break;
+
+		default:
+			break;
+	}
+}
+
+static void StandardInstructionExecutionTimeQuick(Stuff* const stuff)
+{
+	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER || (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER))
+		stuff->cycles_left_in_instruction += 2;
+}
+
+static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
+{
+	switch (stuff->opcode.primary_address_mode)
+	{
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
+			stuff->cycles_left_in_instruction += 4;
+			break;
+
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
+			stuff->cycles_left_in_instruction += 8;
+			break;
+
+		case ADDRESS_MODE_SPECIAL:
+			switch (stuff->opcode.primary_register)
+			{
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
+					stuff->cycles_left_in_instruction += 4;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
+					stuff->cycles_left_in_instruction += 8;
+					break;
+
+				default:
+					break;
+			}
+
+			break;
+
+		default:
+			break;
+	}
+}
+
+static void ABCDSBCDExecutionTime(Stuff* const stuff)
+{
+	stuff->cycles_left_in_instruction = (stuff->opcode.raw & 0x0008) != 0 ? 18 : 6;
+}
+
 
 /* Microcode Operations */
 
@@ -975,23 +1043,76 @@ static void Extend_SetToCarry(Stuff* const stuff)
 static void Action_OR(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value | stuff->source_value;
+
+	StandardInstructionExecutionTime(stuff);
 }
 
 static void Action_AND(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value & stuff->source_value;
+
+	StandardInstructionExecutionTime(stuff);
 }
 
-static void Action_SUB(Stuff* const stuff)
+static void Action_SUBCommon(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value - stuff->source_value;
 }
 
-static void Action_SUBA(Stuff* const stuff)
+static void Action_CMP(Stuff* const stuff)
+{
+	Action_SUBCommon(stuff);
+
+	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? 6 : 4;
+}
+
+static void Action_CMPI(Stuff* const stuff)
+{
+	Action_SUBCommon(stuff);
+
+	stuff->cycles_left_in_instruction += 4;
+
+	if (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER)
+		stuff->cycles_left_in_instruction += 2;
+}
+
+static void Action_CMPM(Stuff* const stuff)
+{
+	Action_SUBCommon(stuff);
+
+	stuff->cycles_left_in_instruction += 4;
+}
+
+static void Action_SUB(Stuff* const stuff)
+{
+	Action_SUBCommon(stuff);
+
+	StandardInstructionExecutionTime(stuff);
+}
+
+
+static void Action_ADDASUBACommon(Stuff* const stuff)
+{
+	if (!stuff->opcode.bit_8)
+	{
+		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+
+		if (stuff->source_decoded_address_mode.type != DECODED_ADDRESS_MODE_TYPE_REGISTER)
+			stuff->cycles_left_in_instruction += 2;
+	}
+}
+
+static void Action_CMPA(Stuff* const stuff)
 {
 	if (!stuff->opcode.bit_8)
 		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
 
+	Action_CMP(stuff);
+}
+
+static void Action_SUBA(Stuff* const stuff)
+{
+	Action_ADDASUBACommon(stuff);
 	Action_SUB(stuff);
 }
 
@@ -999,18 +1120,20 @@ static void Action_SUBQ(Stuff* const stuff)
 {
 	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
 	Action_SUB(stuff);
+
+	StandardInstructionExecutionTimeQuick(stuff);
 }
 
 static void Action_ADD(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value + stuff->source_value;
+
+	StandardInstructionExecutionTime(stuff);
 }
 
 static void Action_ADDA(Stuff* const stuff)
 {
-	if (!stuff->opcode.bit_8)
-		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
-
+	Action_ADDASUBACommon(stuff);
 	Action_ADD(stuff);
 }
 
@@ -1018,11 +1141,15 @@ static void Action_ADDQ(Stuff* const stuff)
 {
 	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
 	Action_ADD(stuff);
+
+	StandardInstructionExecutionTimeQuick(stuff);
 }
 
 static void Action_EOR(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value ^ stuff->source_value;
+
+	StandardInstructionExecutionTime(stuff);
 }
 
 static void Action_Bxxx(Stuff* const stuff)
@@ -1041,7 +1168,7 @@ static void Action_BTST(Stuff* const stuff)
 
 	stuff->cycles_left_in_instruction += 4;
 
-	if (stuff->operation_size == 4)
+	if (stuff->operation_size == 4 || (stuff->opcode.primary_address_mode == ADDRESS_MODE_SPECIAL && stuff->opcode.primary_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE))
 		stuff->cycles_left_in_instruction += 2;
 
 	/* TODO: 'BTST d0,#' timing. */
@@ -1206,6 +1333,9 @@ static void Action_PEA(Stuff* const stuff)
 {
 	stuff->state->address_registers[7] -= 4;
 	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->source_value);
+
+	stuff->cycles_left_in_instruction = 12;
+	LEAPEAInstructionExecutionTime(stuff);
 }
 
 static void Action_ILLEGAL(Stuff* const stuff)
@@ -1328,6 +1458,44 @@ static void Action_JMP(Stuff* const stuff)
 	stuff->state->program_counter = stuff->source_value;
 
 	ProgramCounterChanged(stuff);
+
+	stuff->cycles_left_in_instruction = 8;
+
+	switch (stuff->opcode.primary_address_mode)
+	{
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
+			stuff->cycles_left_in_instruction += 2;
+			break;
+
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
+			stuff->cycles_left_in_instruction += 6;
+			break;
+
+		case ADDRESS_MODE_SPECIAL:
+			switch (stuff->opcode.primary_register)
+			{
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
+					stuff->cycles_left_in_instruction += 2;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
+					stuff->cycles_left_in_instruction += 4;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
+					stuff->cycles_left_in_instruction += 6;
+					break;
+
+				default:
+					break;
+			}
+
+			break;
+
+		default:
+			break;
+	}
 }
 
 static void Action_JSR(Stuff* const stuff)
@@ -1338,6 +1506,23 @@ static void Action_JSR(Stuff* const stuff)
 	Action_JMP(stuff);
 	stuff->state->address_registers[7] -= 4;
 	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], program_counter);
+
+	stuff->cycles_left_in_instruction += 8;
+}
+
+static void Action_LEA(Stuff* const stuff)
+{
+	Action_MOVE(stuff);
+
+	stuff->cycles_left_in_instruction = 4;
+	LEAPEAInstructionExecutionTime(stuff);
+}
+
+static void Action_TST(Stuff* const stuff)
+{
+	Action_MOVE(stuff);
+
+	stuff->cycles_left_in_instruction += 4;
 }
 
 static void Action_MOVEM(Stuff* const stuff)
@@ -1612,17 +1797,21 @@ static void Action_DIVU(Stuff* const stuff)
 	Action_DIVCommon(stuff, cc_false);
 }
 
-static void Action_SUBX(Stuff* const stuff)
+static void Action_SUBXCommon(Stuff* const stuff)
 {
 	stuff->result_value = stuff->destination_value - stuff->source_value - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+}
 
+static void Action_SUBX(Stuff* const stuff)
+{
+	Action_SUBXCommon(stuff);
 	ADDXSUBXExecutionTime(stuff);
 }
 
-static void Action_SBCD(Stuff* const stuff)
+static void Action_SBCDCommon(Stuff* const stuff)
 {
 	/* SBCD works in two steps: a standard SUBX, followed by a standard SUB between the result and a 'correction factor'. */
-	Action_SUBX(stuff);
+	Action_SUBXCommon(stuff);
 
 	/* The correction factor is determined by detecting both decimal and integer overflow of each
 	   nibble of the result, and setting its corresponding nibble to 6 if overflow did occur. */
@@ -1632,19 +1821,26 @@ static void Action_SBCD(Stuff* const stuff)
 
 	stuff->destination_value = stuff->result_value;
 
-	Action_SUB(stuff);
+	Action_SUBCommon(stuff);
 
 	/* Manually set the carry flag here. */
 	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
 	stuff->state->status_register |= (stuff->source_value & 0x40) != 0 || (~stuff->destination_value & stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
 }
 
+static void Action_SBCD(Stuff* const stuff)
+{
+	Action_SBCDCommon(stuff);
+	ABCDSBCDExecutionTime(stuff);
+}
+
 static void Action_NBCD(Stuff* const stuff)
 {
 	stuff->source_value = stuff->destination_value;
 	stuff->destination_value = 0;
-	Action_SBCD(stuff);
-	SingleOperandInstructionExecutionTimeWordOnly(stuff, 0, 2);
+	Action_SBCDCommon(stuff);
+
+	SingleOperandInstructionExecutionTimeWordOnly(stuff, 6, 8);
 }
 
 static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
@@ -1693,6 +1889,8 @@ static void Action_ABCD(Stuff* const stuff)
 	stuff->destination_value = stuff->result_value;
 
 	Action_ADD(stuff);
+
+	ABCDSBCDExecutionTime(stuff);
 
 	/* Manually set the carry flag here. */
 	stuff->state->status_register &= ~CONDITION_CODE_CARRY;

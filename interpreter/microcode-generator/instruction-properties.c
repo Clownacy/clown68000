@@ -38,6 +38,8 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 			return INSTRUCTION_ACTION_AND;
 
 		case INSTRUCTION_CMPA:
+			return INSTRUCTION_ACTION_CMPA;
+
 		case INSTRUCTION_SUBA:
 			return INSTRUCTION_ACTION_SUBA;
 
@@ -46,8 +48,14 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 			return INSTRUCTION_ACTION_SUBQ;
 
 		case INSTRUCTION_CMP:
+			return INSTRUCTION_ACTION_CMP;
+
 		case INSTRUCTION_CMPI:
+			return INSTRUCTION_ACTION_CMPI;
+
 		case INSTRUCTION_CMPM:
+			return INSTRUCTION_ACTION_CMPM;
+
 		case INSTRUCTION_SUB:
 		case INSTRUCTION_SUBI:
 			return INSTRUCTION_ACTION_SUB;
@@ -68,6 +76,9 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 		case INSTRUCTION_EORI_TO_CCR:
 		case INSTRUCTION_EORI_TO_SR:
 			return INSTRUCTION_ACTION_EOR;
+
+		case INSTRUCTION_TST:
+			return INSTRUCTION_ACTION_TST;
 
 		case INSTRUCTION_BCHG_DYNAMIC:
 		case INSTRUCTION_BCHG_STATIC:
@@ -91,12 +102,10 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 		case INSTRUCTION_MOVEA:
 			return INSTRUCTION_ACTION_MOVEA;
 
-		case INSTRUCTION_LEA:
 		case INSTRUCTION_MOVE:
 		case INSTRUCTION_MOVE_FROM_SR:
 		case INSTRUCTION_MOVE_TO_CCR:
 		case INSTRUCTION_MOVE_TO_SR:
-		case INSTRUCTION_TST:
 			return INSTRUCTION_ACTION_MOVE;
 
 		case INSTRUCTION_LINK:
@@ -164,6 +173,9 @@ InstructionAction Instruction_GetAction(const Instruction instruction)
 
 		case INSTRUCTION_JMP:
 			return INSTRUCTION_ACTION_JMP;
+
+		case INSTRUCTION_LEA:
+			return INSTRUCTION_ACTION_LEA;
 
 		case INSTRUCTION_MOVEM:
 			return INSTRUCTION_ACTION_MOVEM;
