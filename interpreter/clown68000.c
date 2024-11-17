@@ -1529,32 +1529,80 @@ static void Action_MOVEM(Stuff* const stuff)
 	cc_u16f i;
 	cc_u16f bitfield;
 
-	int delta;
+	int address_delta;
 	void (*write_function)(Stuff *stuff, cc_u32f address, cc_u32f value);
+
+	const cc_bool memory_to_register = (stuff->opcode.raw & 0x0400) != 0;
+	const cc_bool is_longword = (stuff->opcode.raw & 0x0040) != 0;
+	const unsigned int cycle_delta = is_longword ? 8 : 4;
+
+	stuff->cycles_left_in_instruction = 8;
+
+	if (memory_to_register)
+		stuff->cycles_left_in_instruction += 4;
+
+	switch (stuff->opcode.primary_address_mode)
+	{
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
+			stuff->cycles_left_in_instruction += 4;
+			break;
+
+		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
+			stuff->cycles_left_in_instruction += 6;
+			break;
+
+		case ADDRESS_MODE_SPECIAL:
+			switch (stuff->opcode.primary_register)
+			{
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
+					stuff->cycles_left_in_instruction += 4;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
+					stuff->cycles_left_in_instruction += 6;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
+					stuff->cycles_left_in_instruction += 4;
+					break;
+
+				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
+					stuff->cycles_left_in_instruction += 8;
+					break;
+
+				default:
+					break;
+			}
+
+			break;
+
+		default:
+			break;
+	}
 
 	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
-		if ((stuff->opcode.raw & 0x0040) != 0)
+		if (is_longword)
 		{
-			delta = -4;
+			address_delta = -4;
 			write_function = WriteLongWordBackwards;
 		}
 		else
 		{
-			delta = -2;
+			address_delta = -2;
 			write_function = WriteWord;
 		}
 	}
 	else
 	{
-		if ((stuff->opcode.raw & 0x0040) != 0)
+		if (is_longword)
 		{
-			delta = 4;
+			address_delta = 4;
 			write_function = WriteLongWord;
 		}
 		else
 		{
-			delta = 2;
+			address_delta = 2;
 			write_function = WriteWord;
 		}
 	}
@@ -1566,10 +1614,12 @@ static void Action_MOVEM(Stuff* const stuff)
 	{
 		if ((bitfield & 1) != 0)
 		{
-			if ((stuff->opcode.raw & 0x0400) != 0)
+			stuff->cycles_left_in_instruction += cycle_delta;
+
+			if (memory_to_register)
 			{
 				/* Memory to register */
-				if ((stuff->opcode.raw & 0x0040) != 0)
+				if (is_longword)
 					stuff->state->data_registers[i] = ReadLongWord(stuff, memory_address);
 				else
 					stuff->state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address));
@@ -1578,12 +1628,12 @@ static void Action_MOVEM(Stuff* const stuff)
 			{
 				/* Register to memory */
 				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-					write_function(stuff, memory_address + delta, stuff->state->address_registers[7 - i]);
+					write_function(stuff, memory_address + address_delta, stuff->state->address_registers[7 - i]);
 				else
 					write_function(stuff, memory_address, stuff->state->data_registers[i]);
 			}
 
-			memory_address += delta;
+			memory_address += address_delta;
 		}
 
 		bitfield >>= 1;
@@ -1594,10 +1644,12 @@ static void Action_MOVEM(Stuff* const stuff)
 	{
 		if ((bitfield & 1) != 0)
 		{
-			if ((stuff->opcode.raw & 0x0400) != 0)
+			stuff->cycles_left_in_instruction += cycle_delta;
+
+			if (memory_to_register)
 			{
 				/* Memory to register */
-				if ((stuff->opcode.raw & 0x0040) != 0)
+				if (is_longword)
 					stuff->state->address_registers[i] = ReadLongWord(stuff, memory_address);
 				else
 					stuff->state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address));
@@ -1606,12 +1658,12 @@ static void Action_MOVEM(Stuff* const stuff)
 			{
 				/* Register to memory */
 				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-					write_function(stuff, memory_address + delta, stuff->state->data_registers[7 - i]);
+					write_function(stuff, memory_address + address_delta, stuff->state->data_registers[7 - i]);
 				else
 					write_function(stuff, memory_address, stuff->state->address_registers[i]);
 			}
 
-			memory_address += delta;
+			memory_address += address_delta;
 		}
 
 		bitfield >>= 1;
