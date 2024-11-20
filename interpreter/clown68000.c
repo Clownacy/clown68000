@@ -1976,11 +1976,16 @@ static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
 
 static void Action_MULS(Stuff* const stuff)
 {
+	const cc_u32f shifted_source_value = stuff->source_value << 1;
+	const cc_u16f total_10_patterns = CountBitsSet((shifted_source_value ^ (shifted_source_value << 1)) & (0xAAAA << 1));
+	const cc_u16f total_01_patterns = CountBitsSet((shifted_source_value ^ (shifted_source_value >> 1)) & (0xAAAA >> 1));
+	stuff->cycles_left_in_instruction += 34 + (total_10_patterns + total_01_patterns) * 2;
 	Action_MULCommon(stuff, cc_true);
 }
 
 static void Action_MULU(Stuff* const stuff)
 {
+	stuff->cycles_left_in_instruction += 34 + CountBitsSet(stuff->source_value) * 2;
 	Action_MULCommon(stuff, cc_false);
 }
 
