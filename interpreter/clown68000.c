@@ -1786,13 +1786,10 @@ static void Action_MOVEQ(Stuff* const stuff)
 static cc_u16f CountBitsSet(cc_u16f value)
 {
 	/* https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan */
-	cc_u16f total_bits_set = 0;
+	cc_u16f total_bits_set;
 
-	while (value != 0)
-	{
+	for (total_bits_set = 0; value != 0; ++total_bits_set)
 		value &= value - 1;
-		++total_bits_set;
-	}
 
 	return total_bits_set;
 }
