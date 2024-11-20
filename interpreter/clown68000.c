@@ -1958,7 +1958,7 @@ static void Action_NBCD(Stuff* const stuff)
 	SingleOperandInstructionExecutionTimeWordOnly(stuff, 2, 4);
 }
 
-static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
+static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed, const cc_u16f total_operations)
 {
 	const cc_bool multiplier_is_negative = is_signed && (stuff->source_value & 0x8000) != 0;
 	const cc_bool multiplicand_is_negative = is_signed && (stuff->destination_value & 0x8000) != 0;
@@ -1970,6 +1970,8 @@ static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed)
 	const cc_u32f absolute_result = multiplicand * multiplier;
 
 	stuff->result_value = result_is_negative ? 0 - absolute_result : absolute_result;
+
+	stuff->cycles_left_in_instruction += 34 + total_operations * 2;
 }
 
 static void Action_MULS(Stuff* const stuff)
@@ -1977,14 +1979,13 @@ static void Action_MULS(Stuff* const stuff)
 	const cc_u32f shifted_source_value = stuff->source_value << 1;
 	const cc_u16f total_10_patterns = CountBitsSet((shifted_source_value ^ (shifted_source_value << 1)) & (0xAAAA << 1));
 	const cc_u16f total_01_patterns = CountBitsSet((shifted_source_value ^ (shifted_source_value >> 1)) & (0xAAAA >> 1));
-	stuff->cycles_left_in_instruction += 34 + (total_10_patterns + total_01_patterns) * 2;
-	Action_MULCommon(stuff, cc_true);
+
+	Action_MULCommon(stuff, cc_true, total_10_patterns + total_01_patterns);
 }
 
 static void Action_MULU(Stuff* const stuff)
 {
-	stuff->cycles_left_in_instruction += 34 + CountBitsSet(stuff->source_value) * 2;
-	Action_MULCommon(stuff, cc_false);
+	Action_MULCommon(stuff, cc_false, CountBitsSet(stuff->source_value));
 }
 
 static void Action_ADDX(Stuff* const stuff)
