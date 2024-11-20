@@ -1786,6 +1786,20 @@ static void Action_MOVEQ(Stuff* const stuff)
 	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
 }
 
+static cc_u16f CountBitsSet(cc_u16f value)
+{
+	/* https://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetKernighan */
+	cc_u16f total_bits_set = 0;
+
+	while (value != 0)
+	{
+		value &= value - 1;
+		++total_bits_set;
+	}
+
+	return total_bits_set;
+}
+
 static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 {
 	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
@@ -1808,31 +1822,85 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, stuff->source_value) : stuff->source_value;
 		const cc_u32f absolute_destination_value = destination_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(31, stuff->destination_value) : stuff->destination_value;
 
-		const cc_u32f absolute_quotient = absolute_destination_value / absolute_source_value;
-		const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;
+		stuff->cycles_left_in_instruction += 6;
 
-		/* Overflow detection */
-		if (absolute_quotient > (!is_signed ? 0xFFFFul : (result_is_negative ? 0x8000ul : 0x7FFFul)))
+		if (is_signed)
+			stuff->cycles_left_in_instruction += destination_is_negative ? 8 : 6;
+
+		/* Unsigned overflow detection. */
+		if (absolute_source_value >= (absolute_destination_value >> 16))
 		{
-			stuff->state->status_register |= CONDITION_CODE_OVERFLOW;
-			/* These two are officially undefined, but SingleStepTests show them consistently being set to these values. */
-			/* https://github.com/SingleStepTests/m68000 */
-			stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
-			stuff->state->status_register &= ~CONDITION_CODE_ZERO;
+			const cc_u32f absolute_quotient = absolute_destination_value / absolute_source_value;
 
-			stuff->result_value = stuff->destination_value;
+			/* Compute duration. */
+			if (is_signed)
+			{
+				stuff->cycles_left_in_instruction += 104;
+
+				if (source_is_negative)
+					stuff->cycles_left_in_instruction += 2;
+				else if (destination_is_negative)
+					stuff->cycles_left_in_instruction += 4;
+
+				stuff->cycles_left_in_instruction += (15 - CountBitsSet(absolute_quotient >> 1)) * 2;
+			}
+			else
+			{
+				const cc_u32f shifted_divisor = (absolute_source_value & 0xFFFF) << 16;
+
+				cc_u32f working_dividend = absolute_destination_value;
+				cc_u8f i;
+
+				stuff->cycles_left_in_instruction += 66;
+
+				for (i = 0; i < 15; ++i)
+				{
+					const cc_bool high_bit_set = (working_dividend & 0x80000000) != 0;
+
+					working_dividend <<= 1;
+
+					if (!high_bit_set)
+					{
+						stuff->cycles_left_in_instruction += 2;
+
+						if (working_dividend < shifted_divisor)
+						{
+							stuff->cycles_left_in_instruction += 2;
+							continue;
+						}
+					}
+
+					working_dividend -= shifted_divisor;
+				}
+			}
+
+			/* Signed overflow detection. */
+			if (!is_signed || absolute_quotient <= (result_is_negative ? 0x8000ul : 0x7FFFul))
+			{
+				const cc_u32f absolute_remainder = absolute_destination_value % absolute_source_value;
+
+				const cc_u32f quotient = result_is_negative ? 0 - absolute_quotient : absolute_quotient;
+				const cc_u32f remainder = destination_is_negative ? 0 - absolute_remainder : absolute_remainder;
+
+				stuff->result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);
+
+				stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
+				stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));
+				stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));
+
+				return;
+			}
 		}
-		else
-		{
-			const cc_u32f absolute_remainder = absolute_destination_value % absolute_source_value;
-			const cc_u32f remainder = destination_is_negative ? 0 - absolute_remainder : absolute_remainder;
 
-			stuff->result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);
+		/* If we get here, then there has been overflow. */
 
-			stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
-			stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));
-			stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));
-		}
+		stuff->state->status_register |= CONDITION_CODE_OVERFLOW;
+		/* These two are officially undefined, but SingleStepTests show them consistently being set to these values. */
+		/* https://github.com/SingleStepTests/m68000 */
+		stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
+		stuff->state->status_register &= ~CONDITION_CODE_ZERO;
+
+		stuff->result_value = stuff->destination_value;
 	}
 }
 
