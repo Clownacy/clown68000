@@ -22,9 +22,6 @@ TODO:
 68k memory access order:
 https://gendev.spritesmind.net/forum/viewtopic.php?p=36896#p36896
 
-DIVU/DIVS timing:
-https://gendev.spritesmind.net/forum/viewtopic.php?p=35569#p35569
-
 Z80 reset stuff:
 https://gendev.spritesmind.net/forum/viewtopic.php?p=36118#p36118
 
@@ -1833,6 +1830,7 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 			const cc_u32f absolute_quotient = absolute_destination_value / absolute_source_value;
 
 			/* Compute duration. */
+			/* https://gendev.spritesmind.net/forum/viewtopic.php?p=35569#p35569 */
 			if (is_signed)
 			{
 				stuff->cycles_left_in_instruction += 104;
