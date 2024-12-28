@@ -583,7 +583,7 @@ static size_t GetOperandName(Stuff* const stuff, char* const buffer, const Decod
 
 						case OPERATION_SIZE_BYTE:
 						default:
-							full_data = data;
+							full_data = data & 0xFF;
 							sign_extended_full_data = CC_SIGN_EXTEND_ULONG(7, data);
 							break;
 					}
