@@ -2268,7 +2268,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 				}
 			}
 
-			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street games depends on a one-instruction latency.
+			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
 			   https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
 			/* Process pending interrupt. */
 			if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
