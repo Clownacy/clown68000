@@ -1340,7 +1340,6 @@ static void Action_PEA(Stuff* const stuff)
 static void Action_ILLEGAL(Stuff* const stuff)
 {
 	/* Illegal instruction. */
-	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 4);
 }
 
@@ -1798,9 +1797,8 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 
 	if (stuff->source_value == 0)
 	{
-		/* TODO: These hacks are needed for the validator. Is the validator actually correct? */
+		/* TODO: This hack is needed for the validator. Is the validator actually correct? */
 		stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
-		stuff->state->program_counter -= 4;
 
 		Group1Or2Exception(stuff, 5);
 	}
@@ -2184,13 +2182,11 @@ static void Action_ROXD_REGISTER(Stuff* const stuff)
 
 static void Action_UNIMPLEMENTED_1(Stuff* const stuff)
 {
-	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 10);
 }
 
 static void Action_UNIMPLEMENTED_2(Stuff* const stuff)
 {
-	stuff->state->program_counter -= 2;
 	Group1Or2Exception(stuff, 11);
 }
 
