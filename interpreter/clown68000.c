@@ -274,6 +274,8 @@ static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 	WriteWord(stuff, state->address_registers[7], copy_status_register);
 
 	state->program_counter = ReadLongWord(stuff, vector_offset * 4);
+
+	stuff->cycles_left_in_instruction += 30;
 }
 
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
@@ -2278,7 +2280,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 				Group1Or2Exception(&stuff, 24 + state->pending_interrupt);
 
 				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
-				stuff.cycles_left_in_instruction += 44;
+				stuff.cycles_left_in_instruction += 14;
 
 				/* Set interrupt mask set to current level */
 				state->status_register &= ~STATUS_INTERRUPT_MASK;
