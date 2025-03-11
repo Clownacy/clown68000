@@ -103,6 +103,7 @@ typedef struct Stuff
 	struct
 	{
 		jmp_buf context;
+		cc_u16f vector_offset;
 	} exception;
 	SplitOpcode opcode;
 	cc_u32f operation_size, msb_bit_index;
@@ -273,8 +274,8 @@ static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 
 static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 {
-	DoInterrupt(stuff, vector_offset);
-	longjmp(stuff->exception.context, 1);
+	stuff->exception.vector_offset = vector_offset;
+	longjmp(stuff->exception.context, 2);
 }
 
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
@@ -2245,43 +2246,58 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 
 	if (!state->halted)
 	{
-		if (!setjmp(stuff.exception.context))
+		const cc_u32f starting_program_counter = state->program_counter;
+
+		switch (setjmp(stuff.exception.context))
 		{
-			if (!state->stopped)
-			{
-				/* Process next instruction. */
-
-				/* Figure out which instruction this is. */
-				const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
-
-				/* We already pre-fetched the instruction, so just advance past it. */
-				state->instruction_register = stuff.opcode.raw;
-				state->program_counter += 2;
-
-				switch (instruction)
+			case 0:
+				if (!state->stopped)
 				{
-					#include "microcode.c"
+					/* Process next instruction. */
+
+					/* Figure out which instruction this is. */
+					const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+
+					/* We already pre-fetched the instruction, so just advance past it. */
+					state->instruction_register = stuff.opcode.raw;
+					state->program_counter += 2;
+
+					switch (instruction)
+					{
+						#include "microcode.c"
+					}
 				}
-			}
 
-			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
-			   https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
-			/* Process pending interrupt. */
-			if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
-			{
-				state->stopped = cc_false;
+				/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
+				   https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
+				/* Process pending interrupt. */
+				if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
+				{
+					state->stopped = cc_false;
 
-				DoInterrupt(&stuff, 24 + state->pending_interrupt);
+					DoInterrupt(&stuff, 24 + state->pending_interrupt);
 
-				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
-				stuff.cycles_left_in_instruction += 14;
+					/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
+					stuff.cycles_left_in_instruction += 14;
 
-				/* Set interrupt mask set to current level */
-				state->status_register &= ~STATUS_INTERRUPT_MASK;
-				state->status_register |= state->pending_interrupt << 8;
+					/* Set interrupt mask set to current level */
+					state->status_register &= ~STATUS_INTERRUPT_MASK;
+					state->status_register |= state->pending_interrupt << 8;
 
-				state->pending_interrupt = 0;
-			}
+					state->pending_interrupt = 0;
+				}
+				break;
+
+			case 1:
+				/* Group 0 exception. */
+				/* Handled elsewhere. */
+				break;
+
+			case 2:
+				/* Group 1/2 exception. */
+				state->program_counter = starting_program_counter;
+				DoInterrupt(&stuff, stuff.exception.vector_offset);
+				break;
 		}
 	}
 
