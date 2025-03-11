@@ -1800,7 +1800,9 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 		/* TODO: This hack is needed for the validator. Is the validator actually correct? */
 		stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
 
-		Group1Or2Exception(stuff, 5);
+		stuff->result_value = stuff->destination_value;
+
+		DoInterrupt(stuff, 5);
 	}
 	else
 	{
