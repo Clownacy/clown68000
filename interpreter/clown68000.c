@@ -135,7 +135,6 @@ CC_ATTRIBUTE_PRINTF(1, 2) static void Clown68000_PrintError(const char *format, 
 
 /* Exception forward-declarations. */
 
-static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset);
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read);
 
 /* Memory reads */
@@ -161,10 +160,7 @@ static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 
 	/* TODO: I've heard that the exception should occur after the read is completed. */
 	if ((address & 1) != 0)
-	{
 		Group0Exception(stuff, 3, address, cc_true);
-		longjmp(stuff->exception.context, 1);
-	}
 
 	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true);
 }
@@ -209,10 +205,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 
 	/* TODO: I've heard that the exception should occur after the write is completed. */
 	if ((address & 1) != 0)
-	{
 		Group0Exception(stuff, 3, address, cc_false);
-		longjmp(stuff->exception.context, 1);
-	}
 
 	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, value & 0xFFFF);
 }
@@ -258,7 +251,7 @@ static void SetSupervisorMode(Clown68000_State *state, cc_bool supervisor_mode)
 
 /* Exceptions */
 
-static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
+static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 {
 	Clown68000_State* const state = stuff->state;
 	const cc_u16l copy_status_register = state->status_register; /* Preserve the original supervisor bit. */
@@ -278,6 +271,12 @@ static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 	stuff->cycles_left_in_instruction += 30;
 }
 
+static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
+{
+	DoInterrupt(stuff, vector_offset);
+	longjmp(stuff->exception.context, 1);
+}
+
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
 {
 	Clown68000_State* const state = stuff->state;
@@ -289,7 +288,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 	}
 	else
 	{
-		Group1Or2Exception(stuff, vector_offset);
+		DoInterrupt(stuff, vector_offset);
 
 		/* Push extra information to the stack. */
 		state->address_registers[7] -= 2;
@@ -301,6 +300,8 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 		/* According to the test suite, there really is a partial phantom copy of the intruction register here. */
 		WriteWord(stuff, state->address_registers[7], (state->instruction_register & 0xFFE0) | (is_a_read << 4) | 0xE);
 	}
+
+	longjmp(stuff->exception.context, 1);
 }
 
 /* Misc. utility */
@@ -739,10 +740,7 @@ static void SupervisorCheck(Stuff* const stuff)
 {
 	/* Only allow this instruction in supervisor mode. */
 	if ((stuff->state->status_register & STATUS_SUPERVISOR) == 0)
-	{
 		Group1Or2Exception(stuff, 8);
-		longjmp(stuff->exception.context, 1);
-	}
 }
 
 static void SetSize_Byte(Stuff* const stuff)
@@ -1379,10 +1377,7 @@ static void ProgramCounterChanged(Stuff* const stuff)
 
 	/* TODO: Instruction prefetch is normally what causes this, but that is not yet emulated so we have to do this manually instead. */
 	if ((program_counter & 1) != 0)
-	{
 		Group0Exception(stuff, 3, program_counter, cc_true);
-		longjmp(stuff->exception.context, 1);
-	}
 }
 
 static void SetStatusRegister(Stuff* const stuff, const cc_u16f value)
@@ -1807,7 +1802,6 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 		stuff->state->program_counter -= 4;
 
 		Group1Or2Exception(stuff, 5);
-		longjmp(stuff->exception.context, 1);
 	}
 	else
 	{
@@ -2277,7 +2271,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 			{
 				state->stopped = cc_false;
 
-				Group1Or2Exception(&stuff, 24 + state->pending_interrupt);
+				DoInterrupt(&stuff, 24 + state->pending_interrupt);
 
 				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
 				stuff.cycles_left_in_instruction += 14;
