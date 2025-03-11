@@ -298,7 +298,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 		WriteLongWordBackwards(stuff, state->address_registers[7], access_address);
 		state->address_registers[7] -= 2;
 		/* TODO - Function code and 'Instruction/Not' bit. */
-		/* According to the test suite, there really is a partial phantom copy of the intruction register here. */
+		/* According to the test suite, there really is a partial phantom copy of the instruction register here. */
 		WriteWord(stuff, state->address_registers[7], (state->instruction_register & 0xFFE0) | (is_a_read << 4) | 0xE);
 	}
 
@@ -1358,7 +1358,7 @@ static void Action_TAS(Stuff* const stuff)
 static void Action_TRAP(Stuff* const stuff)
 {
 	stuff->source_value = stuff->opcode.raw & 0xF;
-	Group1Or2Exception(stuff, 32 + stuff->source_value);
+	DoInterrupt(stuff, 32 + stuff->source_value);
 }
 
 static void Action_MOVE_USP(Stuff* const stuff)
@@ -1430,7 +1430,7 @@ static void Action_RTS(Stuff* const stuff)
 static void Action_TRAPV(Stuff* const stuff)
 {
 	if ((stuff->state->status_register & CONDITION_CODE_OVERFLOW) != 0)
-		Group1Or2Exception(stuff, 7);
+		DoInterrupt(stuff, 7);
 }
 
 static void Action_RTR(Stuff* const stuff)
@@ -1677,12 +1677,12 @@ static void Action_CHK(Stuff* const stuff)
 	{
 		/* Value is smaller than 0. */
 		stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
-		Group1Or2Exception(stuff, 6);
+		DoInterrupt(stuff, 6);
 	}
 	else if ((value ^ 0x8000) > (stuff->source_value ^ 0x8000))
 	{
 		/* Value is greater than upper bound. */
-		Group1Or2Exception(stuff, 6);
+		DoInterrupt(stuff, 6);
 	}
 
 	stuff->cycles_left_in_instruction += 6;
