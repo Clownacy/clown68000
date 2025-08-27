@@ -2276,6 +2276,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 					DoInterrupt(&stuff, 24 + state->pending_interrupt);
 
 					/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
+					/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
 					stuff.cycles_left_in_instruction += 14;
 
 					/* Set interrupt mask set to current level */
