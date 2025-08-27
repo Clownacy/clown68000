@@ -40,12 +40,17 @@ https://github.com/TomHarte/ProcessorTests/issues/28
 #include <stdarg.h>
 #include <stddef.h>
 
+/* This is needed so that '_POSIX_VERSION' has the chance to defined. */
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+	#include <unistd.h>
+#endif
+
 #include "../common/instruction.h"
 #include "../common/opcode.h"
 
 /* 'setjmp' is dreadfully slow on macOS (and presumably the BSDs),
    so use 'sigsetjmp' instead if it is available. */
-#ifdef _POSIX_C_SOURCE
+#if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 	#define clown68000_jmp_buf sigjmp_buf
 	#define clown68000_setjmp(env) sigsetjmp(env, 0)
 	#define clown68000_longjmp(env, val) siglongjmp(env, val)
