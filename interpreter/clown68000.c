@@ -1,6 +1,6 @@
 /*
     clown68000 - A Motorola 68000 emulator.
-    Copyright (C) 2021-2023  Clownacy
+    Copyright (C) 2021-2025 Clownacy
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published
@@ -42,6 +42,18 @@ https://github.com/TomHarte/ProcessorTests/issues/28
 
 #include "../common/instruction.h"
 #include "../common/opcode.h"
+
+/* 'setjmp' is dreadfully slow on macOS (and presumably the BSDs),
+   so use 'sigsetjmp' instead if it is available. */
+#ifdef _POSIX_C_SOURCE
+	#define clown68000_jmp_buf sigjmp_buf
+	#define clown68000_setjmp(env) sigsetjmp(env, 0)
+	#define clown68000_longjmp(env, val) siglongjmp(env, val)
+#else
+	#define clown68000_jmp_buf jmp_buf
+	#define clown68000_setjmp(env) setjmp(env)
+	#define clown68000_longjmp(env, val) longjmp(env, val)
+#endif
 
 enum
 {
@@ -102,7 +114,7 @@ typedef struct Stuff
 	cc_u8f cycles_left_in_instruction;
 	struct
 	{
-		jmp_buf context;
+		clown68000_jmp_buf context;
 		cc_u16f vector_offset;
 	} exception;
 	SplitOpcode opcode;
@@ -275,7 +287,7 @@ static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
 {
 	stuff->exception.vector_offset = vector_offset;
-	longjmp(stuff->exception.context, 2);
+	clown68000_longjmp(stuff->exception.context, 2);
 }
 
 static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_address, cc_bool is_a_read)
@@ -302,7 +314,7 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 		WriteWord(stuff, state->address_registers[7], (state->instruction_register & 0xFFE0) | (is_a_read << 4) | 0xE);
 	}
 
-	longjmp(stuff->exception.context, 1);
+	clown68000_longjmp(stuff->exception.context, 1);
 }
 
 /* Misc. utility */
@@ -2209,7 +2221,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 	stuff.state = state;
 	stuff.callbacks = callbacks;
 
-	if (!setjmp(stuff.exception.context))
+	if (!clown68000_setjmp(stuff.exception.context))
 	{
 		state->halted = cc_false;
 		state->stopped = cc_false;
@@ -2246,7 +2258,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 	{
 		const cc_u32f starting_program_counter = state->program_counter;
 
-		switch (setjmp(stuff.exception.context))
+		switch (clown68000_setjmp(stuff.exception.context))
 		{
 			case 0:
 				if (!state->stopped)
