@@ -2299,6 +2299,5 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 		}
 	}
 
-	/* TODO: Stop making this part of the state. */
 	return stuff.cycles_left_in_instruction;
 }
