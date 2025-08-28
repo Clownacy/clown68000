@@ -16,7 +16,6 @@ add_library(clown68000-common STATIC
 set_target_properties(clown68000-common PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
-	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -35,7 +34,6 @@ target_link_libraries(clown68000-interpreter PRIVATE clown68000-common)
 set_target_properties(clown68000-interpreter PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
-	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -57,7 +55,6 @@ add_executable(clown68000-microcode-generator
 set_target_properties(clown68000-microcode-generator PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
-	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -78,7 +75,6 @@ target_link_libraries(clown68000-disassembler PRIVATE clown68000-common)
 set_target_properties(clown68000-disassembler PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
-	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -96,7 +92,6 @@ target_link_libraries(clown68000-disassembler-tool PRIVATE clown68000-disassembl
 set_target_properties(clown68000-disassembler-tool PROPERTIES
 	C_STANDARD 90
 	C_STANDARD_REQUIRED OFF
-	C_EXTENSIONS OFF
 )
 
 if(CC_USE_C99_INTEGERS)
