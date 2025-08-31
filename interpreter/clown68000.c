@@ -169,7 +169,7 @@ static cc_u32f ReadByte(Stuff *stuff, cc_u32f address)
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
+	return (callbacks->read_callback(callbacks->user_data, address / 2, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
 }
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
@@ -180,7 +180,7 @@ static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_true);
 
-	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true);
+	return callbacks->read_callback(callbacks->user_data, address / 2, cc_true, cc_true);
 }
 
 static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
@@ -214,7 +214,7 @@ static void WriteByte(Stuff *stuff, cc_u32f address, cc_u32f value)
 	const cc_bool odd = (address & 1) != 0;
 	const cc_u16f byte = value & 0xFF;
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, byte | byte << 8);
+	callbacks->write_callback(callbacks->user_data, address / 2, (cc_bool)!odd, odd, byte | byte << 8);
 }
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -225,7 +225,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_false);
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, value & 0xFFFF);
+	callbacks->write_callback(callbacks->user_data, address / 2, cc_true, cc_true, value & 0xFFFF);
 }
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -269,6 +269,22 @@ static void SetSupervisorMode(Clown68000_State *state, cc_bool supervisor_mode)
 
 /* Exceptions */
 
+static void IncrementAddressRegister(Clown68000_State* const state, const cc_u8f address_register_index, const cc_u32f delta)
+{
+	cc_u32l* const address_register = &state->address_registers[address_register_index];
+
+	*address_register += delta;
+	*address_register &= 0xFFFFFFFF;
+}
+
+static void DecrementAddressRegister(Clown68000_State* const state, const cc_u8f address_register_index, const cc_u32f delta)
+{
+	cc_u32l* const address_register = &state->address_registers[address_register_index];
+
+	*address_register -= delta;
+	*address_register &= 0xFFFFFFFF;
+}
+
 static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 {
 	Clown68000_State* const state = stuff->state;
@@ -277,11 +293,11 @@ static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 	/* Exit trace mode. */
 	state->status_register &= ~STATUS_TRACE;
 	/* Set supervisor bit */
-	SetSupervisorMode(stuff->state, cc_true);
+	SetSupervisorMode(state, cc_true);
 
-	state->address_registers[7] -= 4;
+	DecrementAddressRegister(state, 7, 4);
 	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
-	state->address_registers[7] -= 2;
+	DecrementAddressRegister(state, 7, 2);
 	WriteWord(stuff, state->address_registers[7], copy_status_register);
 
 	state->program_counter = ReadLongWord(stuff, vector_offset * 4);
@@ -309,11 +325,11 @@ static void Group0Exception(Stuff *stuff, cc_u16f vector_offset, cc_u32f access_
 		DoInterrupt(stuff, vector_offset);
 
 		/* Push extra information to the stack. */
-		state->address_registers[7] -= 2;
+		DecrementAddressRegister(state, 7, 2);
 		WriteWord(stuff, state->address_registers[7], state->instruction_register);
-		state->address_registers[7] -= 4;
+		DecrementAddressRegister(state, 7, 4);
 		WriteLongWordBackwards(stuff, state->address_registers[7], access_address);
-		state->address_registers[7] -= 2;
+		DecrementAddressRegister(state, 7, 2);
 		/* TODO - Function code and 'Instruction/Not' bit. */
 		/* According to the test suite, there really is a partial phantom copy of the instruction register here. */
 		WriteWord(stuff, state->address_registers[7], (state->instruction_register & 0xFFE0) | (is_a_read << 4) | 0xE);
@@ -413,10 +429,9 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		/* Address register indirect with predecrement */
 
 		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
+		const cc_u8f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
 
-		state->address_registers[address_mode_register] -= increment_decrement_size;
-		state->address_registers[address_mode_register] &= 0xFFFFFFFF;
+		DecrementAddressRegister(state, address_mode_register, increment_decrement_size);
 		address = state->address_registers[address_mode_register];
 
 		stuff->cycles_left_in_instruction += longword ? 10 : 6;
@@ -426,11 +441,10 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		/* Address register indirect with postincrement */
 
 		/* The stack pointer moves two bytes instead of one byte, for alignment purposes */
-		const cc_u16f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
+		const cc_u8f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
 
 		address = state->address_registers[address_mode_register];
-		state->address_registers[address_mode_register] += increment_decrement_size;
-		state->address_registers[address_mode_register] &= 0xFFFFFFFF;
+		IncrementAddressRegister(state, address_mode_register, increment_decrement_size);
 
 		stuff->cycles_left_in_instruction += longword ? 8 : 4;
 	}
@@ -1287,28 +1301,33 @@ static void Action_MOVE(Stuff* const stuff)
 
 static void Action_LINK(Stuff* const stuff)
 {
-	/* Push address register to stack */
-	const cc_u32l address_register_contents = stuff->state->address_registers[stuff->opcode.primary_register];
+	Clown68000_State* const state = stuff->state;
 
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], address_register_contents);
+	/* Push address register to stack */
+	const cc_u32l address_register_contents = state->address_registers[stuff->opcode.primary_register];
+
+	DecrementAddressRegister(state, 7, 4);
+	WriteLongWordBackwards(stuff, state->address_registers[7], address_register_contents);
 
 	/* Copy stack pointer to address register */
-	stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->address_registers[7];
+	state->address_registers[stuff->opcode.primary_register] = state->address_registers[7];
 
 	/* Offset the stack pointer by the immediate value */
-	stuff->state->address_registers[7] += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+	IncrementAddressRegister(state, 7, CC_SIGN_EXTEND_ULONG(15, stuff->source_value));
 
 	stuff->cycles_left_in_instruction += 8;
 }
 
 static void Action_UNLK(Stuff* const stuff)
 {
-	const cc_u32l address_register_contents = stuff->state->address_registers[stuff->opcode.primary_register];
+	Clown68000_State* const state = stuff->state;
+
+	const cc_u32l address_register_contents = state->address_registers[stuff->opcode.primary_register];
 	const cc_u32l value = ReadLongWord(stuff, address_register_contents);
 
-	stuff->state->address_registers[7] = address_register_contents + 4;
-	stuff->state->address_registers[stuff->opcode.primary_register] = value;
+	state->address_registers[7] = address_register_contents;
+	IncrementAddressRegister(state, 7, 4);
+	state->address_registers[stuff->opcode.primary_register] = value;
 
 	stuff->cycles_left_in_instruction += 8;
 }
@@ -1349,8 +1368,10 @@ static void Action_SWAP(Stuff* const stuff)
 
 static void Action_PEA(Stuff* const stuff)
 {
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->source_value);
+	Clown68000_State* const state = stuff->state;
+
+	DecrementAddressRegister(state, 7, 4);
+	WriteLongWordBackwards(stuff, state->address_registers[7], stuff->source_value);
 
 	stuff->cycles_left_in_instruction = 12;
 	LEAPEAInstructionExecutionTime(stuff);
@@ -1424,11 +1445,13 @@ static void Action_STOP(Stuff* const stuff)
 
 static void Action_RTE(Stuff* const stuff)
 {
-	const cc_u16f new_status = ReadWord(stuff, stuff->state->address_registers[7]) & STATUS_REGISTER_MASK;
+	Clown68000_State* const state = stuff->state;
 
-	stuff->state->address_registers[7] += 2;
-	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
-	stuff->state->address_registers[7] += 4;
+	const cc_u16f new_status = ReadWord(stuff, state->address_registers[7]) & STATUS_REGISTER_MASK;
+
+	IncrementAddressRegister(state, 7, 2);
+	state->program_counter = ReadLongWord(stuff, state->address_registers[7]);
+	IncrementAddressRegister(state, 7, 4);
 
 	SetStatusRegister(stuff, new_status);
 	ProgramCounterChanged(stuff);
@@ -1438,8 +1461,10 @@ static void Action_RTE(Stuff* const stuff)
 
 static void Action_RTS(Stuff* const stuff)
 {
-	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
-	stuff->state->address_registers[7] += 4;
+	Clown68000_State* const state = stuff->state;
+
+	state->program_counter = ReadLongWord(stuff, state->address_registers[7]);
+	IncrementAddressRegister(state, 7, 4);
 
 	ProgramCounterChanged(stuff);
 
@@ -1454,11 +1479,13 @@ static void Action_TRAPV(Stuff* const stuff)
 
 static void Action_RTR(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_REGISTER_MASK;
-	stuff->state->status_register |= ReadByte(stuff, stuff->state->address_registers[7] + 1) & CONDITION_CODE_REGISTER_MASK;
-	stuff->state->address_registers[7] += 2;
-	stuff->state->program_counter = ReadLongWord(stuff, stuff->state->address_registers[7]);
-	stuff->state->address_registers[7] += 4;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_REGISTER_MASK;
+	state->status_register |= ReadByte(stuff, state->address_registers[7] + 1) & CONDITION_CODE_REGISTER_MASK;
+	IncrementAddressRegister(state, 7, 2);
+	state->program_counter = ReadLongWord(stuff, state->address_registers[7]);
+	IncrementAddressRegister(state, 7, 4);
 
 	ProgramCounterChanged(stuff);
 
@@ -1512,12 +1539,14 @@ static void Action_JMP(Stuff* const stuff)
 
 static void Action_JSR(Stuff* const stuff)
 {
-	const cc_u32f program_counter = stuff->state->program_counter;
+	Clown68000_State* const state = stuff->state;
+
+	const cc_u32f program_counter = state->program_counter;
 
 	/* According to SingleStepTests, this needs to be done first. */
 	Action_JMP(stuff);
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], program_counter);
+	DecrementAddressRegister(state, 7, 4);
+	WriteLongWordBackwards(stuff, state->address_registers[7], program_counter);
 
 	stuff->cycles_left_in_instruction += 8;
 }
@@ -1647,6 +1676,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			}
 
 			memory_address += address_delta;
+			memory_address &= 0xFFFFFFFF;
 		}
 
 		bitfield >>= 1;
@@ -1665,7 +1695,7 @@ static void Action_MOVEM(Stuff* const stuff)
 				if (is_longword)
 					stuff->state->address_registers[i] = ReadLongWord(stuff, memory_address);
 				else
-					stuff->state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address));
+					stuff->state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address)) & 0xFFFFFFFF;
 			}
 			else
 			{
@@ -1677,6 +1707,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			}
 
 			memory_address += address_delta;
+			memory_address &= 0xFFFFFFFF;
 		}
 
 		bitfield >>= 1;
@@ -1742,8 +1773,10 @@ static void Action_BRA_WORD(Stuff* const stuff)
 
 static void Action_BSR_SHORT(Stuff* const stuff)
 {
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	Clown68000_State* const state = stuff->state;
+
+	DecrementAddressRegister(state, 7, 4);
+	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
 	Action_BRA_SHORT(stuff);
 
 	stuff->cycles_left_in_instruction += 8;
@@ -1751,8 +1784,10 @@ static void Action_BSR_SHORT(Stuff* const stuff)
 
 static void Action_BSR_WORD(Stuff* const stuff)
 {
-	stuff->state->address_registers[7] -= 4;
-	WriteLongWordBackwards(stuff, stuff->state->address_registers[7], stuff->state->program_counter);
+	Clown68000_State* const state = stuff->state;
+
+	DecrementAddressRegister(state, 7, 4);
+	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
 	Action_BRA_WORD(stuff);
 
 	stuff->cycles_left_in_instruction += 8;
