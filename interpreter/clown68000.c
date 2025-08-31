@@ -296,11 +296,6 @@ static void IncrementProgramCounter(Clown68000_State* const state, const cc_u32f
 	IncrementRegister(&state->program_counter, delta);
 }
 
-static void DecrementProgramCounter(Clown68000_State* const state, const cc_u32f delta)
-{
-	DecrementRegister(&state->program_counter, delta);
-}
-
 static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 {
 	Clown68000_State* const state = stuff->state;
