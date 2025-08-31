@@ -416,6 +416,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		const cc_u16f increment_decrement_size = (address_mode_register == 7 && operation_size_in_bytes == 1) ? 2 : operation_size_in_bytes;
 
 		state->address_registers[address_mode_register] -= increment_decrement_size;
+		state->address_registers[address_mode_register] &= 0xFFFFFFFF;
 		address = state->address_registers[address_mode_register];
 
 		stuff->cycles_left_in_instruction += longword ? 10 : 6;
@@ -429,6 +430,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 		address = state->address_registers[address_mode_register];
 		state->address_registers[address_mode_register] += increment_decrement_size;
+		state->address_registers[address_mode_register] &= 0xFFFFFFFF;
 
 		stuff->cycles_left_in_instruction += longword ? 8 : 4;
 	}
