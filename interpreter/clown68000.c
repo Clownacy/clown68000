@@ -169,7 +169,7 @@ static cc_u32f ReadByte(Stuff *stuff, cc_u32f address)
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	return (callbacks->read_callback(callbacks->user_data, address / 2, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
+	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
 }
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
@@ -180,7 +180,7 @@ static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_true);
 
-	return callbacks->read_callback(callbacks->user_data, address / 2, cc_true, cc_true);
+	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true);
 }
 
 static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
@@ -214,7 +214,7 @@ static void WriteByte(Stuff *stuff, cc_u32f address, cc_u32f value)
 	const cc_bool odd = (address & 1) != 0;
 	const cc_u16f byte = value & 0xFF;
 
-	callbacks->write_callback(callbacks->user_data, address / 2, (cc_bool)!odd, odd, byte | byte << 8);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, byte | byte << 8);
 }
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -225,7 +225,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_false);
 
-	callbacks->write_callback(callbacks->user_data, address / 2, cc_true, cc_true, value & 0xFFFF);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, value & 0xFFFF);
 }
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
