@@ -269,20 +269,36 @@ static void SetSupervisorMode(Clown68000_State *state, cc_bool supervisor_mode)
 
 /* Exceptions */
 
+static void IncrementRegister(cc_u32l* const register_pointer, const cc_u32f delta)
+{
+	*register_pointer += delta;
+	*register_pointer &= 0xFFFFFFFF;
+}
+
+static void DecrementRegister(cc_u32l* const register_pointer, const cc_u32f delta)
+{
+	*register_pointer -= delta;
+	*register_pointer &= 0xFFFFFFFF;
+}
+
 static void IncrementAddressRegister(Clown68000_State* const state, const cc_u8f address_register_index, const cc_u32f delta)
 {
-	cc_u32l* const address_register = &state->address_registers[address_register_index];
-
-	*address_register += delta;
-	*address_register &= 0xFFFFFFFF;
+	IncrementRegister(&state->address_registers[address_register_index], delta);
 }
 
 static void DecrementAddressRegister(Clown68000_State* const state, const cc_u8f address_register_index, const cc_u32f delta)
 {
-	cc_u32l* const address_register = &state->address_registers[address_register_index];
+	DecrementRegister(&state->address_registers[address_register_index], delta);
+}
 
-	*address_register -= delta;
-	*address_register &= 0xFFFFFFFF;
+static void IncrementProgramCounter(Clown68000_State* const state, const cc_u32f delta)
+{
+	IncrementRegister(&state->program_counter, delta);
+}
+
+static void DecrementProgramCounter(Clown68000_State* const state, const cc_u32f delta)
+{
+	DecrementRegister(&state->program_counter, delta);
 }
 
 static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
@@ -388,7 +404,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		const cc_u32f short_address = ReadWord(stuff, state->program_counter);
 
 		address = CC_SIGN_EXTEND_ULONG(15, short_address);
-		state->program_counter += 2;
+		IncrementProgramCounter(state, 2);
 
 		stuff->cycles_left_in_instruction += longword ? 12 : 8;
 	}
@@ -396,7 +412,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 	{
 		/* Absolute long */
 		address = ReadLongWord(stuff, state->program_counter);
-		state->program_counter += 4;
+		IncrementProgramCounter(state, 4);
 
 		stuff->cycles_left_in_instruction += longword ? 16 : 12;
 	}
@@ -407,12 +423,12 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		{
 			/* A byte-sized immediate value occupies two bytes of space */
 			address = state->program_counter + 1;
-			state->program_counter += 2;
+			IncrementProgramCounter(state, 2);
 		}
 		else
 		{
 			address = state->program_counter;
-			state->program_counter += operation_size_in_bytes;
+			IncrementProgramCounter(state, operation_size_in_bytes);
 		}
 
 		stuff->cycles_left_in_instruction += longword ? 8 : 4;
@@ -467,7 +483,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			const cc_u32f displacement = ReadWord(stuff, state->program_counter);
 
 			address += CC_SIGN_EXTEND_ULONG(15, displacement);
-			state->program_counter += 2;
+			IncrementProgramCounter(state, 2);
 
 			stuff->cycles_left_in_instruction += longword ? 12 : 8;
 		}
@@ -483,13 +499,13 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 
 			address += displacement_reg_value;
 			address += displacement_literal_value;
-			state->program_counter += 2;
+			IncrementProgramCounter(state, 2);
 
 			stuff->cycles_left_in_instruction += longword ? 14 : 10;
 		}
 	}
 
-	decoded_memory_address_mode->address = address;
+	decoded_memory_address_mode->address = address & 0xFFFFFFFF;
 }
 
 static void DecodeAddressMode(Stuff* const stuff, DecodedAddressMode* const decoded_address_mode, const unsigned int operation_size_in_bytes, const AddressMode address_mode, const unsigned int address_mode_register)
@@ -1413,7 +1429,9 @@ static void Action_MOVE_USP(Stuff* const stuff)
 
 static void ProgramCounterChanged(Stuff* const stuff)
 {
-	const cc_u32f program_counter = stuff->state->program_counter;
+	Clown68000_State* const state = stuff->state;
+
+	const cc_u32f program_counter = state->program_counter;
 
 	/* TODO: Instruction prefetch is normally what causes this, but that is not yet emulated so we have to do this manually instead. */
 	if ((program_counter & 1) != 0)
@@ -1754,7 +1772,7 @@ static void Action_SCC(Stuff* const stuff)
 
 static void Action_BRA_SHORT(Stuff* const stuff)
 {
-	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
+	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw));
 
 	ProgramCounterChanged(stuff);
 
@@ -1763,8 +1781,7 @@ static void Action_BRA_SHORT(Stuff* const stuff)
 
 static void Action_BRA_WORD(Stuff* const stuff)
 {
-	stuff->state->program_counter -= 2;
-	stuff->state->program_counter += CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
+	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(15, stuff->source_value) - 2);
 
 	ProgramCounterChanged(stuff);
 
@@ -2312,7 +2329,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 
 					/* We already pre-fetched the instruction, so just advance past it. */
 					state->instruction_register = stuff.opcode.raw;
-					state->program_counter += 2;
+					IncrementProgramCounter(state, 2);
 
 					switch (instruction)
 					{
