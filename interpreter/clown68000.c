@@ -122,7 +122,7 @@ typedef struct Stuff
 		clown68000_jmp_buf context;
 		cc_u16f vector_offset;
 	} exception;
-	SplitOpcode opcode;
+	const SplitOpcode *opcode;
 	cc_u32f operation_size, msb_bit_index;
 	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
@@ -742,13 +742,13 @@ static void StandardInstructionExecutionTime(Stuff* const stuff)
 
 static void StandardInstructionExecutionTimeQuick(Stuff* const stuff)
 {
-	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER || (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER))
+	if (stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER || (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER))
 		stuff->cycles_left_in_instruction += 2;
 }
 
 static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 {
-	switch (stuff->opcode.primary_address_mode)
+	switch (stuff->opcode->primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 			stuff->cycles_left_in_instruction += 4;
@@ -759,7 +759,7 @@ static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
-			switch (stuff->opcode.primary_register)
+			switch (stuff->opcode->primary_register)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
@@ -784,7 +784,7 @@ static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 
 static void ABCDSBCDExecutionTime(Stuff* const stuff)
 {
-	stuff->cycles_left_in_instruction = (stuff->opcode.raw & 0x0008) != 0 ? 18 : 6;
+	stuff->cycles_left_in_instruction = (stuff->opcode->raw & 0x0008) != 0 ? 18 : 6;
 }
 
 
@@ -814,12 +814,12 @@ static void SetSize_Longword(Stuff* const stuff)
 
 static void SetSize_LongwordRegisterByteMemory(Stuff* const stuff)
 {
-	stuff->operation_size = stuff->opcode.primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
+	stuff->operation_size = stuff->opcode->primary_address_mode == ADDRESS_MODE_DATA_REGISTER ? 4 : 1;
 }
 
 static void SetSize_Move(Stuff* const stuff)
 {
-	switch (stuff->opcode.raw & 0x3000)
+	switch (stuff->opcode->raw & 0x3000)
 	{
 		case 0x0000: /* TODO: Verify this. */
 		case 0x1000:
@@ -838,13 +838,13 @@ static void SetSize_Move(Stuff* const stuff)
 
 static void SetSize_Ext(Stuff* const stuff)
 {
-	stuff->operation_size = (stuff->opcode.raw & 0x0040) != 0 ? 4 : 2;
+	stuff->operation_size = (stuff->opcode->raw & 0x0040) != 0 ? 4 : 2;
 }
 
 static void SetSize_Standard(Stuff* const stuff)
 {
 	static const cc_u8l sizes[] = {1, 2, 4, 4}; /* TODO: Verify that last one... */
-	stuff->operation_size = sizes[stuff->opcode.bits_6_and_7];
+	stuff->operation_size = sizes[stuff->opcode->bits_6_and_7];
 }
 
 static void SetMSBBitIndex(Stuff* const stuff)
@@ -861,7 +861,7 @@ static void DecodeSource_ImmediateData(Stuff* const stuff)
 static void DecodeSource_DataRegisterSecondary(Stuff* const stuff)
 {
 	/* Secondary data register. */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode->secondary_register);
 }
 
 static void DecodeSource_ImmediateDataByte(Stuff* const stuff)
@@ -873,7 +873,7 @@ static void DecodeSource_ImmediateDataByte(Stuff* const stuff)
 static void DecodeSource_MemoryAddressPrimary(Stuff* const stuff)
 {
 	/* Memory address */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 0, stuff->opcode.primary_address_mode, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 0, stuff->opcode->primary_address_mode, stuff->opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 }
 
 static void DecodeSource_StatusRegister(Stuff* const stuff)
@@ -889,88 +889,88 @@ static void DecodeSource_ImmediateDataWord(Stuff* const stuff)
 
 static void DecodeSource_BCDX(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, (stuff->opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, (stuff->opcode->raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode->primary_register);
 }
 
 static void DecodeSource_DataRegisterSecondaryOrPrimaryAddressMode(Stuff* const stuff)
 {
 	/* Primary address mode or secondary data register, based on direction bit. */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode.bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff->opcode.primary_address_mode, stuff->opcode.bit_8 ? stuff->opcode.secondary_register : stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode->bit_8 ? ADDRESS_MODE_DATA_REGISTER : stuff->opcode->primary_address_mode, stuff->opcode->bit_8 ? stuff->opcode->secondary_register : stuff->opcode->primary_register);
 }
 
 static void DecodeSource_PrimaryAddressModeSized(Stuff* const stuff)
 {
 	/* Word or longword based on bit 8. */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->opcode.bit_8 ? 4 : 2, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->opcode->bit_8 ? 4 : 2, stuff->opcode->primary_address_mode, stuff->opcode->primary_register);
 }
 
 static void DecodeSource_AddressRegisterPrimaryPostIncrement(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode->primary_register);
 }
 
 static void DecodeSource_PrimaryAddressMode(Stuff* const stuff)
 {
 	/* Primary address mode. */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, stuff->operation_size, stuff->opcode->primary_address_mode, stuff->opcode->primary_register);
 }
 
 static void DecodeSource_PrimaryAddressModeWord(Stuff* const stuff)
 {
 	/* Primary address mode, hardcoded to word-size. */
-	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 2, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->source_decoded_address_mode, 2, stuff->opcode->primary_address_mode, stuff->opcode->primary_register);
 }
 
 static void DecodeDestination_DataRegisterPrimary(Stuff* const stuff)
 {
 	/* Data register (primary) */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode->primary_register);
 }
 
 static void DecodeDestination_DataRegisterSecondary(Stuff* const stuff)
 {
 	/* Data register (secondary) */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_DATA_REGISTER, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_AddressRegisterSecondary(Stuff* const stuff)
 {
 	/* Address register (secondary) */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_SecondaryAddressMode(Stuff* const stuff)
 {
 	/* Secondary address mode */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.secondary_address_mode, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode->secondary_address_mode, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_BCDX(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, (stuff->opcode.raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, (stuff->opcode->raw & 0x0008) != 0 ? ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT : ADDRESS_MODE_DATA_REGISTER, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_DataRegisterSecondaryOrPrimaryAddressMode(Stuff* const stuff)
 {
 	/* Primary address mode or secondary data register, based on direction bit */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.bit_8 ? stuff->opcode.primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff->opcode.bit_8 ? stuff->opcode.primary_register : stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode->bit_8 ? stuff->opcode->primary_address_mode : ADDRESS_MODE_DATA_REGISTER, stuff->opcode->bit_8 ? stuff->opcode->primary_register : stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_AddressRegisterSecondaryFull(Stuff* const stuff)
 {
 	/* Full secondary address register */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 4, ADDRESS_MODE_ADDRESS_REGISTER, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_AddressRegisterSecondaryPostIncrement(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode.secondary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT, stuff->opcode->secondary_register);
 }
 
 static void DecodeDestination_PrimaryAddressMode(Stuff* const stuff)
 {
 	/* Using primary address mode */
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode.primary_address_mode, stuff->opcode.primary_register);
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, stuff->operation_size, stuff->opcode->primary_address_mode, stuff->opcode->primary_register);
 }
 
 static void DecodeDestination_ConditionCodeRegister(Stuff* const stuff)
@@ -985,12 +985,12 @@ static void DecodeDestination_StatusRegister(Stuff* const stuff)
 
 static void DecodeDestination_MOVEM(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, stuff->opcode.primary_address_mode, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, stuff->opcode->primary_address_mode, stuff->opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 }
 
 static void DecodeDestination_MOVEP(Stuff* const stuff)
 {
-	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff->opcode.primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
+	DecodeAddressMode(stuff, &stuff->destination_decoded_address_mode, 0, ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT, stuff->opcode->primary_register); /* 0 is a special value that means to obtain the address rather than the data at that address. */
 }
 
 static void ReadSource(Stuff* const stuff)
@@ -1130,7 +1130,7 @@ static void Action_SUB(Stuff* const stuff)
 
 static void Action_ADDASUBACommon(Stuff* const stuff)
 {
-	if (!stuff->opcode.bit_8)
+	if (!stuff->opcode->bit_8)
 	{
 		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
 
@@ -1141,7 +1141,7 @@ static void Action_ADDASUBACommon(Stuff* const stuff)
 
 static void Action_CMPA(Stuff* const stuff)
 {
-	if (!stuff->opcode.bit_8)
+	if (!stuff->opcode->bit_8)
 		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
 
 	Action_CMP(stuff);
@@ -1155,7 +1155,7 @@ static void Action_SUBA(Stuff* const stuff)
 
 static void Action_SUBQ(Stuff* const stuff)
 {
-	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
+	stuff->source_value = ((stuff->opcode->secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
 	Action_SUB(stuff);
 
 	StandardInstructionExecutionTimeQuick(stuff);
@@ -1176,7 +1176,7 @@ static void Action_ADDA(Stuff* const stuff)
 
 static void Action_ADDQ(Stuff* const stuff)
 {
-	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
+	stuff->source_value = ((stuff->opcode->secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
 	Action_ADD(stuff);
 
 	StandardInstructionExecutionTimeQuick(stuff);
@@ -1203,7 +1203,7 @@ static void Action_BTST(Stuff* const stuff)
 {
 	Action_Bxxx(stuff);
 
-	if (stuff->operation_size == 4 || (stuff->opcode.primary_address_mode == ADDRESS_MODE_SPECIAL && stuff->opcode.primary_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE))
+	if (stuff->operation_size == 4 || (stuff->opcode->primary_address_mode == ADDRESS_MODE_SPECIAL && stuff->opcode->primary_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE))
 		stuff->cycles_left_in_instruction += 2;
 
 	/* TODO: 'BTST d0,#' timing. */
@@ -1246,42 +1246,42 @@ static void Action_MOVEP(Stuff* const stuff)
 {
 	Clown68000_State* const state = stuff->state;
 
-	switch (stuff->opcode.bits_6_and_7)
+	switch (stuff->opcode->bits_6_and_7)
 	{
 		case 0:
 			/* Memory to register (word) */
-			state->data_registers[stuff->opcode.secondary_register] &= ~0xFFFFul;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 1;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 0;
+			state->data_registers[stuff->opcode->secondary_register] &= ~0xFFFFul;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 1;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 0;
 
 			stuff->cycles_left_in_instruction += 4;
 			break;
 
 		case 1:
 			/* Memory to register (longword) */
-			state->data_registers[stuff->opcode.secondary_register] = 0;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 3;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 2;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 2) << 8 * 1;
-			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 3) << 8 * 0;
+			state->data_registers[stuff->opcode->secondary_register] = 0;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 3;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 2;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 2) << 8 * 1;
+			state->data_registers[stuff->opcode->secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 3) << 8 * 0;
 
 			stuff->cycles_left_in_instruction += 12;
 			break;
 
 		case 2:
 			/* Register to memory (word) */
-			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
-			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 1) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 0) & 0xFF);
 
 			stuff->cycles_left_in_instruction += 4;
 			break;
 
 		case 3:
 			/* Register to memory (longword) */
-			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 3) & 0xFF);
-			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 2) & 0xFF);
-			WriteByte(stuff, stuff->destination_value + 2 * 2, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
-			WriteByte(stuff, stuff->destination_value + 2 * 3, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 3) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 2) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 2, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 1) & 0xFF);
+			WriteByte(stuff, stuff->destination_value + 2 * 3, (state->data_registers[stuff->opcode->secondary_register] >> 8 * 0) & 0xFF);
 
 			stuff->cycles_left_in_instruction += 12;
 			break;
@@ -1313,7 +1313,7 @@ static void Action_MOVE(Stuff* const stuff)
 	{
 		stuff->cycles_left_in_instruction += 8;
 	}
-	else if (stuff->opcode.secondary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+	else if (stuff->opcode->secondary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
 		stuff->cycles_left_in_instruction -= 2;
 	}
@@ -1324,13 +1324,13 @@ static void Action_LINK(Stuff* const stuff)
 	Clown68000_State* const state = stuff->state;
 
 	/* Push address register to stack */
-	const cc_u32l address_register_contents = state->address_registers[stuff->opcode.primary_register];
+	const cc_u32l address_register_contents = state->address_registers[stuff->opcode->primary_register];
 
 	DecrementAddressRegister(state, 7, 4);
 	WriteLongWordBackwards(stuff, state->address_registers[7], address_register_contents);
 
 	/* Copy stack pointer to address register */
-	state->address_registers[stuff->opcode.primary_register] = state->address_registers[7];
+	state->address_registers[stuff->opcode->primary_register] = state->address_registers[7];
 
 	/* Offset the stack pointer by the immediate value */
 	IncrementAddressRegister(state, 7, CC_SIGN_EXTEND_ULONG(15, stuff->source_value));
@@ -1342,12 +1342,12 @@ static void Action_UNLK(Stuff* const stuff)
 {
 	Clown68000_State* const state = stuff->state;
 
-	const cc_u32l address_register_contents = state->address_registers[stuff->opcode.primary_register];
+	const cc_u32l address_register_contents = state->address_registers[stuff->opcode->primary_register];
 	const cc_u32l value = ReadLongWord(stuff, address_register_contents);
 
 	state->address_registers[7] = address_register_contents;
 	IncrementAddressRegister(state, 7, 4);
-	state->address_registers[stuff->opcode.primary_register] = value;
+	state->address_registers[stuff->opcode->primary_register] = value;
 
 	stuff->cycles_left_in_instruction += 8;
 }
@@ -1378,7 +1378,7 @@ static void Action_NOT(Stuff* const stuff)
 
 static void Action_EXT(Stuff* const stuff)
 {
-	stuff->result_value = CC_SIGN_EXTEND_ULONG((stuff->opcode.raw & 0x0040) != 0 ? 15 : 7, stuff->destination_value);
+	stuff->result_value = CC_SIGN_EXTEND_ULONG((stuff->opcode->raw & 0x0040) != 0 ? 15 : 7, stuff->destination_value);
 }
 
 static void Action_SWAP(Stuff* const stuff)
@@ -1417,16 +1417,16 @@ static void Action_TAS(Stuff* const stuff)
 
 static void Action_TRAP(Stuff* const stuff)
 {
-	stuff->source_value = stuff->opcode.raw & 0xF;
+	stuff->source_value = stuff->opcode->raw & 0xF;
 	DoInterrupt(stuff, 32 + stuff->source_value);
 }
 
 static void Action_MOVE_USP(Stuff* const stuff)
 {
-	if ((stuff->opcode.raw & 8) != 0)
-		stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->user_stack_pointer;
+	if ((stuff->opcode->raw & 8) != 0)
+		stuff->state->address_registers[stuff->opcode->primary_register] = stuff->state->user_stack_pointer;
 	else
-		stuff->state->user_stack_pointer = stuff->state->address_registers[stuff->opcode.primary_register];
+		stuff->state->user_stack_pointer = stuff->state->address_registers[stuff->opcode->primary_register];
 }
 
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
@@ -1522,7 +1522,7 @@ static void Action_JMP(Stuff* const stuff)
 
 	stuff->cycles_left_in_instruction = 8;
 
-	switch (stuff->opcode.primary_address_mode)
+	switch (stuff->opcode->primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 			stuff->cycles_left_in_instruction += 2;
@@ -1533,7 +1533,7 @@ static void Action_JMP(Stuff* const stuff)
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
-			switch (stuff->opcode.primary_register)
+			switch (stuff->opcode->primary_register)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
@@ -1596,8 +1596,8 @@ static void Action_MOVEM(Stuff* const stuff)
 	int address_delta;
 	void (*write_function)(Stuff *stuff, cc_u32f address, cc_u32f value);
 
-	const cc_bool memory_to_register = (stuff->opcode.raw & 0x0400) != 0;
-	const cc_bool is_longword = (stuff->opcode.raw & 0x0040) != 0;
+	const cc_bool memory_to_register = (stuff->opcode->raw & 0x0400) != 0;
+	const cc_bool is_longword = (stuff->opcode->raw & 0x0040) != 0;
 	const unsigned int cycle_delta = is_longword ? 8 : 4;
 
 	stuff->cycles_left_in_instruction = 8;
@@ -1605,7 +1605,7 @@ static void Action_MOVEM(Stuff* const stuff)
 	if (memory_to_register)
 		stuff->cycles_left_in_instruction += 4;
 
-	switch (stuff->opcode.primary_address_mode)
+	switch (stuff->opcode->primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
 			stuff->cycles_left_in_instruction += 4;
@@ -1616,7 +1616,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
-			switch (stuff->opcode.primary_register)
+			switch (stuff->opcode->primary_register)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
 					stuff->cycles_left_in_instruction += 4;
@@ -1644,7 +1644,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			break;
 	}
 
-	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+	if (stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
 		if (is_longword)
 		{
@@ -1691,7 +1691,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			else
 			{
 				/* Register to memory */
-				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+				if (stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 					write_function(stuff, memory_address + address_delta, stuff->state->address_registers[7 - i]);
 				else
 					write_function(stuff, memory_address, stuff->state->data_registers[i]);
@@ -1722,7 +1722,7 @@ static void Action_MOVEM(Stuff* const stuff)
 			else
 			{
 				/* Register to memory */
-				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
+				if (stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 					write_function(stuff, memory_address + address_delta, stuff->state->data_registers[7 - i]);
 				else
 					write_function(stuff, memory_address, stuff->state->address_registers[i]);
@@ -1735,13 +1735,13 @@ static void Action_MOVEM(Stuff* const stuff)
 		bitfield >>= 1;
 	}
 
-	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT || stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
-		stuff->state->address_registers[stuff->opcode.primary_register] = memory_address;
+	if (stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT || stuff->opcode->primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
+		stuff->state->address_registers[stuff->opcode->primary_register] = memory_address;
 }
 
 static void Action_CHK(Stuff* const stuff)
 {
-	const cc_u32f value = stuff->state->data_registers[stuff->opcode.secondary_register] & 0xFFFF;
+	const cc_u32f value = stuff->state->data_registers[stuff->opcode->secondary_register] & 0xFFFF;
 
 	stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_CARRY | CONDITION_CODE_OVERFLOW | CONDITION_CODE_ZERO);
 
@@ -1762,7 +1762,7 @@ static void Action_CHK(Stuff* const stuff)
 
 static void Action_SCC(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode->raw))
 	{
 		stuff->result_value = 0xFF;
 		SingleOperandInstructionExecutionTimeWordOnly(stuff, 2, 4);
@@ -1776,7 +1776,7 @@ static void Action_SCC(Stuff* const stuff)
 
 static void Action_BRA_SHORT(Stuff* const stuff)
 {
-	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw));
+	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(7, stuff->opcode->raw));
 
 	ProgramCounterChanged(stuff);
 
@@ -1816,7 +1816,7 @@ static void Action_BSR_WORD(Stuff* const stuff)
 
 static void Action_BCC_SHORT(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode->raw))
 		Action_BRA_SHORT(stuff);
 	else
 		stuff->cycles_left_in_instruction += 4;
@@ -1824,7 +1824,7 @@ static void Action_BCC_SHORT(Stuff* const stuff)
 
 static void Action_BCC_WORD(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode->raw))
 		Action_BRA_WORD(stuff);
 	else
 		stuff->cycles_left_in_instruction += 4;
@@ -1832,17 +1832,17 @@ static void Action_BCC_WORD(Stuff* const stuff)
 
 static void Action_DBCC(Stuff* const stuff)
 {
-	if (!IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	if (!IsOpcodeConditionTrue(stuff->state, stuff->opcode->raw))
 	{
-		cc_u16f loop_counter = stuff->state->data_registers[stuff->opcode.primary_register] & 0xFFFF;
+		cc_u16f loop_counter = stuff->state->data_registers[stuff->opcode->primary_register] & 0xFFFF;
 
 		if (loop_counter-- != 0)
 			Action_BRA_WORD(stuff);
 		else
 			stuff->cycles_left_in_instruction += 6;
 
-		stuff->state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
-		stuff->state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
+		stuff->state->data_registers[stuff->opcode->primary_register] &= ~0xFFFFul;
+		stuff->state->data_registers[stuff->opcode->primary_register] |= loop_counter & 0xFFFF;
 	}
 	else
 	{
@@ -1852,7 +1852,7 @@ static void Action_DBCC(Stuff* const stuff)
 
 static void Action_MOVEQ(Stuff* const stuff)
 {
-	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw);
+	stuff->result_value = CC_SIGN_EXTEND_ULONG(7, stuff->opcode->raw);
 }
 
 static cc_u16f CountBitsSet(cc_u16f value)
@@ -2091,25 +2091,25 @@ static void Action_EXG(Stuff* const stuff)
 {
 	cc_u32f temp;
 
-	switch (stuff->opcode.raw & 0x00F8)
+	switch (stuff->opcode->raw & 0x00F8)
 	{
 		/* TODO: What should happen when an invalid bit pattern occurs? */
 		case 0x0040:
-			temp = stuff->state->data_registers[stuff->opcode.secondary_register];
-			stuff->state->data_registers[stuff->opcode.secondary_register] = stuff->state->data_registers[stuff->opcode.primary_register];
-			stuff->state->data_registers[stuff->opcode.primary_register] = temp;
+			temp = stuff->state->data_registers[stuff->opcode->secondary_register];
+			stuff->state->data_registers[stuff->opcode->secondary_register] = stuff->state->data_registers[stuff->opcode->primary_register];
+			stuff->state->data_registers[stuff->opcode->primary_register] = temp;
 			break;
 
 		case 0x0048:
-			temp = stuff->state->address_registers[stuff->opcode.secondary_register];
-			stuff->state->address_registers[stuff->opcode.secondary_register] = stuff->state->address_registers[stuff->opcode.primary_register];
-			stuff->state->address_registers[stuff->opcode.primary_register] = temp;
+			temp = stuff->state->address_registers[stuff->opcode->secondary_register];
+			stuff->state->address_registers[stuff->opcode->secondary_register] = stuff->state->address_registers[stuff->opcode->primary_register];
+			stuff->state->address_registers[stuff->opcode->primary_register] = temp;
 			break;
 
 		case 0x0088:
-			temp = stuff->state->data_registers[stuff->opcode.secondary_register];
-			stuff->state->data_registers[stuff->opcode.secondary_register] = stuff->state->address_registers[stuff->opcode.primary_register];
-			stuff->state->address_registers[stuff->opcode.primary_register] = temp;
+			temp = stuff->state->data_registers[stuff->opcode->secondary_register];
+			stuff->state->data_registers[stuff->opcode->secondary_register] = stuff->state->address_registers[stuff->opcode->primary_register];
+			stuff->state->address_registers[stuff->opcode->primary_register] = temp;
 			break;
 	}
 
@@ -2125,7 +2125,7 @@ static void Action_EXG(Stuff* const stuff)
 	count = 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER \
-	count = (stuff->opcode.raw & 0x0020) != 0 ? stuff->state->data_registers[stuff->opcode.secondary_register] % 64 : ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
+	count = (stuff->opcode->raw & 0x0020) != 0 ? stuff->state->data_registers[stuff->opcode->secondary_register] % 64 : ((stuff->opcode->secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ASD \
 	stuff->result_value <<= 1; \
@@ -2182,7 +2182,7 @@ static void Action_EXG(Stuff* const stuff)
  \
 	SUB_ACTION_6; \
  \
-	if (stuff->opcode.bit_8) \
+	if (stuff->opcode->bit_8) \
 	{ \
 		/* Left */ \
 		for (i = 0; i < count; ++i) \
@@ -2313,17 +2313,15 @@ Instruction GetInstruction(Stuff* const stuff)
 	Clown68000_State* const state = stuff->state;
 	const cc_u32f program_counter = state->program_counter;
 	/* Instructions cannot occur at odd addresses, so we can divide by two here to make better use of space. */
-	CachedInstruction* const cached_instruction = &instruction_cache[program_counter / 2 % CC_COUNT_OF(instruction_cache)];
+	CachedInstruction* const cached_instruction = &instruction_cache[(program_counter / 2) % CC_COUNT_OF(instruction_cache)];
+
+	stuff->opcode = &cached_instruction->opcode;
 
 	if (cached_instruction->address == program_counter)
-	{
-		stuff->opcode = cached_instruction->opcode;
 		return cached_instruction->instruction;
-	}
 
 	cached_instruction->address = program_counter;
-	cached_instruction->instruction = DecodeOpcode(&stuff->opcode, ReadWord(stuff, program_counter));
-	cached_instruction->opcode = stuff->opcode;
+	cached_instruction->instruction = DecodeOpcode(&cached_instruction->opcode, ReadWord(stuff, program_counter));
 	return cached_instruction->instruction;
 }
 
@@ -2351,7 +2349,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 					const Instruction instruction = GetInstruction(&stuff);
 
 					/* We already pre-fetched the instruction, so just advance past it. */
-					state->instruction_register = stuff.opcode.raw;
+					state->instruction_register = stuff.opcode->raw;
 					IncrementProgramCounter(state, 2);
 
 					switch (instruction)
