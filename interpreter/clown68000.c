@@ -131,7 +131,7 @@ typedef struct Stuff
 typedef struct CachedInstruction
 {
 	cc_u32l address;
-	Instruction instructions;
+	Instruction instruction;
 	SplitOpcode opcode;
 } CachedInstruction;
 
@@ -2318,13 +2318,13 @@ Instruction GetInstruction(Stuff* const stuff)
 	if (cached_instruction->address == program_counter)
 	{
 		stuff->opcode = cached_instruction->opcode;
-		return cached_instruction->instructions;
+		return cached_instruction->instruction;
 	}
 
 	cached_instruction->address = program_counter;
-	cached_instruction->instructions = DecodeOpcode(&stuff->opcode, ReadWord(stuff, program_counter));
+	cached_instruction->instruction = DecodeOpcode(&stuff->opcode, ReadWord(stuff, program_counter));
 	cached_instruction->opcode = stuff->opcode;
-	return cached_instruction->instructions;
+	return cached_instruction->instruction;
 }
 
 cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
