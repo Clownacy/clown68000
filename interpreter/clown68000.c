@@ -128,6 +128,15 @@ typedef struct Stuff
 	cc_u32f source_value, destination_value, result_value;
 } Stuff;
 
+typedef struct CachedInstruction
+{
+	cc_u32l address;
+	Instruction instructions;
+	SplitOpcode opcode;
+} CachedInstruction;
+
+static CachedInstruction instruction_cache[32 * 1024];
+
 /* Error callback. */
 /* TODO: Remove this once all instructions are implemented. */
 
@@ -2299,6 +2308,25 @@ void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 	state->pending_interrupt = level;
 }
 
+Instruction GetInstruction(Stuff* const stuff)
+{
+	Clown68000_State* const state = stuff->state;
+	const cc_u32f program_counter = state->program_counter;
+	/* Instructions cannot occur at odd addresses, so we can divide by two here to make better use of space. */
+	CachedInstruction* const cached_instruction = &instruction_cache[program_counter / 2 % CC_COUNT_OF(instruction_cache)];
+
+	if (cached_instruction->address == program_counter)
+	{
+		stuff->opcode = cached_instruction->opcode;
+		return cached_instruction->instructions;
+	}
+
+	cached_instruction->address = program_counter;
+	cached_instruction->instructions = DecodeOpcode(&stuff->opcode, ReadWord(stuff, program_counter));
+	cached_instruction->opcode = stuff->opcode;
+	return cached_instruction->instructions;
+}
+
 cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
 {
 	/* Initialise closure and exception stuff. */
@@ -2320,7 +2348,7 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 					/* Process next instruction. */
 
 					/* Figure out which instruction this is. */
-					const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+					const Instruction instruction = GetInstruction(&stuff);
 
 					/* We already pre-fetched the instruction, so just advance past it. */
 					state->instruction_register = stuff.opcode.raw;
