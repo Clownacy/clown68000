@@ -2315,13 +2315,13 @@ Instruction GetInstruction(Stuff* const stuff)
 	/* Instructions cannot occur at odd addresses, so we can divide by two here to make better use of space. */
 	CachedInstruction* const cached_instruction = &instruction_cache[(program_counter / 2) % CC_COUNT_OF(instruction_cache)];
 
+	if (cached_instruction->address != program_counter)
+	{
+		cached_instruction->address = program_counter;
+		cached_instruction->instruction = DecodeOpcode(&cached_instruction->opcode, ReadWord(stuff, program_counter));
+	}
+
 	stuff->opcode = &cached_instruction->opcode;
-
-	if (cached_instruction->address == program_counter)
-		return cached_instruction->instruction;
-
-	cached_instruction->address = program_counter;
-	cached_instruction->instruction = DecodeOpcode(&cached_instruction->opcode, ReadWord(stuff, program_counter));
 	return cached_instruction->instruction;
 }
 
