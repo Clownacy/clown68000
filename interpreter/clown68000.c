@@ -135,6 +135,8 @@ typedef struct CachedInstruction
 	SplitOpcode opcode;
 } CachedInstruction;
 
+/* TODO: This should not be global state! */
+/* TODO: Allow this cache to be invalidated, for things like self-modified code and bank-switching! */
 static CachedInstruction instruction_cache[32 * 1024];
 
 /* Error callback. */
@@ -2315,6 +2317,7 @@ Instruction GetInstruction(Stuff* const stuff)
 	/* Instructions cannot occur at odd addresses, so we can divide by two here to make better use of space. */
 	CachedInstruction* const cached_instruction = &instruction_cache[(program_counter / 2) % CC_COUNT_OF(instruction_cache)];
 
+	/* TODO: What if an instruction was encountered at address 0 whilst the cache still includes unoccupied slots? */
 	if (cached_instruction->address != program_counter)
 	{
 		cached_instruction->address = program_counter;
