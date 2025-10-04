@@ -117,6 +117,7 @@ typedef struct Stuff
 	Clown68000_State *state;
 	const Clown68000_ReadWriteCallbacks *callbacks;
 	cc_u8f cycles_left_in_instruction;
+	cc_u32f cycles_done;
 	struct
 	{
 		clown68000_jmp_buf context;
@@ -126,6 +127,7 @@ typedef struct Stuff
 	cc_u32f operation_size, msb_bit_index;
 	DecodedAddressMode source_decoded_address_mode, destination_decoded_address_mode;
 	cc_u32f source_value, destination_value, result_value;
+	cc_u32f starting_program_counter;
 } Stuff;
 
 /* Error callback. */
@@ -169,7 +171,7 @@ static cc_u32f ReadByte(Stuff *stuff, cc_u32f address)
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd) >> (odd ? 0 : 8)) & 0xFF;
+	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, stuff->cycles_done) >> (odd ? 0 : 8)) & 0xFF;
 }
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
@@ -180,7 +182,7 @@ static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_true);
 
-	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true);
+	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, stuff->cycles_done);
 }
 
 static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
@@ -214,7 +216,7 @@ static void WriteByte(Stuff *stuff, cc_u32f address, cc_u32f value)
 	const cc_bool odd = (address & 1) != 0;
 	const cc_u16f byte = value & 0xFF;
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, byte | byte << 8);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, stuff->cycles_done, byte | byte << 8);
 }
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -225,7 +227,7 @@ static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_false);
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, value & 0xFFFF);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, stuff->cycles_done, value & 0xFFFF);
 }
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -2280,6 +2282,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		state->halted = cc_false;
 		state->stopped = cc_false;
 		state->pending_interrupt = 0; /* TODO: Does a reset actually clear the pending interrupt? */
+		state->leftover_cycles = 0;
 
 		/* Disable trace mode. */
 		state->status_register &= ~STATUS_TRACE;
@@ -2299,60 +2302,22 @@ void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 	state->pending_interrupt = level;
 }
 
-cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks)
+void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, const cc_u32f cycles_to_do)
 {
 	/* Initialise closure and exception stuff. */
 	Stuff stuff;
 
 	stuff.state = state;
 	stuff.callbacks = callbacks;
-	stuff.cycles_left_in_instruction = 4;
+	stuff.cycles_left_in_instruction = state->leftover_cycles;
+	stuff.cycles_done = 0;
 
 	if (!state->halted)
 	{
-		const cc_u32f starting_program_counter = state->program_counter;
-
+		/* Normally, this would go in the instruction loop, but we want to call this as rarely
+		   as possible (for efficiency's sake), so we call it outside the loop instead. */
 		switch (clown68000_setjmp(stuff.exception.context))
 		{
-			case 0:
-				if (!state->stopped)
-				{
-					/* Process next instruction. */
-
-					/* Figure out which instruction this is. */
-					const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
-
-					/* We already pre-fetched the instruction, so just advance past it. */
-					state->instruction_register = stuff.opcode.raw;
-					IncrementProgramCounter(state, 2);
-
-					switch (instruction)
-					{
-						#include "microcode.c"
-					}
-				}
-
-				/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
-				   https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
-				/* Process pending interrupt. */
-				if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
-				{
-					state->stopped = cc_false;
-
-					DoInterrupt(&stuff, 24 + state->pending_interrupt);
-
-					/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
-					/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
-					stuff.cycles_left_in_instruction += 14;
-
-					/* Set interrupt mask set to current level */
-					state->status_register &= ~STATUS_INTERRUPT_MASK;
-					state->status_register |= state->pending_interrupt << 8;
-
-					state->pending_interrupt = 0;
-				}
-				break;
-
 			case 1:
 				/* Group 0 exception. */
 				/* Handled elsewhere. */
@@ -2360,11 +2325,54 @@ cc_u8f Clown68000_DoCycle(Clown68000_State *state, const Clown68000_ReadWriteCal
 
 			case 2:
 				/* Group 1/2 exception. */
-				state->program_counter = starting_program_counter;
+				state->program_counter = stuff.starting_program_counter;
 				DoInterrupt(&stuff, stuff.exception.vector_offset);
 				break;
 		}
-	}
 
-	return stuff.cycles_left_in_instruction;
+		while ((stuff.cycles_done += stuff.cycles_left_in_instruction) <= cycles_to_do)
+		{
+			stuff.cycles_left_in_instruction = 4;
+			stuff.starting_program_counter = state->program_counter;
+
+			if (!state->stopped)
+			{
+				/* Process next instruction. */
+
+				/* Figure out which instruction this is. */
+				const Instruction instruction = DecodeOpcode(&stuff.opcode, ReadWord(&stuff, state->program_counter));
+
+				/* We already pre-fetched the instruction, so just advance past it. */
+				state->instruction_register = stuff.opcode.raw;
+				IncrementProgramCounter(state, 2);
+
+				switch (instruction)
+				{
+					#include "microcode.c"
+				}
+			}
+
+			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
+				https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
+			/* Process pending interrupt. */
+			if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
+			{
+				state->stopped = cc_false;
+
+				DoInterrupt(&stuff, 24 + state->pending_interrupt);
+
+				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
+				/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
+				stuff.cycles_left_in_instruction += 14;
+
+				/* Set interrupt mask set to current level */
+				state->status_register &= ~STATUS_INTERRUPT_MASK;
+				state->status_register |= state->pending_interrupt << 8;
+
+				state->pending_interrupt = 0;
+			}
+		}
+
+		state->leftover_cycles = stuff.cycles_done - cycles_to_do;
+	}
 }
