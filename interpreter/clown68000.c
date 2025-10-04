@@ -2365,7 +2365,7 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 				/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
 				stuff.cycles_left_in_instruction += 14;
 
-				/* Set interrupt mask set to current level */
+				/* Set interrupt mask to current level */
 				state->status_register &= ~STATUS_INTERRUPT_MASK;
 				state->status_register |= state->pending_interrupt << 8;
 
