@@ -13,11 +13,6 @@ add_library(clown68000-common STATIC
 	"common/opcode.h"	
 )
 
-set_target_properties(clown68000-common PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED OFF
-)
-
 if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-common PUBLIC CC_USE_C99_INTEGERS)
 endif()
@@ -30,11 +25,6 @@ add_library(clown68000-interpreter STATIC
 )
 
 target_link_libraries(clown68000-interpreter PRIVATE clown68000-common) 
-
-set_target_properties(clown68000-interpreter PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED OFF
-)
 
 if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-interpreter PUBLIC CC_USE_C99_INTEGERS)
@@ -52,11 +42,6 @@ add_executable(clown68000-microcode-generator
 	"interpreter/microcode-generator/generator.c"
 )
 
-set_target_properties(clown68000-microcode-generator PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED OFF
-)
-
 if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-microcode-generator PUBLIC CC_USE_C99_INTEGERS)
 endif()
@@ -72,11 +57,6 @@ add_library(clown68000-disassembler STATIC
 
 target_link_libraries(clown68000-disassembler PRIVATE clown68000-common) 
 
-set_target_properties(clown68000-disassembler PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED OFF
-)
-
 if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-disassembler PUBLIC CC_USE_C99_INTEGERS)
 endif()
@@ -88,11 +68,6 @@ add_executable(clown68000-disassembler-tool
 )
 
 target_link_libraries(clown68000-disassembler-tool PRIVATE clown68000-disassembler) 
-
-set_target_properties(clown68000-disassembler-tool PROPERTIES
-	C_STANDARD 90
-	C_STANDARD_REQUIRED OFF
-)
 
 if(CC_USE_C99_INTEGERS)
 	target_compile_definitions(clown68000-disassembler-tool PUBLIC CC_USE_C99_INTEGERS)
