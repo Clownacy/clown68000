@@ -579,7 +579,7 @@ static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *de
 			break;
 
 		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
-			SetSupervisorMode(stuff->state, (value & STATUS_SUPERVISOR) != 0);
+			SetSupervisorMode(state, (value & STATUS_SUPERVISOR) != 0);
 			state->status_register = value & STATUS_REGISTER_MASK;
 
 			break;
@@ -785,8 +785,10 @@ static void ABCDSBCDExecutionTime(Stuff* const stuff)
 
 static void SupervisorCheck(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Only allow this instruction in supervisor mode. */
-	if ((stuff->state->status_register & STATUS_SUPERVISOR) == 0)
+	if ((state->status_register & STATUS_SUPERVISOR) == 0)
 		Group1Or2Exception(stuff, 8);
 }
 
@@ -1003,75 +1005,99 @@ static void WriteDestination(Stuff* const stuff)
 
 static void Carry_StandardCarry(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
-	stuff->state->status_register |= (((stuff->source_value & stuff->destination_value) | ((stuff->source_value | stuff->destination_value) & ~stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_CARRY;
+	state->status_register |= (((stuff->source_value & stuff->destination_value) | ((stuff->source_value | stuff->destination_value) & ~stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 }
 
 static void Carry_StandardBorrow(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
-	stuff->state->status_register |= (((stuff->source_value & ~stuff->destination_value) | ((stuff->source_value | ~stuff->destination_value) & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_CARRY;
+	state->status_register |= (((stuff->source_value & ~stuff->destination_value) | ((stuff->source_value | ~stuff->destination_value) & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 }
 
 static void Carry_NEG(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
-	stuff->state->status_register |= ((stuff->destination_value | stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_CARRY;
+	state->status_register |= ((stuff->destination_value | stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_CARRY_BIT)) & CONDITION_CODE_CARRY;
 }
 
 static void Carry_Clear(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_CARRY;
 }
 
 static void Overflow_ADD(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	stuff->state->status_register |= (((stuff->source_value & stuff->destination_value & ~stuff->result_value) | (~stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((stuff->source_value & stuff->destination_value & ~stuff->result_value) | (~stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 }
 
 static void Overflow_SUB(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	stuff->state->status_register |= (((~stuff->source_value & stuff->destination_value & ~stuff->result_value) | (stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= (((~stuff->source_value & stuff->destination_value & ~stuff->result_value) | (stuff->source_value & ~stuff->destination_value & stuff->result_value)) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 }
 
 static void Overflow_NEG(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
-	stuff->state->status_register |= ((stuff->destination_value & stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	state->status_register |= ((stuff->destination_value & stuff->result_value) >> (stuff->msb_bit_index - CONDITION_CODE_OVERFLOW_BIT)) & CONDITION_CODE_OVERFLOW;
 }
 
 static void Overflow_Clear(Stuff* const stuff)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_OVERFLOW;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_OVERFLOW;
 }
 
 static void Zero_ClearIfNonZeroUnaffectedOtherwise(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Cleared if the result is nonzero; unchanged otherwise */
-	stuff->state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO | (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
 }
 
 static void Zero_SetIfZeroClearOtherwise(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Standard behaviour: set if result is zero; clear otherwise */
-	stuff->state->status_register &= ~CONDITION_CODE_ZERO;
-	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO;
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->result_value & (0xFFFFFFFF >> (32 - stuff->msb_bit_index - 1))) == 0));
 }
 
 static void Negative_SetIfNegativeClearOtherwise(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Standard behaviour: set if result value is negative; clear otherwise */
-	stuff->state->status_register &= ~CONDITION_CODE_NEGATIVE;
-	stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (stuff->result_value >> (stuff->msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
+	state->status_register &= ~CONDITION_CODE_NEGATIVE;
+	state->status_register |= CONDITION_CODE_NEGATIVE & (stuff->result_value >> (stuff->msb_bit_index - CONDITION_CODE_NEGATIVE_BIT)) & CONDITION_CODE_NEGATIVE;
 }
 
 static void Extend_SetToCarry(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Standard behaviour: set to CARRY */
-	stuff->state->status_register &= ~CONDITION_CODE_EXTEND;
-	stuff->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((stuff->state->status_register & CONDITION_CODE_CARRY) != 0));
+	state->status_register &= ~CONDITION_CODE_EXTEND;
+	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
 }
 
 static void Action_OR(Stuff* const stuff)
@@ -1184,12 +1210,14 @@ static void Action_EOR(Stuff* const stuff)
 
 static void Action_Bxxx(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Modulo the source value */
 	stuff->source_value &= stuff->msb_bit_index;
 
 	/* Set the zero flag to the specified bit */
-	stuff->state->status_register &= ~CONDITION_CODE_ZERO;
-	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->destination_value & (1ul << stuff->source_value)) == 0));
+	state->status_register &= ~CONDITION_CODE_ZERO;
+	state->status_register |= CONDITION_CODE_ZERO & (0 - ((stuff->destination_value & (1ul << stuff->source_value)) == 0));
 }
 
 static void Action_BTST(Stuff* const stuff)
@@ -1347,7 +1375,9 @@ static void Action_UNLK(Stuff* const stuff)
 
 static void Action_NEGX(Stuff* const stuff)
 {
-	stuff->result_value = 0 - stuff->destination_value - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+	Clown68000_State* const state = stuff->state;
+
+	stuff->result_value = 0 - stuff->destination_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
 	SingleOperandInstructionExecutionTimeCommon(stuff);
 }
 
@@ -1398,10 +1428,12 @@ static void Action_ILLEGAL(Stuff* const stuff)
 
 static void Action_TAS(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* TODO - This instruction doesn't work properly on memory on the Mega Drive */
-	stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO);
-	stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((stuff->destination_value & 0x80) != 0));
-	stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (stuff->destination_value == 0));
+	state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO);
+	state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((stuff->destination_value & 0x80) != 0));
+	state->status_register |= CONDITION_CODE_ZERO & (0 - (stuff->destination_value == 0));
 
 	stuff->result_value = stuff->destination_value | 0x80;
 
@@ -1416,10 +1448,12 @@ static void Action_TRAP(Stuff* const stuff)
 
 static void Action_MOVE_USP(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	if ((stuff->opcode.raw & 8) != 0)
-		stuff->state->address_registers[stuff->opcode.primary_register] = stuff->state->user_stack_pointer;
+		state->address_registers[stuff->opcode.primary_register] = state->user_stack_pointer;
 	else
-		stuff->state->user_stack_pointer = stuff->state->address_registers[stuff->opcode.primary_register];
+		state->user_stack_pointer = state->address_registers[stuff->opcode.primary_register];
 }
 
 #define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
@@ -1437,9 +1471,11 @@ static void ProgramCounterChanged(Stuff* const stuff)
 
 static void SetStatusRegister(Stuff* const stuff, const cc_u16f value)
 {
-	SetSupervisorMode(stuff->state, (value & STATUS_SUPERVISOR) != 0);
+	Clown68000_State* const state = stuff->state;
+
+	SetSupervisorMode(state, (value & STATUS_SUPERVISOR) != 0);
 	/* Keep only the bits that are actually used. */
-	stuff->state->status_register = value & STATUS_REGISTER_MASK;
+	state->status_register = value & STATUS_REGISTER_MASK;
 }
 
 static void Action_RESET(Stuff* const stuff)
@@ -1452,8 +1488,10 @@ static void Action_RESET(Stuff* const stuff)
 
 static void Action_STOP(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	SetStatusRegister(stuff, stuff->source_value);
-	stuff->state->stopped = cc_true;
+	state->stopped = cc_true;
 
 	stuff->cycles_left_in_instruction -= 4;
 }
@@ -1488,7 +1526,9 @@ static void Action_RTS(Stuff* const stuff)
 
 static void Action_TRAPV(Stuff* const stuff)
 {
-	if ((stuff->state->status_register & CONDITION_CODE_OVERFLOW) != 0)
+	Clown68000_State* const state = stuff->state;
+
+	if ((state->status_register & CONDITION_CODE_OVERFLOW) != 0)
 		DoInterrupt(stuff, 7);
 }
 
@@ -1509,7 +1549,9 @@ static void Action_RTR(Stuff* const stuff)
 
 static void Action_JMP(Stuff* const stuff)
 {
-	stuff->state->program_counter = stuff->source_value;
+	Clown68000_State* const state = stuff->state;
+
+	state->program_counter = stuff->source_value;
 
 	ProgramCounterChanged(stuff);
 
@@ -1581,6 +1623,8 @@ static void Action_TST(Stuff* const stuff)
 
 static void Action_MOVEM(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* Hot damn is this a mess */
 	cc_u32f memory_address = stuff->destination_value; /* TODO: Maybe get rid of this alias? */
 	cc_u16f i;
@@ -1677,17 +1721,17 @@ static void Action_MOVEM(Stuff* const stuff)
 			{
 				/* Memory to register */
 				if (is_longword)
-					stuff->state->data_registers[i] = ReadLongWord(stuff, memory_address);
+					state->data_registers[i] = ReadLongWord(stuff, memory_address);
 				else
-					stuff->state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address));
+					state->data_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address));
 			}
 			else
 			{
 				/* Register to memory */
 				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-					write_function(stuff, memory_address + address_delta, stuff->state->address_registers[7 - i]);
+					write_function(stuff, memory_address + address_delta, state->address_registers[7 - i]);
 				else
-					write_function(stuff, memory_address, stuff->state->data_registers[i]);
+					write_function(stuff, memory_address, state->data_registers[i]);
 			}
 
 			memory_address += address_delta;
@@ -1708,17 +1752,17 @@ static void Action_MOVEM(Stuff* const stuff)
 			{
 				/* Memory to register */
 				if (is_longword)
-					stuff->state->address_registers[i] = ReadLongWord(stuff, memory_address);
+					state->address_registers[i] = ReadLongWord(stuff, memory_address);
 				else
-					stuff->state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address)) & 0xFFFFFFFF;
+					state->address_registers[i] = CC_SIGN_EXTEND_ULONG(15, ReadWord(stuff, memory_address)) & 0xFFFFFFFF;
 			}
 			else
 			{
 				/* Register to memory */
 				if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
-					write_function(stuff, memory_address + address_delta, stuff->state->data_registers[7 - i]);
+					write_function(stuff, memory_address + address_delta, state->data_registers[7 - i]);
 				else
-					write_function(stuff, memory_address, stuff->state->address_registers[i]);
+					write_function(stuff, memory_address, state->address_registers[i]);
 			}
 
 			memory_address += address_delta;
@@ -1729,19 +1773,21 @@ static void Action_MOVEM(Stuff* const stuff)
 	}
 
 	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT || stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
-		stuff->state->address_registers[stuff->opcode.primary_register] = memory_address;
+		state->address_registers[stuff->opcode.primary_register] = memory_address;
 }
 
 static void Action_CHK(Stuff* const stuff)
 {
-	const cc_u32f value = stuff->state->data_registers[stuff->opcode.secondary_register] & 0xFFFF;
+	Clown68000_State* const state = stuff->state;
 
-	stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_CARRY | CONDITION_CODE_OVERFLOW | CONDITION_CODE_ZERO);
+	const cc_u32f value = state->data_registers[stuff->opcode.secondary_register] & 0xFFFF;
+
+	state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_CARRY | CONDITION_CODE_OVERFLOW | CONDITION_CODE_ZERO);
 
 	if ((value & 0x8000) != 0)
 	{
 		/* Value is smaller than 0. */
-		stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
+		state->status_register |= CONDITION_CODE_NEGATIVE;
 		DoInterrupt(stuff, 6);
 	}
 	else if ((value ^ 0x8000) > (stuff->source_value ^ 0x8000))
@@ -1755,7 +1801,9 @@ static void Action_CHK(Stuff* const stuff)
 
 static void Action_SCC(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	Clown68000_State* const state = stuff->state;
+
+	if (IsOpcodeConditionTrue(state, stuff->opcode.raw))
 	{
 		stuff->result_value = 0xFF;
 		SingleOperandInstructionExecutionTimeWordOnly(stuff, 2, 4);
@@ -1769,7 +1817,9 @@ static void Action_SCC(Stuff* const stuff)
 
 static void Action_BRA_SHORT(Stuff* const stuff)
 {
-	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw));
+	Clown68000_State* const state = stuff->state;
+
+	IncrementProgramCounter(state, CC_SIGN_EXTEND_ULONG(7, stuff->opcode.raw));
 
 	ProgramCounterChanged(stuff);
 
@@ -1778,7 +1828,9 @@ static void Action_BRA_SHORT(Stuff* const stuff)
 
 static void Action_BRA_WORD(Stuff* const stuff)
 {
-	IncrementProgramCounter(stuff->state, CC_SIGN_EXTEND_ULONG(15, stuff->source_value) - 2);
+	Clown68000_State* const state = stuff->state;
+
+	IncrementProgramCounter(state, CC_SIGN_EXTEND_ULONG(15, stuff->source_value) - 2);
 
 	ProgramCounterChanged(stuff);
 
@@ -1809,7 +1861,9 @@ static void Action_BSR_WORD(Stuff* const stuff)
 
 static void Action_BCC_SHORT(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	Clown68000_State* const state = stuff->state;
+
+	if (IsOpcodeConditionTrue(state, stuff->opcode.raw))
 		Action_BRA_SHORT(stuff);
 	else
 		stuff->cycles_left_in_instruction += 4;
@@ -1817,7 +1871,9 @@ static void Action_BCC_SHORT(Stuff* const stuff)
 
 static void Action_BCC_WORD(Stuff* const stuff)
 {
-	if (IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	Clown68000_State* const state = stuff->state;
+
+	if (IsOpcodeConditionTrue(state, stuff->opcode.raw))
 		Action_BRA_WORD(stuff);
 	else
 		stuff->cycles_left_in_instruction += 4;
@@ -1825,17 +1881,19 @@ static void Action_BCC_WORD(Stuff* const stuff)
 
 static void Action_DBCC(Stuff* const stuff)
 {
-	if (!IsOpcodeConditionTrue(stuff->state, stuff->opcode.raw))
+	Clown68000_State* const state = stuff->state;
+
+	if (!IsOpcodeConditionTrue(state, stuff->opcode.raw))
 	{
-		cc_u16f loop_counter = stuff->state->data_registers[stuff->opcode.primary_register] & 0xFFFF;
+		cc_u16f loop_counter = state->data_registers[stuff->opcode.primary_register] & 0xFFFF;
 
 		if (loop_counter-- != 0)
 			Action_BRA_WORD(stuff);
 		else
 			stuff->cycles_left_in_instruction += 6;
 
-		stuff->state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
-		stuff->state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
+		state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
+		state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
 	}
 	else
 	{
@@ -1861,12 +1919,14 @@ static cc_u16f CountBitsSet(cc_u16f value)
 
 static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 {
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
+	Clown68000_State* const state = stuff->state;
+
+	state->status_register &= ~CONDITION_CODE_CARRY;
 
 	if (stuff->source_value == 0)
 	{
 		/* TODO: This hack is needed for the validator. Is the validator actually correct? */
-		stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
+		state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
 
 		stuff->result_value = stuff->destination_value;
 
@@ -1944,9 +2004,9 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 
 				stuff->result_value = (quotient & 0xFFFF) | ((remainder & 0xFFFF) << 16);
 
-				stuff->state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
-				stuff->state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));
-				stuff->state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));
+				state->status_register &= ~(CONDITION_CODE_NEGATIVE | CONDITION_CODE_ZERO | CONDITION_CODE_OVERFLOW);
+				state->status_register |= CONDITION_CODE_NEGATIVE & (0 - ((quotient & 0x8000) != 0));
+				state->status_register |= CONDITION_CODE_ZERO & (0 - (quotient == 0));
 
 				return;
 			}
@@ -1954,11 +2014,11 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 
 		/* If we get here, then there has been overflow. */
 
-		stuff->state->status_register |= CONDITION_CODE_OVERFLOW;
+		state->status_register |= CONDITION_CODE_OVERFLOW;
 		/* These two are officially undefined, but SingleStepTests show them consistently being set to these values. */
 		/* https://github.com/SingleStepTests/m68000 */
-		stuff->state->status_register |= CONDITION_CODE_NEGATIVE;
-		stuff->state->status_register &= ~CONDITION_CODE_ZERO;
+		state->status_register |= CONDITION_CODE_NEGATIVE;
+		state->status_register &= ~CONDITION_CODE_ZERO;
 
 		stuff->result_value = stuff->destination_value;
 	}
@@ -1976,7 +2036,9 @@ static void Action_DIVU(Stuff* const stuff)
 
 static void Action_SUBXCommon(Stuff* const stuff)
 {
-	stuff->result_value = stuff->destination_value - stuff->source_value - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+	Clown68000_State* const state = stuff->state;
+
+	stuff->result_value = stuff->destination_value - stuff->source_value - ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
 }
 
 static void Action_SUBX(Stuff* const stuff)
@@ -1987,6 +2049,8 @@ static void Action_SUBX(Stuff* const stuff)
 
 static void Action_SBCDCommon(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* SBCD works in two steps: a standard SUBX, followed by a standard SUB between the result and a 'correction factor'. */
 	Action_SUBXCommon(stuff);
 
@@ -2001,8 +2065,8 @@ static void Action_SBCDCommon(Stuff* const stuff)
 	Action_SUBCommon(stuff);
 
 	/* Manually set the carry flag here. */
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
-	stuff->state->status_register |= (stuff->source_value & 0x40) != 0 || (~stuff->destination_value & stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
+	state->status_register &= ~CONDITION_CODE_CARRY;
+	state->status_register |= (stuff->source_value & 0x40) != 0 || (~stuff->destination_value & stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
 }
 
 static void Action_SBCD(Stuff* const stuff)
@@ -2052,13 +2116,17 @@ static void Action_MULU(Stuff* const stuff)
 
 static void Action_ADDX(Stuff* const stuff)
 {
-	stuff->result_value = stuff->destination_value + stuff->source_value + ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
+	Clown68000_State* const state = stuff->state;
+
+	stuff->result_value = stuff->destination_value + stuff->source_value + ((state->status_register & CONDITION_CODE_EXTEND) != 0 ? 1 : 0);
 
 	ADDXSUBXExecutionTime(stuff);
 }
 
 static void Action_ABCD(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* ABCD works in two steps: a standard ADDX, followed by a standard ADD between the result and a 'correction factor'. */
 	Action_ADDX(stuff);
 
@@ -2076,33 +2144,35 @@ static void Action_ABCD(Stuff* const stuff)
 	ABCDSBCDExecutionTime(stuff);
 
 	/* Manually set the carry flag here. */
-	stuff->state->status_register &= ~CONDITION_CODE_CARRY;
-	stuff->state->status_register |= (stuff->source_value & 0x40) != 0 || (stuff->destination_value & ~stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
+	state->status_register &= ~CONDITION_CODE_CARRY;
+	state->status_register |= (stuff->source_value & 0x40) != 0 || (stuff->destination_value & ~stuff->result_value & 0x80) != 0 ? CONDITION_CODE_CARRY : 0;
 }
 
 static void Action_EXG(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	cc_u32f temp;
 
 	switch (stuff->opcode.raw & 0x00F8)
 	{
 		/* TODO: What should happen when an invalid bit pattern occurs? */
 		case 0x0040:
-			temp = stuff->state->data_registers[stuff->opcode.secondary_register];
-			stuff->state->data_registers[stuff->opcode.secondary_register] = stuff->state->data_registers[stuff->opcode.primary_register];
-			stuff->state->data_registers[stuff->opcode.primary_register] = temp;
+			temp = state->data_registers[stuff->opcode.secondary_register];
+			state->data_registers[stuff->opcode.secondary_register] = state->data_registers[stuff->opcode.primary_register];
+			state->data_registers[stuff->opcode.primary_register] = temp;
 			break;
 
 		case 0x0048:
-			temp = stuff->state->address_registers[stuff->opcode.secondary_register];
-			stuff->state->address_registers[stuff->opcode.secondary_register] = stuff->state->address_registers[stuff->opcode.primary_register];
-			stuff->state->address_registers[stuff->opcode.primary_register] = temp;
+			temp = state->address_registers[stuff->opcode.secondary_register];
+			state->address_registers[stuff->opcode.secondary_register] = state->address_registers[stuff->opcode.primary_register];
+			state->address_registers[stuff->opcode.primary_register] = temp;
 			break;
 
 		case 0x0088:
-			temp = stuff->state->data_registers[stuff->opcode.secondary_register];
-			stuff->state->data_registers[stuff->opcode.secondary_register] = stuff->state->address_registers[stuff->opcode.primary_register];
-			stuff->state->address_registers[stuff->opcode.primary_register] = temp;
+			temp = state->data_registers[stuff->opcode.secondary_register];
+			state->data_registers[stuff->opcode.secondary_register] = state->address_registers[stuff->opcode.primary_register];
+			state->address_registers[stuff->opcode.primary_register] = temp;
 			break;
 	}
 
@@ -2118,25 +2188,25 @@ static void Action_EXG(Stuff* const stuff)
 	count = 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER \
-	count = (stuff->opcode.raw & 0x0020) != 0 ? stuff->state->data_registers[stuff->opcode.secondary_register] % 64 : ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
+	count = (stuff->opcode.raw & 0x0020) != 0 ? state->data_registers[stuff->opcode.secondary_register] % 64 : ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8 */
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ASD \
 	stuff->result_value <<= 1; \
-	stuff->state->status_register |= CONDITION_CODE_OVERFLOW & (0 - ((stuff->result_value & sign_bit_bitmask) != original_sign_bit));
+	state->status_register |= CONDITION_CODE_OVERFLOW & (0 - ((stuff->result_value & sign_bit_bitmask) != original_sign_bit));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_LSD \
 	stuff->result_value <<= 1;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ROXD \
 	stuff->result_value <<= 1; \
-	stuff->result_value |= (stuff->state->status_register & CONDITION_CODE_EXTEND) != 0;
+	stuff->result_value |= (state->status_register & CONDITION_CODE_EXTEND) != 0;
 
 #define DO_INSTRUCTION_ACTION_SHIFT_3_ROD \
 	stuff->result_value = (stuff->result_value << 1) | ((stuff->result_value & sign_bit_bitmask) != 0);
 
 #define DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD \
-	stuff->state->status_register &= ~CONDITION_CODE_EXTEND; \
-	stuff->state->status_register |= CONDITION_CODE_EXTEND & (0 - ((stuff->state->status_register & CONDITION_CODE_CARRY) != 0));
+	state->status_register &= ~CONDITION_CODE_EXTEND; \
+	state->status_register |= CONDITION_CODE_EXTEND & (0 - ((state->status_register & CONDITION_CODE_CARRY) != 0));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_4_ROD
 
@@ -2149,13 +2219,13 @@ static void Action_EXG(Stuff* const stuff)
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_ROXD \
 	stuff->result_value >>= 1; \
-	stuff->result_value |= sign_bit_bitmask & (0 - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0));
+	stuff->result_value |= sign_bit_bitmask & (0 - ((state->status_register & CONDITION_CODE_EXTEND) != 0));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_5_ROD \
 	stuff->result_value = (stuff->result_value >> 1) | (sign_bit_bitmask & (0 - ((stuff->result_value & 1) != 0)));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_6_ROXD \
-	stuff->state->status_register |= CONDITION_CODE_CARRY & (0 - ((stuff->state->status_register & CONDITION_CODE_EXTEND) != 0));
+	state->status_register |= CONDITION_CODE_CARRY & (0 - ((state->status_register & CONDITION_CODE_EXTEND) != 0));
 
 #define DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD
 
@@ -2171,7 +2241,7 @@ static void Action_EXG(Stuff* const stuff)
  \
 	SUB_ACTION_2; \
  \
-	stuff->state->status_register &= ~(CONDITION_CODE_OVERFLOW | CONDITION_CODE_CARRY); \
+	state->status_register &= ~(CONDITION_CODE_OVERFLOW | CONDITION_CODE_CARRY); \
  \
 	SUB_ACTION_6; \
  \
@@ -2180,8 +2250,8 @@ static void Action_EXG(Stuff* const stuff)
 		/* Left */ \
 		for (i = 0; i < count; ++i) \
 		{ \
-			stuff->state->status_register &= ~CONDITION_CODE_CARRY; \
-			stuff->state->status_register |= CONDITION_CODE_CARRY & (0 - ((stuff->result_value & sign_bit_bitmask) != 0)); \
+			state->status_register &= ~CONDITION_CODE_CARRY; \
+			state->status_register |= CONDITION_CODE_CARRY & (0 - ((stuff->result_value & sign_bit_bitmask) != 0)); \
  \
 			SUB_ACTION_3; \
  \
@@ -2193,8 +2263,8 @@ static void Action_EXG(Stuff* const stuff)
 		/* Right */ \
 		for (i = 0; i < count; ++i) \
 		{ \
-			stuff->state->status_register &= ~CONDITION_CODE_CARRY; \
-			stuff->state->status_register |= CONDITION_CODE_CARRY & (0 - ((stuff->result_value & 1) != 0)); \
+			state->status_register &= ~CONDITION_CODE_CARRY; \
+			state->status_register |= CONDITION_CODE_CARRY & (0 - ((stuff->result_value & 1) != 0)); \
  \
 			SUB_ACTION_5; \
  \
@@ -2204,48 +2274,64 @@ static void Action_EXG(Stuff* const stuff)
 
 static void Action_ASD_MEMORY(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ASD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ASD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ASD_REGISTER(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ASD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ASD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_LSD_MEMORY(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_LSD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_LSD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_LSD_REGISTER(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_LSD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_LSD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_ROD_MEMORY(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ROD, DO_INSTRUCTION_ACTION_SHIFT_4_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ROD_REGISTER(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ROD, DO_INSTRUCTION_ACTION_SHIFT_4_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROD, DO_INSTRUCTION_ACTION_SHIFT_6_NOT_ROXD)
 	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
 
 static void Action_ROXD_MEMORY(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_MEMORY, DO_INSTRUCTION_ACTION_SHIFT_3_ROXD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROXD, DO_INSTRUCTION_ACTION_SHIFT_6_ROXD)
 	ShiftRotateInstructionExecutionTimeMemory(stuff);
 }
 
 static void Action_ROXD_REGISTER(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	DO_INSTRUCTION_ACTION_SHIFT(DO_INSTRUCTION_ACTION_SHIFT_1_NOT_ASD, DO_INSTRUCTION_ACTION_SHIFT_2_REGISTER, DO_INSTRUCTION_ACTION_SHIFT_3_ROXD, DO_INSTRUCTION_ACTION_SHIFT_4_NOT_ROD, DO_INSTRUCTION_ACTION_SHIFT_5_ROXD, DO_INSTRUCTION_ACTION_SHIFT_6_ROXD)
 	ShiftRotateInstructionExecutionTimeRegister(stuff, count);
 }
