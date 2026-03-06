@@ -34,11 +34,11 @@ typedef struct Clown68000_State
 	cc_u32l supervisor_stack_pointer;
 	cc_u32l user_stack_pointer;
 	cc_u32l program_counter;
-	cc_u32l cycles_done;
 	cc_u16l status_register;
 	cc_u16l instruction_register;
-	cc_u8l pending_interrupt;
 	cc_bool halted, stopped;
+	cc_u8l pending_interrupt;
+	cc_u8l leftover_cycles;
 } Clown68000_State;
 
 typedef struct Clown68000_ReadWriteCallbacks
