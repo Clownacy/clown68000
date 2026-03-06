@@ -116,8 +116,6 @@ typedef struct Stuff
 {
 	Clown68000_State *state;
 	const Clown68000_ReadWriteCallbacks *callbacks;
-	cc_u8f cycles_left_in_instruction;
-	cc_u32f cycles_done;
 	struct
 	{
 		clown68000_jmp_buf context;
@@ -168,21 +166,23 @@ static cc_u32f ReadAddress(Stuff *stuff, cc_u32f address)
 
 static cc_u32f ReadByte(Stuff *stuff, cc_u32f address)
 {
+	Clown68000_State* const state = stuff->state;
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 
-	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, stuff->cycles_done) >> (odd ? 0 : 8)) & 0xFF;
+	return (callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, state->cycles_done) >> (odd ? 0 : 8)) & 0xFF;
 }
 
 static cc_u32f ReadWord(Stuff *stuff, cc_u32f address)
 {
+	Clown68000_State* const state = stuff->state;
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	/* TODO: I've heard that the exception should occur after the read is completed. */
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_true);
 
-	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, stuff->cycles_done);
+	return callbacks->read_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, state->cycles_done);
 }
 
 static cc_u32f ReadLongWord(Stuff *stuff, cc_u32f address)
@@ -212,22 +212,24 @@ static cc_u32f ReadLongWordBackwards(Stuff *stuff, cc_u32f address)
 
 static void WriteByte(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
+	Clown68000_State* const state = stuff->state;
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 	const cc_bool odd = (address & 1) != 0;
 	const cc_u16f byte = value & 0xFF;
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, stuff->cycles_done, byte | byte << 8);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, (cc_bool)!odd, odd, state->cycles_done, byte | byte << 8);
 }
 
 static void WriteWord(Stuff *stuff, cc_u32f address, cc_u32f value)
 {
+	Clown68000_State* const state = stuff->state;
 	const Clown68000_ReadWriteCallbacks* const callbacks = stuff->callbacks;
 
 	/* TODO: I've heard that the exception should occur after the write is completed. */
 	if ((address & 1) != 0)
 		Group0Exception(stuff, 3, address, cc_false);
 
-	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, stuff->cycles_done, value & 0xFFFF);
+	callbacks->write_callback(callbacks->user_data, (address / 2) & 0x7FFFFF, cc_true, cc_true, state->cycles_done, value & 0xFFFF);
 }
 
 static void WriteLongWord(Stuff *stuff, cc_u32f address, cc_u32f value)
@@ -315,7 +317,7 @@ static void DoInterrupt(Stuff *stuff, cc_u16f vector_offset)
 
 	state->program_counter = ReadLongWord(stuff, vector_offset * 4);
 
-	stuff->cycles_left_in_instruction += 30;
+	state->cycles_done += 30;
 }
 
 static void Group1Or2Exception(Stuff *stuff, cc_u16f vector_offset)
@@ -403,7 +405,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		address = CC_SIGN_EXTEND_ULONG(15, short_address);
 		IncrementProgramCounter(state, 2);
 
-		stuff->cycles_left_in_instruction += longword ? 12 : 8;
+		state->cycles_done += longword ? 12 : 8;
 	}
 	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG)
 	{
@@ -411,7 +413,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		address = ReadLongWord(stuff, state->program_counter);
 		IncrementProgramCounter(state, 4);
 
-		stuff->cycles_left_in_instruction += longword ? 16 : 12;
+		state->cycles_done += longword ? 16 : 12;
 	}
 	else if (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE)
 	{
@@ -428,14 +430,14 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			IncrementProgramCounter(state, operation_size_in_bytes);
 		}
 
-		stuff->cycles_left_in_instruction += longword ? 8 : 4;
+		state->cycles_done += longword ? 8 : 4;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT)
 	{
 		/* Address register indirect */
 		address = state->address_registers[address_mode_register];
 
-		stuff->cycles_left_in_instruction += longword ? 8 : 4;
+		state->cycles_done += longword ? 8 : 4;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
@@ -447,7 +449,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		DecrementAddressRegister(state, address_mode_register, increment_decrement_size);
 		address = state->address_registers[address_mode_register];
 
-		stuff->cycles_left_in_instruction += longword ? 10 : 6;
+		state->cycles_done += longword ? 10 : 6;
 	}
 	else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_POSTINCREMENT)
 	{
@@ -459,7 +461,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 		address = state->address_registers[address_mode_register];
 		IncrementAddressRegister(state, address_mode_register, increment_decrement_size);
 
-		stuff->cycles_left_in_instruction += longword ? 8 : 4;
+		state->cycles_done += longword ? 8 : 4;
 	}
 	else
 	{
@@ -482,7 +484,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			address += CC_SIGN_EXTEND_ULONG(15, displacement);
 			IncrementProgramCounter(state, 2);
 
-			stuff->cycles_left_in_instruction += longword ? 12 : 8;
+			state->cycles_done += longword ? 12 : 8;
 		}
 		else if (address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX || (address_mode == ADDRESS_MODE_SPECIAL && address_mode_register == ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX))
 		{
@@ -498,7 +500,7 @@ static void DecodeMemoryAddressMode(Stuff* const stuff, DecodedMemoryAddressMode
 			address += displacement_literal_value;
 			IncrementProgramCounter(state, 2);
 
-			stuff->cycles_left_in_instruction += longword ? 14 : 10;
+			state->cycles_done += longword ? 14 : 10;
 		}
 	}
 
@@ -673,12 +675,16 @@ static cc_bool IsOpcodeConditionTrue(Clown68000_State *state, cc_u16f opcode)
 
 static void SingleOperandInstructionExecutionTimeWordOnly(Stuff* const stuff, const cc_u8f register_word, const cc_u8f memory_word)
 {
-	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_word : memory_word;
+	Clown68000_State* const state = stuff->state;
+
+	state->cycles_done += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_word : memory_word;
 }
 
 static void SingleOperandInstructionExecutionTimeLongwordOnly(Stuff* const stuff, const cc_u8f register_longword, const cc_u8f memory_longword)
 {
-	stuff->cycles_left_in_instruction += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_longword : memory_longword;
+	Clown68000_State* const state = stuff->state;
+
+	state->cycles_done += stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER ? register_longword : memory_longword;
 }
 
 static void SingleOperandInstructionExecutionTime(Stuff* const stuff, const cc_u8f register_word, const cc_u8f memory_word, const cc_u8f register_longword, const cc_u8f memory_longword)
@@ -696,15 +702,19 @@ static void SingleOperandInstructionExecutionTimeCommon(Stuff* const stuff)
 
 static void ShiftRotateInstructionExecutionTimeRegister(Stuff* const stuff, const cc_u8f count)
 {
-	stuff->cycles_left_in_instruction += 2 + 2 * count;
+	Clown68000_State* const state = stuff->state;
+
+	state->cycles_done += 2 + 2 * count;
 
 	if (stuff->operation_size == 4)
-		stuff->cycles_left_in_instruction += 2;
+		state->cycles_done += 2;
 }
 
 static void ShiftRotateInstructionExecutionTimeMemory(Stuff* const stuff)
 {
-	stuff->cycles_left_in_instruction += 4;
+	Clown68000_State* const state = stuff->state;
+
+	state->cycles_done += 4;
 }
 
 static void ADDXSUBXExecutionTime(Stuff* const stuff)
@@ -714,18 +724,20 @@ static void ADDXSUBXExecutionTime(Stuff* const stuff)
 
 static void StandardInstructionExecutionTime(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	SingleOperandInstructionExecutionTimeCommon(stuff);
 
 	switch (stuff->destination_decoded_address_mode.type)
 	{
 		case DECODED_ADDRESS_MODE_TYPE_REGISTER:
 			if (stuff->operation_size == 4 && (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER || (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_MEMORY && stuff->source_decoded_address_mode.data.memory.address == stuff->state->program_counter - 4)))
-				stuff->cycles_left_in_instruction += 2;
+				state->cycles_done += 2;
 			break;
 
 		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
 		case DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER:
-			stuff->cycles_left_in_instruction += 8;
+			state->cycles_done += 8;
 			break;
 
 		default:
@@ -735,20 +747,24 @@ static void StandardInstructionExecutionTime(Stuff* const stuff)
 
 static void StandardInstructionExecutionTimeQuick(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	if (stuff->opcode.primary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER || (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER))
-		stuff->cycles_left_in_instruction += 2;
+		state->cycles_done += 2;
 }
 
 static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	switch (stuff->opcode.primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
-			stuff->cycles_left_in_instruction += 4;
+			state->cycles_done += 4;
 			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
-			stuff->cycles_left_in_instruction += 8;
+			state->cycles_done += 8;
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
@@ -756,12 +772,12 @@ static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
-					stuff->cycles_left_in_instruction += 4;
+					state->cycles_done += 4;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
-					stuff->cycles_left_in_instruction += 8;
+					state->cycles_done += 8;
 					break;
 
 				default:
@@ -777,7 +793,9 @@ static void LEAPEAInstructionExecutionTime(Stuff* const stuff)
 
 static void ABCDSBCDExecutionTime(Stuff* const stuff)
 {
-	stuff->cycles_left_in_instruction = (stuff->opcode.raw & 0x0008) != 0 ? 18 : 6;
+	Clown68000_State* const state = stuff->state;
+
+	state->cycles_done += (stuff->opcode.raw & 0x0008) != 0 ? 14 : 2;
 }
 
 
@@ -1121,17 +1139,21 @@ static void Action_SUBCommon(Stuff* const stuff)
 
 static void Action_CMP(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_SUBCommon(stuff);
 
-	stuff->cycles_left_in_instruction += stuff->operation_size == 4 ? 2 : 0;
+	state->cycles_done += stuff->operation_size == 4 ? 2 : 0;
 }
 
 static void Action_CMPI(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_SUBCommon(stuff);
 
 	if (stuff->operation_size == 4 && stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER)
-		stuff->cycles_left_in_instruction += 2;
+		state->cycles_done += 2;
 }
 
 static void Action_CMPM(Stuff* const stuff)
@@ -1151,10 +1173,12 @@ static void Action_ADDASUBACommon(Stuff* const stuff)
 {
 	if (!stuff->opcode.bit_8)
 	{
+		Clown68000_State* const state = stuff->state;
+
 		stuff->source_value = CC_SIGN_EXTEND_ULONG(15, stuff->source_value);
 
 		if (stuff->source_decoded_address_mode.type != DECODED_ADDRESS_MODE_TYPE_REGISTER)
-			stuff->cycles_left_in_instruction += 2;
+			state->cycles_done += 2;
 	}
 }
 
@@ -1222,45 +1246,53 @@ static void Action_Bxxx(Stuff* const stuff)
 
 static void Action_BTST(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_Bxxx(stuff);
 
 	if (stuff->operation_size == 4 || (stuff->opcode.primary_address_mode == ADDRESS_MODE_SPECIAL && stuff->opcode.primary_register == ADDRESS_MODE_REGISTER_SPECIAL_IMMEDIATE))
-		stuff->cycles_left_in_instruction += 2;
+		state->cycles_done += 2;
 
 	/* TODO: 'BTST d0,#' timing. */
 }
 
 static void Action_BCHG(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value ^ (1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 4;
+	state->cycles_done += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value < 16)
-		stuff->cycles_left_in_instruction -= 2;
+		state->cycles_done -= 2;
 }
 
 static void Action_BCLR(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value & ~(1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 4;
+	state->cycles_done += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value >= 16)
-		stuff->cycles_left_in_instruction += 2;
+		state->cycles_done += 2;
 }
 
 static void Action_BSET(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_Bxxx(stuff);
 	stuff->result_value = stuff->destination_value | (1ul << stuff->source_value);
 
-	stuff->cycles_left_in_instruction += 4;
+	state->cycles_done += 4;
 
 	if (stuff->operation_size == 4 && stuff->source_value < 16)
-		stuff->cycles_left_in_instruction -= 2;
+		state->cycles_done -= 2;
 }
 
 static void Action_MOVEP(Stuff* const stuff)
@@ -1275,7 +1307,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 0) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 1) << 8 * 0;
 
-			stuff->cycles_left_in_instruction += 4;
+			state->cycles_done += 4;
 			break;
 
 		case 1:
@@ -1286,7 +1318,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 2) << 8 * 1;
 			state->data_registers[stuff->opcode.secondary_register] |= ReadByte(stuff, stuff->destination_value + 2 * 3) << 8 * 0;
 
-			stuff->cycles_left_in_instruction += 12;
+			state->cycles_done += 12;
 			break;
 
 		case 2:
@@ -1294,7 +1326,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			WriteByte(stuff, stuff->destination_value + 2 * 0, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 1, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
 
-			stuff->cycles_left_in_instruction += 4;
+			state->cycles_done += 4;
 			break;
 
 		case 3:
@@ -1304,7 +1336,7 @@ static void Action_MOVEP(Stuff* const stuff)
 			WriteByte(stuff, stuff->destination_value + 2 * 2, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 1) & 0xFF);
 			WriteByte(stuff, stuff->destination_value + 2 * 3, (state->data_registers[stuff->opcode.secondary_register] >> 8 * 0) & 0xFF);
 
-			stuff->cycles_left_in_instruction += 12;
+			state->cycles_done += 12;
 			break;
 	}
 }
@@ -1321,22 +1353,24 @@ static void Action_MOVECommon(Stuff* const stuff)
 
 static void Action_MOVE(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	Action_MOVECommon(stuff);
 
 	if (stuff->source_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER)
 	{
 		if (stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_REGISTER)
-			stuff->cycles_left_in_instruction += 2;
+			state->cycles_done += 2;
 		else
-			stuff->cycles_left_in_instruction += 4;
+			state->cycles_done += 4;
 	}
 	else if (stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER || stuff->destination_decoded_address_mode.type == DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER)
 	{
-		stuff->cycles_left_in_instruction += 8;
+		state->cycles_done += 8;
 	}
 	else if (stuff->opcode.secondary_address_mode == ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_PREDECREMENT)
 	{
-		stuff->cycles_left_in_instruction -= 2;
+		state->cycles_done -= 2;
 	}
 }
 
@@ -1356,7 +1390,7 @@ static void Action_LINK(Stuff* const stuff)
 	/* Offset the stack pointer by the immediate value */
 	IncrementAddressRegister(state, 7, CC_SIGN_EXTEND_ULONG(15, stuff->source_value));
 
-	stuff->cycles_left_in_instruction += 8;
+	state->cycles_done += 8;
 }
 
 static void Action_UNLK(Stuff* const stuff)
@@ -1370,7 +1404,7 @@ static void Action_UNLK(Stuff* const stuff)
 	IncrementAddressRegister(state, 7, 4);
 	state->address_registers[stuff->opcode.primary_register] = value;
 
-	stuff->cycles_left_in_instruction += 8;
+	state->cycles_done += 8;
 }
 
 static void Action_NEGX(Stuff* const stuff)
@@ -1416,7 +1450,7 @@ static void Action_PEA(Stuff* const stuff)
 	DecrementAddressRegister(state, 7, 4);
 	WriteLongWordBackwards(stuff, state->address_registers[7], stuff->source_value);
 
-	stuff->cycles_left_in_instruction = 12;
+	state->cycles_done += 8;
 	LEAPEAInstructionExecutionTime(stuff);
 }
 
@@ -1456,7 +1490,7 @@ static void Action_MOVE_USP(Stuff* const stuff)
 		state->user_stack_pointer = state->address_registers[stuff->opcode.primary_register];
 }
 
-#define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, stuff->state->program_counter)
+#define UNIMPLEMENTED_INSTRUCTION(instruction) Clown68000_PrintError("Unimplemented instruction " instruction " used at 0x%" CC_PRIXLEAST32, state->program_counter)
 
 static void ProgramCounterChanged(Stuff* const stuff)
 {
@@ -1480,10 +1514,12 @@ static void SetStatusRegister(Stuff* const stuff, const cc_u16f value)
 
 static void Action_RESET(Stuff* const stuff)
 {
+	Clown68000_State* const state = stuff->state;
+
 	/* TODO */
 	UNIMPLEMENTED_INSTRUCTION("RESET");
 
-	stuff->cycles_left_in_instruction += 128;
+	state->cycles_done += 128;
 }
 
 static void Action_STOP(Stuff* const stuff)
@@ -1493,7 +1529,7 @@ static void Action_STOP(Stuff* const stuff)
 	SetStatusRegister(stuff, stuff->source_value);
 	state->stopped = cc_true;
 
-	stuff->cycles_left_in_instruction -= 4;
+	state->cycles_done -= 4;
 }
 
 static void Action_RTE(Stuff* const stuff)
@@ -1509,7 +1545,7 @@ static void Action_RTE(Stuff* const stuff)
 	SetStatusRegister(stuff, new_status);
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 16;
+	state->cycles_done += 16;
 }
 
 static void Action_RTS(Stuff* const stuff)
@@ -1521,7 +1557,7 @@ static void Action_RTS(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 12;
+	state->cycles_done += 12;
 }
 
 static void Action_TRAPV(Stuff* const stuff)
@@ -1544,7 +1580,7 @@ static void Action_RTR(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 16;
+	state->cycles_done += 16;
 }
 
 static void Action_JMP(Stuff* const stuff)
@@ -1555,16 +1591,16 @@ static void Action_JMP(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction = 8;
+	state->cycles_done += 4;
 
 	switch (stuff->opcode.primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
-			stuff->cycles_left_in_instruction += 2;
+			state->cycles_done += 2;
 			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
-			stuff->cycles_left_in_instruction += 6;
+			state->cycles_done += 6;
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
@@ -1572,15 +1608,15 @@ static void Action_JMP(Stuff* const stuff)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
-					stuff->cycles_left_in_instruction += 2;
+					state->cycles_done += 2;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
-					stuff->cycles_left_in_instruction += 4;
+					state->cycles_done += 4;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
-					stuff->cycles_left_in_instruction += 6;
+					state->cycles_done += 6;
 					break;
 
 				default:
@@ -1605,14 +1641,13 @@ static void Action_JSR(Stuff* const stuff)
 	DecrementAddressRegister(state, 7, 4);
 	WriteLongWordBackwards(stuff, state->address_registers[7], program_counter);
 
-	stuff->cycles_left_in_instruction += 8;
+	state->cycles_done += 8;
 }
 
 static void Action_LEA(Stuff* const stuff)
 {
 	Action_MOVECommon(stuff);
 
-	stuff->cycles_left_in_instruction = 4;
 	LEAPEAInstructionExecutionTime(stuff);
 }
 
@@ -1637,38 +1672,38 @@ static void Action_MOVEM(Stuff* const stuff)
 	const cc_bool is_longword = (stuff->opcode.raw & 0x0040) != 0;
 	const unsigned int cycle_delta = is_longword ? 8 : 4;
 
-	stuff->cycles_left_in_instruction = 8;
+	state->cycles_done += 4;
 
 	if (memory_to_register)
-		stuff->cycles_left_in_instruction += 4;
+		state->cycles_done += 4;
 
 	switch (stuff->opcode.primary_address_mode)
 	{
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_DISPLACEMENT:
-			stuff->cycles_left_in_instruction += 4;
+			state->cycles_done += 4;
 			break;
 
 		case ADDRESS_MODE_ADDRESS_REGISTER_INDIRECT_WITH_INDEX:
-			stuff->cycles_left_in_instruction += 6;
+			state->cycles_done += 6;
 			break;
 
 		case ADDRESS_MODE_SPECIAL:
 			switch (stuff->opcode.primary_register)
 			{
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_DISPLACEMENT:
-					stuff->cycles_left_in_instruction += 4;
+					state->cycles_done += 4;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_PROGRAM_COUNTER_WITH_INDEX:
-					stuff->cycles_left_in_instruction += 6;
+					state->cycles_done += 6;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_SHORT:
-					stuff->cycles_left_in_instruction += 4;
+					state->cycles_done += 4;
 					break;
 
 				case ADDRESS_MODE_REGISTER_SPECIAL_ABSOLUTE_LONG:
-					stuff->cycles_left_in_instruction += 8;
+					state->cycles_done += 8;
 					break;
 
 				default:
@@ -1715,7 +1750,7 @@ static void Action_MOVEM(Stuff* const stuff)
 	{
 		if ((bitfield & 1) != 0)
 		{
-			stuff->cycles_left_in_instruction += cycle_delta;
+			state->cycles_done += cycle_delta;
 
 			if (memory_to_register)
 			{
@@ -1746,7 +1781,7 @@ static void Action_MOVEM(Stuff* const stuff)
 	{
 		if ((bitfield & 1) != 0)
 		{
-			stuff->cycles_left_in_instruction += cycle_delta;
+			state->cycles_done += cycle_delta;
 
 			if (memory_to_register)
 			{
@@ -1796,7 +1831,7 @@ static void Action_CHK(Stuff* const stuff)
 		DoInterrupt(stuff, 6);
 	}
 
-	stuff->cycles_left_in_instruction += 6;
+	state->cycles_done += 6;
 }
 
 static void Action_SCC(Stuff* const stuff)
@@ -1823,7 +1858,7 @@ static void Action_BRA_SHORT(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 6;
+	state->cycles_done += 6;
 }
 
 static void Action_BRA_WORD(Stuff* const stuff)
@@ -1834,7 +1869,7 @@ static void Action_BRA_WORD(Stuff* const stuff)
 
 	ProgramCounterChanged(stuff);
 
-	stuff->cycles_left_in_instruction += 2;
+	state->cycles_done += 2;
 }
 
 static void Action_BSR_SHORT(Stuff* const stuff)
@@ -1845,7 +1880,7 @@ static void Action_BSR_SHORT(Stuff* const stuff)
 	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
 	Action_BRA_SHORT(stuff);
 
-	stuff->cycles_left_in_instruction += 8;
+	state->cycles_done += 8;
 }
 
 static void Action_BSR_WORD(Stuff* const stuff)
@@ -1856,7 +1891,7 @@ static void Action_BSR_WORD(Stuff* const stuff)
 	WriteLongWordBackwards(stuff, state->address_registers[7], state->program_counter);
 	Action_BRA_WORD(stuff);
 
-	stuff->cycles_left_in_instruction += 8;
+	state->cycles_done += 8;
 }
 
 static void Action_BCC_SHORT(Stuff* const stuff)
@@ -1866,7 +1901,7 @@ static void Action_BCC_SHORT(Stuff* const stuff)
 	if (IsOpcodeConditionTrue(state, stuff->opcode.raw))
 		Action_BRA_SHORT(stuff);
 	else
-		stuff->cycles_left_in_instruction += 4;
+		state->cycles_done += 4;
 }
 
 static void Action_BCC_WORD(Stuff* const stuff)
@@ -1876,7 +1911,7 @@ static void Action_BCC_WORD(Stuff* const stuff)
 	if (IsOpcodeConditionTrue(state, stuff->opcode.raw))
 		Action_BRA_WORD(stuff);
 	else
-		stuff->cycles_left_in_instruction += 4;
+		state->cycles_done += 4;
 }
 
 static void Action_DBCC(Stuff* const stuff)
@@ -1890,14 +1925,14 @@ static void Action_DBCC(Stuff* const stuff)
 		if (loop_counter-- != 0)
 			Action_BRA_WORD(stuff);
 		else
-			stuff->cycles_left_in_instruction += 6;
+			state->cycles_done += 6;
 
 		state->data_registers[stuff->opcode.primary_register] &= ~0xFFFFul;
 		state->data_registers[stuff->opcode.primary_register] |= loop_counter & 0xFFFF;
 	}
 	else
 	{
-		stuff->cycles_left_in_instruction += 4;
+		state->cycles_done += 4;
 	}
 }
 
@@ -1941,10 +1976,10 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 		const cc_u32f absolute_source_value = source_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(15, stuff->source_value) : stuff->source_value;
 		const cc_u32f absolute_destination_value = destination_is_negative ? 0 - CC_SIGN_EXTEND_ULONG(31, stuff->destination_value) : stuff->destination_value;
 
-		stuff->cycles_left_in_instruction += 6;
+		state->cycles_done += 6;
 
 		if (is_signed)
-			stuff->cycles_left_in_instruction += destination_is_negative ? 8 : 6;
+			state->cycles_done += destination_is_negative ? 8 : 6;
 
 		/* Unsigned overflow detection. */
 		if (absolute_source_value >= (absolute_destination_value >> 16))
@@ -1955,14 +1990,14 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 			/* https://gendev.spritesmind.net/forum/viewtopic.php?p=35569#p35569 */
 			if (is_signed)
 			{
-				stuff->cycles_left_in_instruction += 104;
+				state->cycles_done += 104;
 
 				if (source_is_negative)
-					stuff->cycles_left_in_instruction += 2;
+					state->cycles_done += 2;
 				else if (destination_is_negative)
-					stuff->cycles_left_in_instruction += 4;
+					state->cycles_done += 4;
 
-				stuff->cycles_left_in_instruction += (15 - CountBitsSet(absolute_quotient >> 1)) * 2;
+				state->cycles_done += (15 - CountBitsSet(absolute_quotient >> 1)) * 2;
 			}
 			else
 			{
@@ -1971,7 +2006,7 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 				cc_u32f working_dividend = absolute_destination_value;
 				cc_u8f i;
 
-				stuff->cycles_left_in_instruction += 66;
+				state->cycles_done += 66;
 
 				for (i = 0; i < 15; ++i)
 				{
@@ -1981,11 +2016,11 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 
 					if (!high_bit_set)
 					{
-						stuff->cycles_left_in_instruction += 2;
+						state->cycles_done += 2;
 
 						if (working_dividend < shifted_divisor)
 						{
-							stuff->cycles_left_in_instruction += 2;
+							state->cycles_done += 2;
 							continue;
 						}
 					}
@@ -2086,6 +2121,8 @@ static void Action_NBCD(Stuff* const stuff)
 
 static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed, const cc_u16f total_operations)
 {
+	Clown68000_State* const state = stuff->state;
+
 	const cc_bool multiplier_is_negative = is_signed && (stuff->source_value & 0x8000) != 0;
 	const cc_bool multiplicand_is_negative = is_signed && (stuff->destination_value & 0x8000) != 0;
 	const cc_bool result_is_negative = multiplier_is_negative != multiplicand_is_negative;
@@ -2097,7 +2134,7 @@ static void Action_MULCommon(Stuff* const stuff, const cc_bool is_signed, const 
 
 	stuff->result_value = result_is_negative ? 0 - absolute_result : absolute_result;
 
-	stuff->cycles_left_in_instruction += 34 + total_operations * 2;
+	state->cycles_done += 34 + total_operations * 2;
 }
 
 static void Action_MULS(Stuff* const stuff)
@@ -2176,7 +2213,7 @@ static void Action_EXG(Stuff* const stuff)
 			break;
 	}
 
-	stuff->cycles_left_in_instruction += 2;
+	state->cycles_done += 2;
 }
 
 #define DO_INSTRUCTION_ACTION_SHIFT_1_ASD \
@@ -2368,7 +2405,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		state->halted = cc_false;
 		state->stopped = cc_false;
 		state->pending_interrupt = 0; /* TODO: Does a reset actually clear the pending interrupt? */
-		state->leftover_cycles = 0;
+		state->cycles_done = 0;
 
 		/* Disable trace mode. */
 		state->status_register &= ~STATUS_TRACE;
@@ -2395,8 +2432,6 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 
 	stuff.state = state;
 	stuff.callbacks = callbacks;
-	stuff.cycles_left_in_instruction = state->leftover_cycles;
-	stuff.cycles_done = 0;
 
 	if (!state->halted)
 	{
@@ -2416,9 +2451,9 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 				break;
 		}
 
-		while ((stuff.cycles_done += stuff.cycles_left_in_instruction) <= cycles_to_do)
+		while (state->cycles_done <= cycles_to_do)
 		{
-			stuff.cycles_left_in_instruction = 4;
+			state->cycles_done += 4;
 			stuff.starting_program_counter = state->program_counter;
 
 			if (!state->stopped)
@@ -2449,7 +2484,7 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 
 				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
 				/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
-				stuff.cycles_left_in_instruction += 14;
+				state->cycles_done += 14;
 
 				/* Set interrupt mask to current level */
 				state->status_register &= ~STATUS_INTERRUPT_MASK;
@@ -2459,6 +2494,6 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 			}
 		}
 
-		state->leftover_cycles = stuff.cycles_done - cycles_to_do;
+		state->cycles_done -= cycles_to_do;
 	}
 }
