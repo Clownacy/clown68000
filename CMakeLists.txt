@@ -7,10 +7,10 @@ project(clown68000 LANGUAGES C)
 # Common
 
 add_library(clown68000-common STATIC
-	"common/clowncommon/clowncommon.h"
-	"common/instruction.h"
-	"common/opcode.c"
-	"common/opcode.h"	
+	"libraries/clowncommon/clowncommon.h"
+	"source/common/instruction.h"
+	"source/common/opcode.c"
+	"source/common/opcode.h"	
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -20,8 +20,8 @@ endif()
 # Interpreter
 
 add_library(clown68000-interpreter STATIC
-	"interpreter/clown68000.c"
-	"interpreter/clown68000.h"
+	"source/interpreter/clown68000.c"
+	"source/interpreter/clown68000.h"
 )
 
 target_link_libraries(clown68000-interpreter PRIVATE clown68000-common) 
@@ -33,13 +33,13 @@ endif()
 # Microcode Generator
 
 add_executable(clown68000-microcode-generator
-	"interpreter/microcode-generator/emit.c"
-	"interpreter/microcode-generator/emit.h"
-	"interpreter/microcode-generator/emit-instructions.c"
-	"interpreter/microcode-generator/emit-instructions.h"
-	"interpreter/microcode-generator/instruction-properties.c"
-	"interpreter/microcode-generator/instruction-properties.h"
-	"interpreter/microcode-generator/generator.c"
+	"source/interpreter/microcode-generator/emit.c"
+	"source/interpreter/microcode-generator/emit.h"
+	"source/interpreter/microcode-generator/emit-instructions.c"
+	"source/interpreter/microcode-generator/emit-instructions.h"
+	"source/interpreter/microcode-generator/instruction-properties.c"
+	"source/interpreter/microcode-generator/instruction-properties.h"
+	"source/interpreter/microcode-generator/generator.c"
 )
 
 if(CC_USE_C99_INTEGERS)
@@ -49,10 +49,10 @@ endif()
 # Disassembler
 
 add_library(clown68000-disassembler STATIC
-	"disassembler/disassembler.c"
-	"disassembler/disassembler.h"
-	"disassembler/opcode.c"
-	"disassembler/opcode.h"
+	"source/disassembler/disassembler.c"
+	"source/disassembler/disassembler.h"
+	"source/disassembler/opcode.c"
+	"source/disassembler/opcode.h"
 )
 
 target_link_libraries(clown68000-disassembler PRIVATE clown68000-common) 
@@ -64,7 +64,7 @@ endif()
 # Disassembler Tool
 
 add_executable(clown68000-disassembler-tool
-	"disassembler/main.c"
+	"source/disassembler/main.c"
 )
 
 target_link_libraries(clown68000-disassembler-tool PRIVATE clown68000-disassembler) 

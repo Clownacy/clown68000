@@ -19,7 +19,7 @@
 #ifndef INCLUDE_GUARD_0BB73C0B_EA27_45D8_AA97_E98FBFD79EFC
 #define INCLUDE_GUARD_0BB73C0B_EA27_45D8_AA97_E98FBFD79EFC
 
-#include "../../common/instruction.h"
+#include "../../../libraries/common/instruction.h"
 
 void EmitInstructionSupervisorCheck(const Instruction instruction);
 void EmitInstructionSize(const Instruction instruction);

@@ -19,7 +19,7 @@
 #ifndef INCLUDE_GUARD_11BFE06C_ADE3_4F4B_AFB3_5854B5D48789
 #define INCLUDE_GUARD_11BFE06C_ADE3_4F4B_AFB3_5854B5D48789
 
-#include "clowncommon/clowncommon.h"
+#include "../../libraries/clowncommon/clowncommon.h"
 
 #include "instruction.h"
 

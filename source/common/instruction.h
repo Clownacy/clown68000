@@ -19,7 +19,7 @@
 #ifndef INCLUDE_GUARD_6B0AEAE2_3B04_4765_8C50_0B1F08F445C1
 #define INCLUDE_GUARD_6B0AEAE2_3B04_4765_8C50_0B1F08F445C1
 
-#include "clowncommon/clowncommon.h"
+#include "../../libraries/clowncommon/clowncommon.h"
 
 typedef enum Instruction
 {
