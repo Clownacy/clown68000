@@ -45,6 +45,7 @@ typedef struct Clown68000_ReadWriteCallbacks
 {
 	cc_u16f (*read_callback)(const void *user_data, cc_u32f address, cc_bool do_high_byte, cc_bool do_low_byte, cc_u32f current_cycle);
 	void (*write_callback)(const void *user_data, cc_u32f address, cc_bool do_high_byte, cc_bool do_low_byte, cc_u32f current_cycle, cc_u16f value);
+	void (*interrupt_acknowledge_callback)(const void *user_data);
 	const void *user_data;
 } Clown68000_ReadWriteCallbacks;
 

@@ -2384,7 +2384,7 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 
 void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 {
-	assert(level >= 1 && level <= 7);
+	assert(level <= 7);
 	state->pending_interrupt = level;
 }
 
@@ -2418,6 +2418,9 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 
 		while ((stuff.cycles_done += stuff.cycles_left_in_instruction) <= cycles_to_do)
 		{
+			/* Latch pending interrupt, to approximate the latency that Sesame Street: Counting Cafe depends on. */
+			const cc_u8f pending_interrupt = state->pending_interrupt;
+
 			stuff.cycles_left_in_instruction = 4;
 			stuff.starting_program_counter = state->program_counter;
 
@@ -2441,11 +2444,11 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 			/* TODO: Does this occur before or after instruction processing? Apparently a Sesame Street game depends on a one-instruction latency.
 				https://gendev.spritesmind.net/forum/viewtopic.php?t=2202 */
 			/* Process pending interrupt. */
-			if (state->pending_interrupt == 7 || state->pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
+			if (pending_interrupt == 7 || pending_interrupt > (((cc_u16f)state->status_register >> 8) & 7))
 			{
 				state->stopped = cc_false;
 
-				DoInterrupt(&stuff, 24 + state->pending_interrupt);
+				DoInterrupt(&stuff, 24 + pending_interrupt);
 
 				/* TODO: Integrate this into the exception logic, and give all exceptions proper durations. */
 				/* TODO: Didn't James Groth mention that this should be 24 in one of his blog posts? */
@@ -2453,9 +2456,9 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 
 				/* Set interrupt mask to current level */
 				state->status_register &= ~STATUS_INTERRUPT_MASK;
-				state->status_register |= state->pending_interrupt << 8;
+				state->status_register |= pending_interrupt << 8;
 
-				state->pending_interrupt = 0;
+				callbacks->interrupt_acknowledge_callback(callbacks->user_data);
 			}
 		}
 
