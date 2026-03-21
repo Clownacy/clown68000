@@ -38,7 +38,6 @@ typedef struct Clown68000_State
 	cc_u16l instruction_register;
 	cc_bool halted, stopped;
 	cc_u8l pending_interrupt;
-	cc_u8l leftover_cycles;
 } Clown68000_State;
 
 typedef struct Clown68000_ReadWriteCallbacks
@@ -52,7 +51,7 @@ typedef struct Clown68000_ReadWriteCallbacks
 void Clown68000_SetErrorCallback(void (*error_callback)(void *user_data, const char *format, va_list arg), const void *user_data);
 void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks);
 void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level);
-void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, cc_u32f cycles_to_do);
+cc_u32f Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, cc_u32f cycles_to_do);
 
 #ifdef __cplusplus
 }

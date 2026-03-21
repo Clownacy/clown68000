@@ -2368,7 +2368,6 @@ void Clown68000_Reset(Clown68000_State *state, const Clown68000_ReadWriteCallbac
 		state->halted = cc_false;
 		state->stopped = cc_false;
 		state->pending_interrupt = 0; /* TODO: Does a reset actually clear the pending interrupt? */
-		state->leftover_cycles = 0;
 
 		/* Disable trace mode. */
 		state->status_register &= ~STATUS_TRACE;
@@ -2388,14 +2387,14 @@ void Clown68000_Interrupt(Clown68000_State *state, cc_u16f level)
 	state->pending_interrupt = level;
 }
 
-void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, const cc_u32f cycles_to_do)
+cc_u32f Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCallbacks *callbacks, const cc_u32f cycles_to_do)
 {
 	/* Initialise closure and exception stuff. */
 	Stuff stuff;
 
 	stuff.state = state;
 	stuff.callbacks = callbacks;
-	stuff.cycles_left_in_instruction = state->leftover_cycles;
+	stuff.cycles_left_in_instruction = 0;
 	stuff.cycles_done = 0;
 
 	if (!state->halted)
@@ -2461,7 +2460,7 @@ void Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteCall
 				callbacks->interrupt_acknowledge_callback(callbacks->user_data);
 			}
 		}
-
-		state->leftover_cycles = stuff.cycles_done - cycles_to_do;
 	}
+
+	return stuff.cycles_done;
 }
