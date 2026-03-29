@@ -2415,7 +2415,7 @@ cc_u32f Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteC
 				break;
 		}
 
-		while ((stuff.cycles_done += stuff.cycles_left_in_instruction) <= cycles_to_do)
+		while ((stuff.cycles_done += stuff.cycles_left_in_instruction) < cycles_to_do)
 		{
 			/* Latch pending interrupt, to approximate the latency that Sesame Street: Counting Cafe depends on. */
 			const cc_u8f pending_interrupt = state->pending_interrupt;
