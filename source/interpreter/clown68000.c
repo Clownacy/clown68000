@@ -1948,7 +1948,7 @@ static void Action_DIVCommon(Stuff* const stuff, const cc_bool is_signed)
 			stuff->cycles_left_in_instruction += destination_is_negative ? 8 : 6;
 
 		/* Unsigned overflow detection. */
-		if (absolute_source_value >= (absolute_destination_value >> 16))
+		if (absolute_source_value > (absolute_destination_value >> 16))
 		{
 			const cc_u32f absolute_quotient = absolute_destination_value / absolute_source_value;
 
