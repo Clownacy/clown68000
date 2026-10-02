@@ -2439,6 +2439,11 @@ cc_u32f Clown68000_DoCycles(Clown68000_State *state, const Clown68000_ReadWriteC
 
 			switch (instruction)
 			{
+				/* Do this to optimise the switch statement by eliminating the bounds-checking. */
+				default:
+					CC_UNREACHABLE;
+					break;
+
 				#include "microcode.c"
 			}
 		}
