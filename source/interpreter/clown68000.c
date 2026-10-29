@@ -86,7 +86,8 @@ typedef	enum DecodedAddressModeType
 	DECODED_ADDRESS_MODE_TYPE_REGISTER,
 	DECODED_ADDRESS_MODE_TYPE_MEMORY,
 	DECODED_ADDRESS_MODE_TYPE_STATUS_REGISTER,
-	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER
+	DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER,
+	DECODED_ADDRESS_MODE_TYPE_OPCODE /* Data held within the opcode itself (ADDQ, SUBQ). */
 } DecodedAddressModeType;
 
 struct Stuff;
@@ -556,6 +557,10 @@ static cc_u32f GetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode 
 		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
 			value = state->status_register & 0xFF;
 			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_OPCODE:
+			/* The instruction supplies the value itself. */
+			break;
 	}
 
 	return value;
@@ -587,6 +592,10 @@ static void SetValueUsingDecodedAddressMode(Stuff *stuff, DecodedAddressMode *de
 
 		case DECODED_ADDRESS_MODE_TYPE_CONDITION_CODE_REGISTER:
 			state->status_register = (state->status_register & ~CONDITION_CODE_REGISTER_MASK) | (value & CONDITION_CODE_REGISTER_MASK);
+			break;
+
+		case DECODED_ADDRESS_MODE_TYPE_OPCODE:
+			/* Never a destination. */
 			break;
 	}
 }
@@ -1176,6 +1185,8 @@ static void Action_SUBA(Stuff* const stuff)
 static void Action_SUBQ(Stuff* const stuff)
 {
 	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
+	/* This instruction does not decode a source address mode, so give it one: otherwise, 'StandardInstructionExecutionTime' reads whatever the previous instruction left there. */
+	stuff->source_decoded_address_mode.type = DECODED_ADDRESS_MODE_TYPE_OPCODE;
 	Action_SUB(stuff);
 
 	StandardInstructionExecutionTimeQuick(stuff);
@@ -1197,6 +1208,8 @@ static void Action_ADDA(Stuff* const stuff)
 static void Action_ADDQ(Stuff* const stuff)
 {
 	stuff->source_value = ((stuff->opcode.secondary_register - 1u) & 7u) + 1u; /* A little math trick to turn 0 into 8. */
+	/* This instruction does not decode a source address mode, so give it one: otherwise, 'StandardInstructionExecutionTime' reads whatever the previous instruction left there. */
+	stuff->source_decoded_address_mode.type = DECODED_ADDRESS_MODE_TYPE_OPCODE;
 	Action_ADD(stuff);
 
 	StandardInstructionExecutionTimeQuick(stuff);
